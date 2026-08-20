@@ -1,0 +1,2314 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>波動與光學 SUPER 複習系統</title>
+    <meta name="description" content="波動、聲波、幾何光學、物理光學四章的知識節點複習、互動實驗與分級題庫。">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+
+    <script>
+        window.MathJax = {
+            tex: {
+                inlineMath: [['$', '$'], ['\\(', '\\)']],
+                displayMath: [['$$', '$$'], ['\\[', '\\]']],
+                processEscapes: true
+            },
+            options: {
+                ignoreHtmlClass: 'tex2jax_ignore',
+                processHtmlClass: 'tex2jax_process'
+            }
+        };
+    </script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <script src="assets/js/wave-runtime.js"></script>
+    <link rel="stylesheet" href="assets/css/interaction-runtime.css">
+
+    <script src="data/modulesData.js"></script>
+    <script src="data/questionBank.js"></script>
+    <style>
+        :root {
+            --bg-body: hsl(200, 30%, 98%);
+            --bg-sidebar: #14313a;
+            --bg-card: rgba(255, 255, 255, 0.72);
+
+            --text-main: hsl(200, 26%, 14%);
+            --text-muted: hsl(200, 12%, 43%);
+            --border-color: rgba(10, 45, 55, 0.08);
+
+            --primary-blue: hsl(196, 88%, 32%);
+            --primary-blue-light: rgba(8, 118, 156, 0.07);
+            --accent-cyan: hsl(184, 78%, 31%);
+            --accent-green: hsl(150, 65%, 30%);
+            --accent-green-light: rgba(16, 145, 105, 0.07);
+            --accent-orange: hsl(32, 88%, 42%);
+            --accent-orange-light: rgba(220, 130, 20, 0.08);
+            --accent-rose: hsl(348, 72%, 45%);
+            --accent-rose-light: rgba(200, 40, 70, 0.07);
+            --accent-violet: hsl(264, 52%, 46%);
+            --accent-violet-light: rgba(120, 70, 200, 0.07);
+
+            --transition: all 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+            --shadow-neon: 0 4px 20px rgba(10, 45, 55, 0.04);
+            --shadow-neon-hover: 0 10px 30px rgba(10, 45, 55, 0.09);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: radial-gradient(circle at 50% 0%, hsl(200, 34%, 99%) 0%, hsl(200, 22%, 95%) 100%) no-repeat fixed;
+            color: var(--text-main);
+            font-family: 'Outfit', 'Noto Sans TC', system-ui, sans-serif;
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ---------- 側欄 ---------- */
+        #sidebar {
+            width: 296px;
+            padding: 1.7rem 1.1rem 2rem;
+            background: var(--bg-sidebar);
+            box-shadow: 10px 0 30px rgba(16, 38, 51, 0.09);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            height: 100vh;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #35525d transparent;
+        }
+
+        .sidebar-brand {
+            margin: 0 0 1.6rem;
+            padding: 0.3rem 0.7rem 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-brand::before {
+            content: '';
+            display: block;
+            width: 34px; height: 3px;
+            margin-bottom: 0.8rem;
+            border-radius: 99px;
+            background: #58c9c6;
+            box-shadow: 12px 0 0 rgba(88, 201, 198, 0.35);
+        }
+        .sidebar-brand h1 { color: #f4fbfc; font-size: 1.16rem; font-weight: 800; line-height: 1.25; letter-spacing: -0.02em; }
+        .sidebar-brand p { font-size: 0.74rem; font-weight: 500; margin-top: 0.4rem; color: #9db0b8; line-height: 1.55; }
+
+        .nav-section-title {
+            font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.12em; color: #6fd0ce; margin: 1.45rem 0.7rem 0.6rem;
+        }
+        .nav-list { list-style: none; display: flex; flex-direction: column; gap: 0.16rem; }
+        .nav-item {
+            display: flex; align-items: center; min-height: 40px;
+            padding: 0.58rem 0.7rem; border: 1px solid transparent; border-radius: 8px;
+            cursor: pointer; color: #b6c5cb; font-size: 0.85rem; font-weight: 500;
+            transition: var(--transition); text-decoration: none; gap: 0.7rem; line-height: 1.5;
+        }
+        .nav-item:hover { color: #f4fbfc; background: rgba(255, 255, 255, 0.055); }
+        .nav-item.active {
+            color: #fff; background: rgba(76, 179, 184, 0.16);
+            border-color: rgba(112, 210, 208, 0.22); border-left: 3px solid #58c5c4; font-weight: 700;
+        }
+        .nav-item-node { padding-left: 1.5rem; }
+        .nav-module-label {
+            font-size: 0.71rem; font-weight: 800; color: #8fb6bd;
+            margin: 0.85rem 0.7rem 0.35rem; letter-spacing: 0.04em;
+        }
+        .node-code-badge {
+            font-size: 0.67rem; font-weight: 800; min-width: 34px; padding: 0.12rem 0.36rem;
+            color: #8edbd9; background: rgba(85, 195, 195, 0.1);
+            border: 1px solid rgba(85, 195, 195, 0.15); border-radius: 4px;
+            font-family: 'Outfit', sans-serif; text-align: center;
+        }
+        .nav-item.active .node-code-badge { color: #fff; background: rgba(88, 197, 196, 0.32); }
+        .nav-icon { width: 18px; text-align: center; font-size: 0.95rem; }
+        .nav-badge {
+            margin-left: auto; font-size: 0.66rem; font-weight: 800; padding: 0.05rem 0.36rem;
+            border-radius: 99px; background: var(--accent-rose); color: #fff;
+        }
+        .mobile-nav-toggle { display: none; }
+
+        /* ---------- 版面 ---------- */
+        .app-workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+
+        .view-toolbar {
+            position: sticky; top: 0; z-index: 30;
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.6rem clamp(1rem, 3vw, 2.5rem);
+            background: rgba(255, 255, 255, 0.86);
+            backdrop-filter: blur(10px) saturate(140%);
+            border-bottom: 1px solid var(--border-color);
+        }
+        .view-toolbar button {
+            font: inherit; font-size: 0.8rem; font-weight: 600;
+            padding: 0.32rem 0.7rem; border-radius: 7px;
+            border: 1px solid var(--border-color); background: #fff;
+            color: var(--text-main); cursor: pointer; transition: var(--transition);
+        }
+        .view-toolbar button:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .view-breadcrumb { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-left: 0.4rem; }
+
+        #main-content { padding: 2.2rem clamp(1.1rem, 4vw, 3rem) 5rem; max-width: 1180px; width: 100%; }
+
+        /* ---------- 通用元件 ---------- */
+        .view-header { margin-bottom: 1.8rem; }
+        .view-eyebrow {
+            display: inline-flex; align-items: center; gap: 0.4rem;
+            font-size: 0.7rem; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase;
+            color: var(--accent-cyan); background: rgba(6, 148, 162, 0.08);
+            border: 1px solid rgba(6, 148, 162, 0.16);
+            padding: 0.2rem 0.6rem; border-radius: 99px; margin-bottom: 0.7rem;
+        }
+        .view-header h2 { font-size: clamp(1.45rem, 3.2vw, 2rem); font-weight: 800; letter-spacing: -0.02em; line-height: 1.25; }
+        .view-header p { margin-top: 0.6rem; color: var(--text-muted); font-size: 0.94rem; line-height: 1.8; max-width: 62ch; }
+
+        .section-title {
+            display: flex; align-items: center; gap: 0.6rem;
+            font-size: 1.08rem; font-weight: 800; margin: 2.3rem 0 1rem;
+            padding-bottom: 0.5rem; border-bottom: 2px solid var(--border-color);
+        }
+        .section-title::before {
+            content: ''; width: 4px; height: 18px; border-radius: 99px; background: var(--accent-cyan);
+        }
+        .section-title .title-hint { font-size: 0.75rem; font-weight: 500; color: var(--text-muted); margin-left: auto; }
+
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 14px; padding: 1.1rem 1.2rem; box-shadow: var(--shadow-neon);
+            transition: var(--transition);
+        }
+        .card + .card { margin-top: 0.95rem; }
+
+        .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 0.95rem; }
+        .card-grid .card + .card { margin-top: 0; }
+
+        /* 公式卡 */
+        .formula-card { border-left: 4px solid var(--primary-blue); }
+        .formula-card h4 {
+            font-size: 1rem; font-weight: 800; display: flex; align-items: center;
+            gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.6rem;
+        }
+        .formula-node-tag {
+            font-size: 0.66rem; font-weight: 800; padding: 0.1rem 0.4rem; border-radius: 4px;
+            color: var(--primary-blue); background: var(--primary-blue-light);
+            border: 1px solid rgba(8, 118, 156, 0.18); cursor: pointer;
+        }
+        .formula-box {
+            margin: 0.55rem 0 0.75rem; padding: 0.75rem 0.9rem; overflow-x: auto;
+            background: rgba(8, 118, 156, 0.045); border: 1px solid rgba(8, 118, 156, 0.12);
+            border-radius: 10px; text-align: center; font-size: 1.02rem;
+        }
+        .formula-anchor {
+            font-size: 0.85rem; font-weight: 700; color: var(--accent-cyan);
+            padding-left: 0.7rem; border-left: 3px solid var(--accent-cyan); margin-bottom: 0.7rem; line-height: 1.7;
+        }
+        .formula-desc { font-size: 0.88rem; line-height: 1.9; color: var(--text-main); }
+        .formula-desc b { color: var(--primary-blue); }
+
+        /* 即時檢核 probe */
+        .probe { margin-top: 0.85rem; padding: 0.75rem 0.85rem; border-radius: 10px; background: var(--accent-violet-light); border: 1px solid rgba(120, 70, 200, 0.15); }
+        .probe-q { font-size: 0.84rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .probe-opts { display: flex; flex-direction: column; gap: 0.35rem; }
+        .probe-opt {
+            text-align: left; font: inherit; font-size: 0.82rem; padding: 0.38rem 0.6rem;
+            border-radius: 7px; border: 1px solid rgba(120, 70, 200, 0.18);
+            background: rgba(255, 255, 255, 0.85); cursor: pointer; transition: var(--transition);
+        }
+        .probe-opt:hover { border-color: var(--accent-violet); }
+        .probe-opt.right { background: var(--accent-green-light); border-color: var(--accent-green); color: var(--accent-green); font-weight: 700; }
+        .probe-opt.wrong { background: var(--accent-rose-light); border-color: var(--accent-rose); color: var(--accent-rose); }
+
+        /* 解題特徵卡 */
+        .feature-card { border-left: 4px solid var(--accent-orange); }
+        .feature-line { font-size: 0.88rem; line-height: 1.85; }
+        .feature-line + .feature-line { margin-top: 0.6rem; padding-top: 0.6rem; border-top: 1px dashed var(--border-color); }
+        .feature-label {
+            display: inline-block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.05em;
+            padding: 0.08rem 0.4rem; border-radius: 4px; margin-right: 0.45rem; vertical-align: 1px;
+        }
+        .label-feature { color: var(--primary-blue); background: var(--primary-blue-light); }
+        .label-bridge { color: var(--accent-green); background: var(--accent-green-light); }
+        .label-trap { color: var(--accent-rose); background: var(--accent-rose-light); }
+
+        /* 概念圖 */
+        .concept-map-container { display: flex; flex-direction: column; align-items: center; gap: 0.2rem; }
+        .map-node {
+            width: 100%; max-width: 680px; padding: 0.8rem 1rem; border-radius: 12px;
+            background: var(--bg-card); border: 1px solid var(--border-color); box-shadow: var(--shadow-neon);
+        }
+        .map-node-title { font-size: 0.92rem; font-weight: 800; color: var(--primary-blue); margin-bottom: 0.25rem; }
+        .map-node-desc { font-size: 0.83rem; line-height: 1.8; color: var(--text-muted); }
+        .map-connector { font-size: 0.76rem; font-weight: 700; color: var(--accent-cyan); padding: 0.35rem 0; }
+
+        /* 表格 */
+        .edu-table-container { overflow-x: auto; border-radius: 12px; border: 1px solid var(--border-color); }
+        .edu-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; background: rgba(255,255,255,0.72); min-width: 520px; }
+        .edu-table th {
+            background: rgba(8, 118, 156, 0.07); font-weight: 800; text-align: left;
+            padding: 0.65rem 0.8rem; border-bottom: 2px solid rgba(8, 118, 156, 0.14); color: var(--primary-blue);
+        }
+        .edu-table td { padding: 0.65rem 0.8rem; border-bottom: 1px solid var(--border-color); line-height: 1.75; vertical-align: top; }
+        .edu-table tr:last-child td { border-bottom: 0; }
+        .formula-desc .edu-table { min-width: 380px; margin-top: 0.5rem; }
+
+        /* 大考題型卡 */
+        .exam-card { border-left: 4px solid var(--accent-violet); }
+        .exam-card h4 { font-size: 0.95rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .exam-year {
+            display: inline-block; font-size: 0.7rem; font-weight: 800; padding: 0.1rem 0.45rem;
+            border-radius: 4px; color: var(--accent-violet); background: var(--accent-violet-light);
+            border: 1px solid rgba(120, 70, 200, 0.18); margin-bottom: 0.45rem;
+        }
+        .exam-card p { font-size: 0.86rem; line-height: 1.85; color: var(--text-main); }
+
+        /* 首頁 */
+        .home-hero {
+            display: grid; grid-template-columns: 1.35fr 1fr; gap: 1.6rem; align-items: start;
+            padding: 1.6rem 1.5rem; border-radius: 18px; margin-bottom: 2rem;
+            background: linear-gradient(135deg, rgba(8,118,156,0.07), rgba(120,70,200,0.05));
+            border: 1px solid var(--border-color);
+        }
+        .home-hero h2 { font-size: clamp(1.5rem, 3.4vw, 2.1rem); font-weight: 800; line-height: 1.25; letter-spacing: -0.02em; }
+        .home-hero p { margin-top: 0.7rem; font-size: 0.92rem; line-height: 1.85; color: var(--text-muted); }
+        .home-stats { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+        .home-stat {
+            padding: 0.7rem 0.85rem; border-radius: 12px; background: rgba(255,255,255,0.8);
+            border: 1px solid var(--border-color);
+        }
+        .home-stat span { display: block; font-size: 0.72rem; font-weight: 700; color: var(--text-muted); }
+        .home-stat strong { display: block; font-size: 1.35rem; font-weight: 800; color: var(--primary-blue); font-family: 'Outfit', sans-serif; }
+
+        .module-card { cursor: pointer; border-left: 4px solid var(--accent-cyan); }
+        .module-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-neon-hover); border-color: var(--accent-cyan); }
+        .module-card h3 { font-size: 1.02rem; font-weight: 800; margin-bottom: 0.3rem; }
+        .module-card p { font-size: 0.84rem; color: var(--text-muted); line-height: 1.75; }
+        .module-badge {
+            display: inline-block; font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.45rem;
+            border-radius: 4px; color: var(--accent-cyan); background: rgba(6,148,162,0.08);
+            border: 1px solid rgba(6,148,162,0.16); margin-bottom: 0.4rem;
+        }
+        .module-nodes { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.7rem; }
+        .module-node-chip {
+            font-size: 0.7rem; font-weight: 700; padding: 0.16rem 0.45rem; border-radius: 5px;
+            background: var(--primary-blue-light); color: var(--primary-blue);
+            border: 1px solid rgba(8,118,156,0.14); cursor: pointer; transition: var(--transition);
+        }
+        .module-node-chip:hover { background: var(--primary-blue); color: #fff; }
+
+        /* 節點頁動作列 */
+        .node-route-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 0.6rem; margin-bottom: 1.6rem; }
+        .node-route-btn {
+            font: inherit; text-align: left; padding: 0.7rem 0.85rem; border-radius: 12px; cursor: pointer;
+            background: rgba(255,255,255,0.82); border: 1px solid var(--border-color); transition: var(--transition);
+        }
+        .node-route-btn:hover { border-color: var(--accent-cyan); transform: translateY(-1px); box-shadow: var(--shadow-neon-hover); }
+        .node-route-btn b { display: block; font-size: 0.88rem; font-weight: 800; }
+        .node-route-btn span { display: block; font-size: 0.76rem; color: var(--text-muted); margin-top: 0.15rem; }
+
+        /* 題庫 */
+        .quiz-toolbar { display: flex; flex-wrap: wrap; gap: 0.45rem; margin-bottom: 1.1rem; align-items: center; }
+        .chip-btn {
+            font: inherit; font-size: 0.79rem; font-weight: 700; padding: 0.34rem 0.75rem;
+            border-radius: 99px; border: 1px solid var(--border-color); background: #fff;
+            color: var(--text-muted); cursor: pointer; transition: var(--transition);
+        }
+        .chip-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+        .chip-btn.is-active { background: var(--accent-cyan); border-color: var(--accent-cyan); color: #fff; }
+        .quiz-card { border-left: 4px solid var(--accent-green); }
+        .quiz-meta { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-bottom: 0.5rem; }
+        .quiz-tag { font-size: 0.68rem; font-weight: 800; padding: 0.1rem 0.42rem; border-radius: 4px; border: 1px solid var(--border-color); color: var(--text-muted); background: rgba(255,255,255,0.7); }
+        .quiz-tag.level-記憶 { color: var(--primary-blue); background: var(--primary-blue-light); border-color: rgba(8,118,156,0.18); }
+        .quiz-tag.level-理解 { color: var(--accent-cyan); background: rgba(6,148,162,0.08); border-color: rgba(6,148,162,0.18); }
+        .quiz-tag.level-應用 { color: var(--accent-orange); background: var(--accent-orange-light); border-color: rgba(220,130,20,0.2); }
+        .quiz-tag.level-分析 { color: var(--accent-violet); background: var(--accent-violet-light); border-color: rgba(120,70,200,0.2); }
+        .quiz-q { font-size: 0.92rem; font-weight: 700; line-height: 1.8; margin-bottom: 0.7rem; }
+        .quiz-opts { display: flex; flex-direction: column; gap: 0.4rem; }
+        .quiz-opt {
+            text-align: left; font: inherit; font-size: 0.86rem; line-height: 1.7;
+            padding: 0.5rem 0.7rem; border-radius: 9px; border: 1px solid var(--border-color);
+            background: rgba(255,255,255,0.85); cursor: pointer; transition: var(--transition);
+        }
+        .quiz-opt:hover { border-color: var(--accent-cyan); }
+        .quiz-opt.picked { border-color: var(--primary-blue); background: var(--primary-blue-light); }
+        .quiz-opt.right { border-color: var(--accent-green); background: var(--accent-green-light); }
+        .quiz-opt.wrong { border-color: var(--accent-rose); background: var(--accent-rose-light); }
+        .quiz-why { display: block; margin-top: 0.3rem; font-size: 0.79rem; color: var(--text-muted); line-height: 1.7; }
+        .quiz-actions { display: flex; gap: 0.45rem; margin-top: 0.7rem; flex-wrap: wrap; }
+        .quiz-exp {
+            margin-top: 0.7rem; padding: 0.6rem 0.8rem; border-radius: 0 9px 9px 0;
+            border-left: 3px solid var(--accent-green); background: var(--accent-green-light);
+            font-size: 0.83rem; line-height: 1.8;
+        }
+        .quiz-empty { padding: 2rem; text-align: center; color: var(--text-muted); font-size: 0.9rem; }
+
+        /* 提示條 */
+        .callout {
+            padding: 0.75rem 0.95rem; border-radius: 0 10px 10px 0; font-size: 0.85rem; line-height: 1.85;
+            border-left: 3px solid var(--accent-orange); background: var(--accent-orange-light); margin: 1rem 0;
+        }
+        .callout.info { border-left-color: var(--primary-blue); background: var(--primary-blue-light); }
+
+        .print-hide { }
+        @media print { .view-toolbar, #sidebar { display: none !important; } #main-content { padding: 0; } }
+
+        @media (max-width: 900px) {
+            body { flex-direction: column; }
+            #sidebar {
+                width: 100%; height: auto; position: static; padding: 0.9rem 1rem;
+                flex-direction: column;
+            }
+            .mobile-nav-toggle {
+                display: block; position: absolute; top: 0.9rem; right: 1rem;
+                font-size: 1.3rem; background: none; border: 0; color: #cfe4e6; cursor: pointer;
+            }
+            #sidebar > .nav-section-title,
+            #sidebar > .nav-list,
+            #sidebar > #node-nav-container { display: none; }
+            #sidebar.mobile-open > .nav-list { display: flex; }
+            #sidebar.mobile-open > .nav-section-title,
+            #sidebar.mobile-open > #node-nav-container { display: block; }
+            #sidebar.mobile-open { padding-bottom: 1.1rem; }
+            .sidebar-brand { border-bottom: 0; padding-bottom: 0; margin-bottom: 0; }
+            .home-hero { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+            #main-content { padding: 1.4rem 0.9rem 4rem; }
+            .card-grid { grid-template-columns: 1fr; }
+            .node-route-actions { grid-template-columns: 1fr; }
+            .lab-readout { grid-template-columns: 1fr 1fr; }
+            .home-stats { grid-template-columns: 1fr 1fr; }
+            .view-toolbar .toolbar-long { display: none; }
+            .formula-box { font-size: 0.92rem; padding: 0.6rem 0.5rem; }
+            .quiz-toolbar { gap: 0.35rem; }
+            .chip-btn { font-size: 0.74rem; padding: 0.28rem 0.6rem; }
+        }
+    </style>
+</head>
+<body>
+    <nav id="sidebar">
+        <div class="sidebar-brand">
+            <h1>波動與光學 SUPER 複習系統</h1>
+            <p>選修物理 Ch1–Ch4 • 20 個知識節點導航</p>
+        </div>
+        <button class="mobile-nav-toggle" type="button" aria-label="開啟導覽選單" aria-expanded="false" onclick="toggleMobileNav(this)"><span aria-hidden="true">☰</span></button>
+
+        <div class="nav-section-title">開始</div>
+        <ul class="nav-list">
+            <li><a class="nav-item" data-route="home" onclick="switchMainView(this, 'home')"><span class="nav-icon">⌂</span> 學習首頁</a></li>
+        </ul>
+
+        <div class="nav-section-title">四章 20 個知識節點</div>
+        <div id="node-nav-container"></div>
+
+        <div class="nav-section-title">複習工具箱</div>
+        <ul class="nav-list">
+            <li><a class="nav-item" data-route="tool-formula" onclick="switchMainView(this, 'tool-formula')"><span class="nav-icon">📐</span> 公式速查表</a></li>
+            <li><a class="nav-item" data-route="tool-lab" onclick="switchMainView(this, 'tool-lab')"><span class="nav-icon">🔬</span> 互動實驗室</a></li>
+            <li><a class="nav-item" data-route="tool-quiz" onclick="switchMainView(this, 'tool-quiz')"><span class="nav-icon">✏️</span> 分級題庫（80 題）</a></li>
+            <li><a class="nav-item" data-route="tool-compare" onclick="switchMainView(this, 'tool-compare')"><span class="nav-icon">⚖️</span> 易混淆對照表</a></li>
+            <li><a class="nav-item" data-route="tool-exam" onclick="switchMainView(this, 'tool-exam')"><span class="nav-icon">📚</span> 大考題型索引</a></li>
+            <li><a class="nav-item" data-route="tool-wrong" onclick="switchMainView(this, 'tool-wrong')"><span class="nav-icon">📕</span> 錯題本<span class="nav-badge" id="wrong-nav-badge" style="display:none;"></span></a></li>
+        </ul>
+    </nav>
+
+    <div class="app-workspace">
+        <div class="view-toolbar print-hide" id="view-toolbar" aria-label="頁面導覽">
+            <button type="button" onclick="goBackInApp()" aria-label="回到上一頁">← <span class="toolbar-long">上一頁</span></button>
+            <button type="button" onclick="navigateTo('home')" aria-label="回到學習首頁">⌂ <span class="toolbar-long">首頁</span></button>
+            <div class="view-breadcrumb" id="view-breadcrumb">學習首頁</div>
+        </div>
+        <main id="main-content"></main>
+    </div>
+
+    <script>
+        /* =====================================================================
+         * 核心：檢視生命週期、路由與側欄
+         * ===================================================================*/
+        let activeDisposers = WaveRuntime.createDisposerRegistry('initial');
+        let lastRenderedRoute = null;
+        let mathJaxTimer = null;
+
+        function cleanupCurrentView() {
+            activeDisposers.dispose();
+            activeDisposers = WaveRuntime.createDisposerRegistry('view');
+        }
+
+        function scheduleMathJax(target) {
+            if (mathJaxTimer) clearTimeout(mathJaxTimer);
+            mathJaxTimer = setTimeout(() => {
+                mathJaxTimer = null;
+                const el = target || document.getElementById('main-content');
+                if (window.MathJax && window.MathJax.typesetPromise) {
+                    window.MathJax.typesetPromise([el]).catch((err) => console.warn('MathJax', err));
+                }
+            }, 40);
+        }
+
+        const ALL_NODES = Object.keys(nodeMeta).sort();
+
+        function nodesOfModule(moduleNum) {
+            return ALL_NODES.filter((code) => nodeMeta[code].module === Number(moduleNum));
+        }
+
+        function itemsForNode(list, code) {
+            return list.filter((item) => [].concat(item.node).includes(code));
+        }
+
+        function buildNodeSidebar() {
+            const host = document.getElementById('node-nav-container');
+            let html = '';
+            Object.keys(modulesData).map(Number).sort((a, b) => a - b).forEach((m) => {
+                html += `<div class="nav-module-label">${modulesData[m].title.replace('模組', '')}</div><ul class="nav-list">`;
+                html += `<li><a class="nav-item nav-item-node" data-route="module-${m}" onclick="switchMainView(this, 'module-${m}')"><span class="node-code-badge">總覽</span> 模組導讀</a></li>`;
+                nodesOfModule(m).forEach((code) => {
+                    html += `<li><a class="nav-item nav-item-node" data-route="node-${code}" onclick="switchMainView(this, 'node-${code}')"><span class="node-code-badge">${code}</span> ${nodeMeta[code].title}</a></li>`;
+                });
+                html += '</ul>';
+            });
+            host.innerHTML = html;
+        }
+
+        function routeFromLocation() {
+            const raw = decodeURIComponent((location.hash || '').replace(/^#/, '')).trim();
+            return raw || 'home';
+        }
+
+        function routeLabel(route) {
+            if (route === 'home') return '學習首頁';
+            if (route.startsWith('module-')) return modulesData[route.slice(7)] ? modulesData[route.slice(7)].title : '模組導讀';
+            if (route.startsWith('node-')) {
+                const code = route.slice(5);
+                return nodeMeta[code] ? `${code}　${nodeMeta[code].title}` : '知識節點';
+            }
+            if (route.startsWith('lab-')) {
+                const id = route.slice(4);
+                return labMeta[id] ? `互動實驗：${labMeta[id].name}` : '互動實驗';
+            }
+            const toolNames = {
+                'tool-formula': '公式速查表',
+                'tool-lab': '互動實驗室',
+                'tool-quiz': '知識節點分級題庫',
+                'tool-compare': '易混淆對照表',
+                'tool-exam': '大考題型索引',
+                'tool-wrong': '錯題本'
+            };
+            return toolNames[route] || '學習首頁';
+        }
+
+        function activateNavForRoute(route) {
+            document.querySelectorAll('#sidebar .nav-item').forEach((el) => el.classList.remove('active'));
+            const target = document.querySelector(`#sidebar .nav-item[data-route="${route}"]`);
+            if (target) target.classList.add('active');
+        }
+
+        function renderRoute(route) {
+            cleanupCurrentView();
+            const main = document.getElementById('main-content');
+            main.scrollTop = 0;
+            window.scrollTo({ top: 0, behavior: 'auto' });
+
+            if (route === 'home') renderHomeView();
+            else if (route.startsWith('module-')) renderModuleView(route.slice(7));
+            else if (route.startsWith('node-')) renderNodeView(route.slice(5));
+            else if (route.startsWith('lab-')) renderSingleLabView(route.slice(4));
+            else if (route === 'tool-formula') renderFormulaSheet();
+            else if (route === 'tool-lab') renderLabIndex();
+            else if (route === 'tool-quiz') renderQuizView();
+            else if (route === 'tool-compare') renderCompareView();
+            else if (route === 'tool-exam') renderExamIndexView();
+            else if (route === 'tool-wrong') renderWrongBookView();
+            else renderHomeView();
+
+            activateNavForRoute(route);
+            document.getElementById('view-breadcrumb').textContent = routeLabel(route);
+            lastRenderedRoute = route;
+            updateWrongBadge();
+            scheduleMathJax();
+        }
+
+        function navigateTo(route) {
+            if (route === lastRenderedRoute) return;
+            history.pushState({ waveRoute: route }, '', `#${encodeURIComponent(route)}`);
+            renderRoute(route);
+        }
+
+        function switchMainView(navEl, route) {
+            document.getElementById('sidebar').classList.remove('mobile-open');
+            navigateTo(route);
+        }
+
+        function goBackInApp() {
+            if (history.length > 1) history.back();
+            else navigateTo('home');
+        }
+
+        function toggleMobileNav(button) {
+            const bar = document.getElementById('sidebar');
+            const open = bar.classList.toggle('mobile-open');
+            button.setAttribute('aria-expanded', String(open));
+        }
+
+        /* =====================================================================
+         * 首頁
+         * ===================================================================*/
+        function renderHomeView() {
+            const totalFormulas = Object.values(modulesData).reduce((s, m) => s + m.formulas.length, 0);
+            const totalExams = Object.values(modulesData).reduce((s, m) => s + m.examQuestions.length, 0);
+
+            let cards = '';
+            Object.keys(modulesData).map(Number).sort((a, b) => a - b).forEach((m) => {
+                const mod = modulesData[m];
+                const chips = nodesOfModule(m).map((code) =>
+                    `<span class="module-node-chip" onclick="event.stopPropagation();navigateTo('node-${code}')">${code} ${nodeMeta[code].title}</span>`
+                ).join('');
+                cards += `
+                    <div class="card module-card" onclick="navigateTo('module-${m}')">
+                        <span class="module-badge">${mod.badge}</span>
+                        <h3>${mod.title}</h3>
+                        <p>${mod.subtitle}</p>
+                        <div class="module-nodes">${chips}</div>
+                    </div>`;
+            });
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="home-hero">
+                    <div>
+                        <span class="view-eyebrow">選修物理　波動・聲波・光學</span>
+                        <h2>把四章拆成 20 個知識節點，<br>每個節點都能看、能算、能練。</h2>
+                        <p>本站以「波速由介質決定、頻率由波源決定」為主軸，把繩波、駐波、聲波樂器、折射全反射、透鏡成像與干涉繞射串成一條完整的推理鏈。每個節點提供核心公式、解題特徵引導、常見陷阱、跨章連結與大考題型解析，並搭配可調參數的互動實驗。</p>
+                    </div>
+                    <div class="home-stats">
+                        <div class="home-stat"><span>知識節點</span><strong>${ALL_NODES.length}</strong></div>
+                        <div class="home-stat"><span>核心公式卡</span><strong>${totalFormulas}</strong></div>
+                        <div class="home-stat"><span>分級題庫</span><strong>${questionBank.length}</strong></div>
+                        <div class="home-stat"><span>互動實驗</span><strong>${Object.keys(labMeta).length}</strong></div>
+                    </div>
+                </div>
+
+                <div class="section-title">四大模組<span class="title-hint">點選卡片進入模組導讀，或直接點節點標籤</span></div>
+                <div class="card-grid">${cards}</div>
+
+                <div class="section-title">建議的複習路徑</div>
+                <div class="card-grid">
+                    <div class="card">
+                        <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:0.4rem;">第一次建立架構</h4>
+                        <p style="font-size:0.85rem;line-height:1.85;color:var(--text-muted);">先讀「公式速查表」掌握四章全部公式的位置，再依序看四個模組導讀的概念圖，最後才進入個別節點細讀。</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:0.4rem;">觀念卡關時</h4>
+                        <p style="font-size:0.85rem;line-height:1.85;color:var(--text-muted);">到「互動實驗室」把參數拉一拉：駐波、折射、透鏡成像與干涉條紋，用眼睛看過一次比背十遍有效。</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:0.4rem;">段考前衝刺</h4>
+                        <p style="font-size:0.85rem;line-height:1.85;color:var(--text-muted);">用「分級題庫」依節點與層級篩選，先做記憶與理解確認定義，再攻應用與分析；答錯的題目會自動進入錯題本。</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="font-size:0.98rem;font-weight:800;margin-bottom:0.4rem;">最容易混淆的地方</h4>
+                        <p style="font-size:0.85rem;line-height:1.85;color:var(--text-muted);">開管與閉管、雙狹縫與單狹縫、聲波與光波進入密介質的快慢——「易混淆對照表」把這些成對的概念放在同一頁。</p>
+                    </div>
+                </div>
+
+                <div class="callout info">
+                    共 ${totalExams} 則大考與段考題型解析散布在各節點頁，也可從側欄的「大考題型索引」一次瀏覽。
+                </div>`;
+        }
+
+        /* =====================================================================
+         * 模組導讀
+         * ===================================================================*/
+        function renderModuleView(moduleNum) {
+            const mod = modulesData[moduleNum];
+            if (!mod) { renderHomeView(); return; }
+
+            const nodeCards = nodesOfModule(moduleNum).map((code) => {
+                const meta = nodeMeta[code];
+                const fCount = itemsForNode(mod.formulas, code).length;
+                const qCount = questionBank.filter((q) => q.node === code).length;
+                return `
+                    <div class="card module-card" onclick="navigateTo('node-${code}')">
+                        <span class="module-badge">${code}　${meta.section}</span>
+                        <h3>${meta.title}</h3>
+                        <p>核心公式卡 ${fCount} 張・分級題庫 ${qCount} 題${meta.lab ? `・互動實驗「${labMeta[meta.lab].name}」` : ''}</p>
+                    </div>`;
+            }).join('');
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">${mod.badge}</span>
+                    <h2>${mod.title}</h2>
+                    <p>${mod.subtitle}</p>
+                </div>
+
+                <div class="section-title">這一章的推理鏈</div>
+                ${mod.conceptMap}
+
+                <div class="section-title">本模組的知識節點</div>
+                <div class="card-grid">${nodeCards}</div>
+
+                <div class="section-title">跨章與跨科延伸</div>
+                ${mod.extensions}`;
+        }
+
+        /* =====================================================================
+         * 節點頁
+         * ===================================================================*/
+        function renderNodeView(code) {
+            const meta = nodeMeta[code];
+            if (!meta) { renderHomeView(); return; }
+            const mod = modulesData[meta.module];
+
+            const formulas = itemsForNode(mod.formulas, code);
+            const features = itemsForNode(mod.keyFeatures, code);
+            const exams = itemsForNode(mod.examQuestions, code);
+            const quizCount = questionBank.filter((q) => q.node === code).length;
+
+            let probeUid = 0;
+            const formulaHtml = formulas.map((f) => {
+                let probeHtml = '';
+                if (f.probe) {
+                    const uid = `${code}-p${probeUid++}`;
+                    probeHtml = `
+                        <div class="probe" id="probe-${uid}">
+                            <div class="probe-q">🧪 即時檢核：${f.probe.q}</div>
+                            <div class="probe-opts">
+                                ${f.probe.opts.map((o, i) => `<button type="button" class="probe-opt" onclick="probePick('${uid}', ${i}, ${o.c ? 1 : 0})">${o.t}</button>`).join('')}
+                            </div>
+                        </div>`;
+                }
+                return `
+                    <div class="card formula-card">
+                        <h4><span class="formula-node-tag">${code}</span>${f.name}</h4>
+                        <div class="formula-box">$$${f.formula}$$</div>
+                        <div class="formula-anchor">${f.anchor}</div>
+                        <div class="formula-desc">${f.desc}</div>
+                        ${probeHtml}
+                    </div>`;
+            }).join('');
+
+            const featureHtml = features.length ? features.map((k) => `
+                <div class="card feature-card">
+                    <div class="feature-line"><span class="feature-label label-feature">題目特徵</span>${k.feature}</div>
+                    <div class="feature-line"><span class="feature-label label-bridge">解題橋樑</span>${k.bridge}</div>
+                    <div class="feature-line"><span class="feature-label label-trap">常見陷阱</span>${k.trap}</div>
+                </div>`).join('') : '<div class="card"><p style="font-size:0.86rem;color:var(--text-muted);">本節點的解題特徵整理在同模組的其他節點頁，可由左側切換。</p></div>';
+
+            const examHtml = exams.length ? exams.map((e) => `
+                <div class="card exam-card">
+                    <span class="exam-year">${e.year}</span>
+                    <h4>${e.title}</h4>
+                    <p>${e.desc}</p>
+                </div>`).join('') : '<div class="card"><p style="font-size:0.86rem;color:var(--text-muted);">本節點目前沒有獨立的大考題型解析，建議搭配同模組其他節點一起複習。</p></div>';
+
+            const siblings = nodesOfModule(meta.module);
+            const idx = siblings.indexOf(code);
+            const prev = idx > 0 ? siblings[idx - 1] : null;
+            const next = idx < siblings.length - 1 ? siblings[idx + 1] : null;
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">${mod.badge}　${meta.section}　${code}</span>
+                    <h2>${meta.title}</h2>
+                    <p>${mod.title.replace(/^模組[一二三四]：/, '')}｜核心公式卡 ${formulas.length} 張・解題特徵 ${features.length} 組・大考題型 ${exams.length} 則・題庫 ${quizCount} 題</p>
+                </div>
+
+                <div class="node-route-actions">
+                    ${meta.lab ? `<button class="node-route-btn" onclick="navigateTo('lab-${meta.lab}')"><b>🔬 開啟互動實驗</b><span>${labMeta[meta.lab].name}</span></button>` : ''}
+                    <button class="node-route-btn" onclick="openBankForNode('${code}')"><b>✏️ 練這個節點的題目</b><span>${quizCount} 題，含記憶到分析四個層級</span></button>
+                    <button class="node-route-btn" onclick="navigateTo('module-${meta.module}')"><b>🧭 回到模組導讀</b><span>${mod.title}</span></button>
+                </div>
+
+                <div class="section-title">核心公式與觀念</div>
+                ${formulaHtml}
+
+                <div class="section-title">解題特徵引導</div>
+                ${featureHtml}
+
+                <div class="section-title">大考與段考題型</div>
+                ${examHtml}
+
+                <div class="node-route-actions" style="margin-top:2rem;">
+                    ${prev ? `<button class="node-route-btn" onclick="navigateTo('node-${prev}')"><b>← 上一個節點</b><span>${prev}　${nodeMeta[prev].title}</span></button>` : ''}
+                    ${next ? `<button class="node-route-btn" onclick="navigateTo('node-${next}')"><b>下一個節點 →</b><span>${next}　${nodeMeta[next].title}</span></button>` : ''}
+                </div>`;
+        }
+
+        function probePick(uid, idx, isRight) {
+            const host = document.getElementById(`probe-${uid}`);
+            if (!host) return;
+            const opts = host.querySelectorAll('.probe-opt');
+            opts[idx].classList.add(isRight ? 'right' : 'wrong');
+            if (!isRight) {
+                opts.forEach((el, i) => { if (el.getAttribute('onclick').includes(', 1)')) opts[i].classList.add('right'); });
+            }
+            opts.forEach((el) => { el.disabled = true; });
+        }
+
+        function openBankForNode(code) {
+            quizFilter.node = code;
+            quizFilter.level = 'all';
+            navigateTo('tool-quiz');
+        }
+
+        /* =====================================================================
+         * 工具：公式速查表
+         * ===================================================================*/
+        function renderFormulaSheet() {
+            let html = '';
+            Object.keys(modulesData).map(Number).sort((a, b) => a - b).forEach((m) => {
+                const mod = modulesData[m];
+                const rows = mod.formulas.map((f) => {
+                    const codes = [].concat(f.node);
+                    const chips = codes.map((c) => `<span class="module-node-chip" onclick="navigateTo('node-${c}')">${c}</span>`).join(' ');
+                    return `<tr>
+                        <td style="white-space:nowrap;">${chips}<br><span style="font-size:0.72rem;color:var(--text-muted);">${nodeMeta[codes[0]].section}</span></td>
+                        <td><b>${f.name}</b><div style="margin-top:0.3rem;">$${f.formula}$</div></td>
+                        <td style="color:var(--text-muted);">${f.anchor}</td>
+                    </tr>`;
+                }).join('');
+                html += `
+                    <div class="section-title">${mod.title}<span class="title-hint">${mod.badge}</span></div>
+                    <div class="edu-table-container">
+                        <table class="edu-table">
+                            <thead><tr><th style="width:14%">節點</th><th style="width:44%">公式</th><th>一句話重點</th></tr></thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    </div>`;
+            });
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>公式速查表</h2>
+                    <p>四章全部核心公式集中在同一頁，附上「一句話重點」與所屬節點。段考前先掃一遍這頁，確認每一條式子都知道它在什麼情境下用。</p>
+                </div>
+                <div class="callout">列印這一頁時側欄與工具列會自動隱藏，可直接當成單張公式卡使用。</div>
+                ${html}`;
+        }
+
+        /* =====================================================================
+         * 工具：大考題型索引
+         * ===================================================================*/
+        function renderExamIndexView() {
+            let html = '';
+            Object.keys(modulesData).map(Number).sort((a, b) => a - b).forEach((m) => {
+                const mod = modulesData[m];
+                const cards = mod.examQuestions.map((e) => {
+                    const chips = [].concat(e.node).map((c) => `<span class="module-node-chip" onclick="navigateTo('node-${c}')">${c} ${nodeMeta[c].title}</span>`).join(' ');
+                    return `<div class="card exam-card">
+                        <span class="exam-year">${e.year}</span>
+                        <h4>${e.title}</h4>
+                        <p>${e.desc}</p>
+                        <div class="module-nodes">${chips}</div>
+                    </div>`;
+                }).join('');
+                html += `<div class="section-title">${mod.title}<span class="title-hint">${mod.examQuestions.length} 則</span></div>${cards}`;
+            });
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>大考題型索引</h2>
+                    <p>把散在各節點頁的大考與段考題型解析集中排列。每一則都標註了對應的知識節點，看完解析可直接點節點標籤回去補觀念。標有答對率的題目來自歷屆學測與指考，數字愈低代表該處的誘答設計愈成功。</p>
+                </div>
+                ${html}`;
+        }
+
+        /* =====================================================================
+         * 工具：易混淆對照表
+         * ===================================================================*/
+        function renderCompareView() {
+            const tables = [
+                {
+                    title: '駐波系統：三種端點條件',
+                    hint: '弦樂器、開管、閉管其實只有兩張圖',
+                    head: ['系統', '端點條件', '駐波條件', '頻率公式', '可存在的諧音'],
+                    rows: [
+                        ['兩端固定的弦', '兩端皆為波節', '$L = n\\lambda/2$', '$f_n = nv/2L$', '奇偶皆有'],
+                        ['開管樂器', '兩端皆為位移腹點', '$L = n\\lambda/2$', '$f_n = nv/2L$', '奇偶皆有'],
+                        ['閉管樂器', '閉口端節點、開口端腹點', '$L = m\\lambda/4$', '$f_m = mv/4L$', '<b>僅奇數</b>'],
+                        ['一端固定一端自由的弦', '固定端節點、自由端腹點', '$L = m\\lambda/4$', '$f_m = mv/4L$', '<b>僅奇數</b>']
+                    ]
+                },
+                {
+                    title: '穿越界面時哪些量會變',
+                    hint: '反射波留在原介質、透射波換介質',
+                    head: ['情形', '頻率 $f$', '波速 $v$', '波長 $\\lambda$', '波形是否上下顛倒'],
+                    rows: [
+                        ['固定端反射', '不變', '不變', '不變', '<b>顛倒</b>'],
+                        ['自由端反射', '不變', '不變', '不變', '不顛倒'],
+                        ['輕繩 → 重繩（透射）', '不變', '變慢', '變短', '不顛倒'],
+                        ['重繩 → 輕繩（透射）', '不變', '變快', '變長', '不顛倒'],
+                        ['聲波：空氣 → 玻璃', '不變', '<b>變快</b>', '變長', '—'],
+                        ['光波：空氣 → 玻璃', '不變', '<b>變慢</b>', '變短', '—']
+                    ]
+                },
+                {
+                    title: '雙狹縫干涉 vs. 單狹縫繞射',
+                    hint: '公式外型相似，但一個是亮紋、一個是暗紋',
+                    head: ['項目', '雙狹縫干涉', '單狹縫繞射'],
+                    rows: [
+                        ['幾何參數', '狹縫間距 $d$', '狹縫寬度 $a$'],
+                        ['亮紋位置', '$y_n = n\\dfrac{L\\lambda}{d}$（$n = 0,1,2,\\dots$）', '中央 $y=0$；其他 $y_n = (n+\\frac{1}{2})\\dfrac{L\\lambda}{a}$'],
+                        ['暗紋位置', '$y_m = (m-\\frac{1}{2})\\dfrac{L\\lambda}{d}$', '$y_m = m\\dfrac{L\\lambda}{a}$（$m = 1,2,3,\\dots$）'],
+                        ['中央亮紋寬度', '$\\dfrac{L\\lambda}{d}$，與其他亮紋相同', '$\\dfrac{2L\\lambda}{a}$，是其他亮紋的<b>兩倍</b>'],
+                        ['亮度分布', '各亮紋大致等亮', '由中央向兩側<b>迅速遞減</b>'],
+                        ['浸入折射率 $n$ 的液體', '間距 $\\times \\dfrac{1}{n}$', '間距與中央寬度 $\\times \\dfrac{1}{n}$']
+                    ]
+                },
+                {
+                    title: '水波干涉 vs. 光的干涉：同一套判準',
+                    hint: '腹線就是亮紋、節線就是暗紋',
+                    head: ['概念', '第一章：水波', '第四章：光'],
+                    rows: [
+                        ['完全建設性干涉', '腹線：$\\Delta\\ell = n\\lambda$', '亮紋：$\\Delta\\ell = n\\lambda$'],
+                        ['完全破壞性干涉', '節線：$\\Delta\\ell = (m-\\frac{1}{2})\\lambda$', '暗紋：$\\Delta\\ell = (m-\\frac{1}{2})\\lambda$'],
+                        ['幾何形狀', '以兩波源為焦點的雙曲線', '屏幕上近似等間距的直條紋'],
+                        ['觀察到的樣貌', '腹線亮暗交替、節線靜止灰色', '亮紋與暗紋相間'],
+                        ['近似條件', '無（直接算距離差）', '$L \\gg d$，$\\sin\\theta \\approx \\tan\\theta = y/L$']
+                    ]
+                },
+                {
+                    title: '透鏡成像的符號法則',
+                    hint: '算出來的正負號本身就是答案',
+                    head: ['符號', '取正', '取負'],
+                    rows: [
+                        ['焦距 $f$', '凸透鏡（會聚）', '凹透鏡（發散）'],
+                        ['物距 $p$', '鏡前實物（高中只考這種）', '—'],
+                        ['像距 $q$', '實像（在鏡後）', '虛像（在鏡前）'],
+                        ['放大率 $m = -q/p$', '$m>0$ 正立', '$m<0$ 倒立'],
+                        ['$|m|$ 的意義', '$|m|>1$ 放大', '$|m|<1$ 縮小']
+                    ]
+                },
+                {
+                    title: '各章「頻率不變」的統一結論',
+                    hint: '這是貫穿四章最好用的一句話',
+                    head: ['現象', '頻率', '波速', '波長'],
+                    rows: [
+                        ['繩波透射到另一段繩', '不變', '改變', '改變'],
+                        ['水波由深水進入淺水', '不變', '變慢', '變短'],
+                        ['聲波由空氣進入水或固體', '不變', '變快', '變長'],
+                        ['光由空氣進入玻璃', '不變', '變慢', '變短'],
+                        ['任何波的反射', '不變', '不變', '不變']
+                    ]
+                }
+            ];
+
+            const html = tables.map((t) => `
+                <div class="section-title">${t.title}<span class="title-hint">${t.hint}</span></div>
+                <div class="edu-table-container">
+                    <table class="edu-table">
+                        <thead><tr>${t.head.map((h) => `<th>${h}</th>`).join('')}</tr></thead>
+                        <tbody>${t.rows.map((r) => `<tr>${r.map((c) => `<td>${c}</td>`).join('')}</tr>`).join('')}</tbody>
+                    </table>
+                </div>`).join('');
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>易混淆對照表</h2>
+                    <p>四章裡最常被寫錯的地方，幾乎都是「兩個很像的東西記反了」。這一頁把成對的概念放在同一張表裡，讓差異一眼就看得出來。</p>
+                </div>
+                ${html}`;
+        }
+
+        /* =====================================================================
+         * 工具：分級題庫與錯題本
+         * ===================================================================*/
+        const quizFilter = { node: 'all', level: 'all' };
+        const QUIZ_LEVELS = ['記憶', '理解', '應用', '分析'];
+        const WRONG_KEY = 'waveOptics.wrongBook.v1';
+
+        function loadWrongBook() {
+            try { return JSON.parse(localStorage.getItem(WRONG_KEY) || '[]'); }
+            catch (err) { return []; }
+        }
+        function saveWrongBook(list) {
+            try { localStorage.setItem(WRONG_KEY, JSON.stringify(list)); }
+            catch (err) { /* 隱私模式下略過 */ }
+        }
+        function markWrong(qid) {
+            const list = loadWrongBook();
+            if (!list.includes(qid)) { list.push(qid); saveWrongBook(list); }
+            updateWrongBadge();
+        }
+        function unmarkWrong(qid) {
+            saveWrongBook(loadWrongBook().filter((x) => x !== qid));
+            updateWrongBadge();
+        }
+        function updateWrongBadge() {
+            const badge = document.getElementById('wrong-nav-badge');
+            const n = loadWrongBook().length;
+            badge.style.display = n ? 'inline-block' : 'none';
+            badge.textContent = n;
+        }
+
+        function questionId(q) {
+            return `${q.node}-${q.level}`;
+        }
+
+        function quizCardHtml(q, index) {
+            const qid = questionId(q);
+            const opts = q.opts.map((o, i) =>
+                `<button type="button" class="quiz-opt" data-i="${i}" onclick="pickQuizOption('${qid}', ${i})">${o.t}<span class="quiz-why" style="display:none;">${o.why}</span></button>`
+            ).join('');
+            return `
+                <div class="card quiz-card" id="quiz-${qid}" data-qid="${qid}">
+                    <div class="quiz-meta">
+                        <span class="quiz-tag" style="cursor:pointer;" onclick="navigateTo('node-${q.node}')">${q.node}　${nodeMeta[q.node].title}</span>
+                        <span class="quiz-tag level-${q.level}">${q.level}</span>
+                        <span class="quiz-tag">${q.type === 'multi' ? '多選' : '單選'}</span>
+                        <span class="quiz-tag">${nodeMeta[q.node].section}</span>
+                    </div>
+                    <div class="quiz-q">${index + 1}. ${q.q}</div>
+                    <div class="quiz-opts">${opts}</div>
+                    <div class="quiz-actions">
+                        <button class="chip-btn" onclick="submitQuiz('${qid}')">送出作答</button>
+                        <button class="chip-btn" onclick="revealQuiz('${qid}')">直接看答案</button>
+                        <button class="chip-btn" onclick="resetQuiz('${qid}')">重做</button>
+                    </div>
+                    <div class="quiz-exp" style="display:none;"><b>觀念總結：</b>${q.exp}</div>
+                </div>`;
+        }
+
+        function findQuestion(qid) {
+            return questionBank.find((q) => questionId(q) === qid);
+        }
+
+        function pickQuizOption(qid, idx) {
+            const q = findQuestion(qid);
+            const host = document.getElementById(`quiz-${qid}`);
+            if (!q || !host || host.dataset.done === '1') return;
+            const btns = host.querySelectorAll('.quiz-opt');
+            if (q.type === 'multi') btns[idx].classList.toggle('picked');
+            else { btns.forEach((b) => b.classList.remove('picked')); btns[idx].classList.add('picked'); }
+        }
+
+        function gradeQuiz(qid, forceReveal) {
+            const q = findQuestion(qid);
+            const host = document.getElementById(`quiz-${qid}`);
+            if (!q || !host) return;
+            const btns = host.querySelectorAll('.quiz-opt');
+            const picked = [];
+            btns.forEach((b, i) => { if (b.classList.contains('picked')) picked.push(i); });
+            if (!forceReveal && picked.length === 0) return;
+
+            let allRight = true;
+            btns.forEach((b, i) => {
+                const correct = Boolean(q.opts[i].c);
+                b.classList.remove('picked');
+                if (correct) b.classList.add('right');
+                else if (picked.includes(i)) { b.classList.add('wrong'); allRight = false; }
+                if (correct && !picked.includes(i)) allRight = false;
+                b.querySelector('.quiz-why').style.display = 'block';
+            });
+            host.querySelector('.quiz-exp').style.display = 'block';
+            host.dataset.done = '1';
+            if (!forceReveal) { if (allRight) unmarkWrong(qid); else markWrong(qid); }
+            scheduleMathJax(host);
+        }
+
+        function submitQuiz(qid) { gradeQuiz(qid, false); }
+        function revealQuiz(qid) { gradeQuiz(qid, true); }
+
+        function resetQuiz(qid) {
+            const host = document.getElementById(`quiz-${qid}`);
+            if (!host) return;
+            host.dataset.done = '';
+            host.querySelectorAll('.quiz-opt').forEach((b) => {
+                b.classList.remove('picked', 'right', 'wrong');
+                b.querySelector('.quiz-why').style.display = 'none';
+            });
+            host.querySelector('.quiz-exp').style.display = 'none';
+        }
+
+        function setQuizFilter(kind, value) {
+            quizFilter[kind] = value;
+            renderQuizView();
+            history.replaceState({ waveRoute: 'tool-quiz' }, '', '#tool-quiz');
+        }
+
+        function renderQuizView() {
+            const list = questionBank.filter((q) =>
+                (quizFilter.node === 'all' || q.node === quizFilter.node) &&
+                (quizFilter.level === 'all' || q.level === quizFilter.level)
+            );
+
+            const nodeChips = ['all'].concat(ALL_NODES).map((code) =>
+                `<button class="chip-btn ${quizFilter.node === code ? 'is-active' : ''}" onclick="setQuizFilter('node','${code}')">${code === 'all' ? '全部節點' : code}</button>`
+            ).join('');
+            const levelChips = ['all'].concat(QUIZ_LEVELS).map((lv) =>
+                `<button class="chip-btn ${quizFilter.level === lv ? 'is-active' : ''}" onclick="setQuizFilter('level','${lv}')">${lv === 'all' ? '全部層級' : lv}</button>`
+            ).join('');
+
+            const body = list.length
+                ? list.map((q, i) => quizCardHtml(q, i)).join('')
+                : '<div class="card quiz-empty">這個組合目前沒有題目，請換一個節點或層級。</div>';
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>知識節點分級題庫</h2>
+                    <p>20 個節點各有記憶、理解、應用、分析四個層級，共 ${questionBank.length} 題。每個選項都附上「為什麼對／為什麼是誘答」，答錯的題目會自動收進錯題本。</p>
+                </div>
+                <div class="quiz-toolbar">${levelChips}</div>
+                <div class="quiz-toolbar">${nodeChips}</div>
+                <div class="callout info">目前顯示 <b>${list.length}</b> 題${quizFilter.node !== 'all' ? `（${quizFilter.node}　${nodeMeta[quizFilter.node].title}）` : ''}${quizFilter.level !== 'all' ? `・層級：${quizFilter.level}` : ''}。</div>
+                ${body}`;
+        }
+
+        function renderWrongBookView() {
+            const ids = loadWrongBook();
+            const list = ids.map(findQuestion).filter(Boolean);
+            const body = list.length
+                ? list.map((q, i) => quizCardHtml(q, i)).join('')
+                : '<div class="card quiz-empty">錯題本目前是空的。到「分級題庫」作答後，答錯的題目會自動收進這裡。</div>';
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>錯題本</h2>
+                    <p>紀錄保存在這台裝置的瀏覽器中，不會上傳。重做並全部答對後，該題會自動從錯題本移除。</p>
+                </div>
+                <div class="quiz-toolbar">
+                    <button class="chip-btn" onclick="clearWrongBook()">清空錯題本</button>
+                    <button class="chip-btn" onclick="navigateTo('tool-quiz')">回到分級題庫</button>
+                </div>
+                <div class="callout info">目前錯題本共有 <b>${list.length}</b> 題。</div>
+                ${body}`;
+        }
+
+        function clearWrongBook() {
+            saveWrongBook([]);
+            renderWrongBookView();
+            updateWrongBadge();
+        }
+
+        /* =====================================================================
+         * 互動實驗：共用框架
+         * ---------------------------------------------------------------------
+         * 每個實驗宣告 controls（滑桿）、modes（切換鈕）、draw（繪圖）與
+         * readouts（即時讀數）。框架負責建立 DOM、綁定事件、跑固定步長時鐘，
+         * 並在離開檢視時由 activeDisposers 一次清除。
+         * ===================================================================*/
+        const C = {
+            ink: '#12313a', muted: '#7d949c', grid: 'rgba(18,49,58,0.10)',
+            blue: '#0b6f92', cyan: '#0e8b93', rose: '#c2264a',
+            violet: '#6b46c1', orange: '#c9750f', green: '#12805c',
+            soft: 'rgba(11,111,146,0.12)'
+        };
+
+        function axis(ctx, x0, y0, x1, y1) {
+            ctx.strokeStyle = C.grid; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        }
+        function label(ctx, text, x, y, color, size, align) {
+            ctx.fillStyle = color || C.muted;
+            ctx.font = `${size || 11}px Outfit, "Noto Sans TC", sans-serif`;
+            ctx.textAlign = align || 'left';
+            ctx.fillText(text, x, y);
+            ctx.textAlign = 'left';
+        }
+        function arrow(ctx, x1, y1, x2, y2, color, width) {
+            ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = width || 1.6;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+            const a = Math.atan2(y2 - y1, x2 - x1); const s = 6;
+            ctx.beginPath();
+            ctx.moveTo(x2, y2);
+            ctx.lineTo(x2 - s * Math.cos(a - 0.4), y2 - s * Math.sin(a - 0.4));
+            ctx.lineTo(x2 - s * Math.cos(a + 0.4), y2 - s * Math.sin(a + 0.4));
+            ctx.closePath(); ctx.fill();
+        }
+        function dashed(ctx, x1, y1, x2, y2, color) {
+            ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = color || C.muted; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
+        }
+        const deg = (r) => r * 180 / Math.PI;
+        const rad = (d) => d * Math.PI / 180;
+
+        function labShellHtml(id) {
+            const lab = LABS[id];
+            const controls = (lab.controls || []).map((c) => `
+                <div class="lab-control" id="${id}-${c.key}-wrap">
+                    <label for="${id}-${c.key}">${c.label}<b id="${id}-${c.key}-out"></b></label>
+                    <input type="range" id="${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
+                </div>`).join('');
+            const modes = (lab.modes || []).map((m, i) =>
+                `<button type="button" class="lab-btn ${i === 0 ? 'is-active' : ''}" data-mode="${m.key}">${m.label}</button>`
+            ).join('');
+            return `
+                <div class="lab-shell" id="lab-${id}">
+                    <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
+                    <div class="lab-hint">${lab.hint}</div>
+                    ${modes ? `<div class="lab-buttons" data-role="modes">${modes}</div>` : ''}
+                    <div class="lab-stage"><canvas id="${id}-canvas"></canvas></div>
+                    <div class="lab-controls">${controls}</div>
+                    <div class="lab-buttons">
+                        <button type="button" class="lab-btn" data-role="toggle">⏸ 暫停</button>
+                        <button type="button" class="lab-btn" data-role="reset">↺ 回到預設值</button>
+                    </div>
+                    <div class="lab-readout" id="${id}-readout"></div>
+                    ${lab.note ? `<div class="lab-note">${lab.note}</div>` : ''}
+                </div>`;
+        }
+
+        function mountLab(id) {
+            const lab = LABS[id];
+            const host = document.getElementById(`lab-${id}`);
+            const canvas = document.getElementById(`${id}-canvas`);
+            if (!lab || !host || !canvas) return;
+
+            const params = {};
+            (lab.controls || []).forEach((c) => { params[c.key] = Number(c.value); });
+            params.mode = lab.modes ? lab.modes[0].key : null;
+
+            let running = !WaveRuntime.prefersReducedMotion();
+            let simTime = 0;
+            let geom = WaveRuntime.fitCanvas(canvas, lab.height || 320);
+
+            const syncOutputs = () => {
+                (lab.controls || []).forEach((c) => {
+                    const out = document.getElementById(`${id}-${c.key}-out`);
+                    if (out) out.textContent = c.fmt ? c.fmt(params[c.key], params) : params[c.key];
+                    const wrap = document.getElementById(`${id}-${c.key}-wrap`);
+                    if (wrap && c.only) wrap.style.display = c.only.includes(params.mode) ? '' : 'none';
+                });
+                const ro = document.getElementById(`${id}-readout`);
+                if (ro && lab.readouts) {
+                    ro.innerHTML = lab.readouts(params).map((r) => `<div><span>${r.label}</span><strong>${r.value}</strong></div>`).join('');
+                }
+            };
+
+            const paint = () => {
+                const ctx = canvas.getContext('2d');
+                ctx.clearRect(0, 0, geom.width, geom.height);
+                lab.draw(ctx, geom.width, geom.height, params, simTime);
+            };
+
+            (lab.controls || []).forEach((c) => {
+                const input = document.getElementById(`${id}-${c.key}`);
+                activeDisposers.addEventListener(input, 'input', () => {
+                    params[c.key] = Number(input.value);
+                    syncOutputs(); paint();
+                });
+            });
+
+            host.querySelectorAll('[data-mode]').forEach((btn) => {
+                activeDisposers.addEventListener(btn, 'click', () => {
+                    host.querySelectorAll('[data-mode]').forEach((b) => b.classList.remove('is-active'));
+                    btn.classList.add('is-active');
+                    params.mode = btn.dataset.mode;
+                    if (lab.onMode) lab.onMode(params);
+                    syncOutputs(); paint();
+                });
+            });
+
+            const toggleBtn = host.querySelector('[data-role="toggle"]');
+            activeDisposers.addEventListener(toggleBtn, 'click', () => {
+                running = !running;
+                toggleBtn.textContent = running ? '⏸ 暫停' : '▶ 播放';
+            });
+            if (!running) toggleBtn.textContent = '▶ 播放';
+
+            activeDisposers.addEventListener(host.querySelector('[data-role="reset"]'), 'click', () => {
+                (lab.controls || []).forEach((c) => {
+                    params[c.key] = Number(c.value);
+                    const input = document.getElementById(`${id}-${c.key}`);
+                    if (input) input.value = c.value;
+                });
+                simTime = 0;
+                syncOutputs(); paint();
+            });
+
+            activeDisposers.addEventListener(window, 'resize', () => {
+                geom = WaveRuntime.fitCanvas(canvas, lab.height || 320);
+                paint();
+            });
+
+            activeDisposers.runLoop((dt) => {
+                if (running) simTime += dt;
+                paint();
+            });
+
+            syncOutputs();
+            paint();
+        }
+
+        /* =====================================================================
+         * 互動實驗：各實驗定義
+         * ===================================================================*/
+        const LABS = {};
+
+        /* 1. 行進波與質點振動 --------------------------------------------- */
+        LABS.travelling = {
+            name: '行進波與質點振動',
+            tag: 'N01 / N02',
+            hint: '藍色曲線是繩上的波形，橘點是繩上的一個質點。無論波形往右跑得多快，質點永遠只在原處上下振動——這是「波只傳遞能量」最直觀的畫面。',
+            note: '把頻率調高時，波長會自動變短，但波速讀數不變：波速由張力與線密度決定，與波源無關。',
+            height: 300,
+            controls: [
+                { key: 'A', label: '振幅 A (cm)', min: 0.5, max: 4, step: 0.1, value: 2.5, fmt: (v) => `${v.toFixed(1)} cm` },
+                { key: 'lam', label: '波長 λ (cm)', min: 3, max: 16, step: 0.5, value: 8, fmt: (v) => `${v.toFixed(1)} cm` },
+                { key: 'f', label: '頻率 f (Hz)', min: 0.2, max: 2.0, step: 0.05, value: 0.6, fmt: (v) => `${v.toFixed(2)} Hz` },
+                { key: 'px', label: '觀察質點位置 (cm)', min: 0, max: 30, step: 0.5, value: 12, fmt: (v) => `${v.toFixed(1)} cm` }
+            ],
+            readouts: (p) => [
+                { label: '波速 v = fλ', value: `${(p.f * p.lam).toFixed(2)} cm/s` },
+                { label: '週期 T = 1/f', value: `${(1 / p.f).toFixed(2)} s` },
+                { label: '質點最大速率', value: `${(2 * Math.PI * p.f * p.A).toFixed(2)} cm/s` },
+                { label: '波形前進方向', value: '+x（向右）' }
+            ],
+            draw: (ctx, w, h, p, t) => {
+                const mid = h * 0.52;
+                const scaleX = (w - 22) / 32;     // 32 cm 對應畫布可用寬度
+                const scaleY = 26;                // 1 cm 對應 26 px
+                axis(ctx, 10, mid, w - 10, mid);
+                for (let x = 0; x <= 32; x += 4) {
+                    dashed(ctx, 10 + x * scaleX, mid - 70, 10 + x * scaleX, mid + 70, 'rgba(18,49,58,0.06)');
+                    label(ctx, `${x}`, 10 + x * scaleX, h - 8, C.muted, 10, 'center');
+                }
+
+                const k = 2 * Math.PI / p.lam;
+                const omega = 2 * Math.PI * p.f;
+                const yAt = (xcm) => p.A * Math.sin(k * xcm - omega * t);
+
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.4; ctx.beginPath();
+                for (let i = 0; i <= 320; i++) {
+                    const xcm = i / 10;
+                    const X = 10 + xcm * scaleX;
+                    const Y = mid - yAt(xcm) * scaleY;
+                    i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                }
+                ctx.stroke();
+
+                // 觀察質點
+                const X = 10 + p.px * scaleX;
+                const Y = mid - yAt(p.px) * scaleY;
+                dashed(ctx, X, mid - 75, X, mid + 75, 'rgba(201,117,15,0.4)');
+                ctx.fillStyle = C.orange;
+                ctx.beginPath(); ctx.arc(X, Y, 6, 0, Math.PI * 2); ctx.fill();
+
+                // 質點速度方向（對時間微分）
+                const vy = -p.A * omega * Math.cos(k * p.px - omega * t);
+                if (Math.abs(vy) > 0.05) {
+                    arrow(ctx, X, Y, X, Y - Math.sign(vy) * 26, C.orange, 2);
+                }
+                label(ctx, '質點只上下振動', X + 10, Y - 12, C.orange, 11);
+
+                // 波形移動方向
+                arrow(ctx, w - 120, mid - 88, w - 40, mid - 88, C.blue, 2);
+                label(ctx, '波形前進', w - 118, mid - 96, C.blue, 11);
+                label(ctx, 'x (cm)', w - 40, h - 8, C.muted, 10);
+
+                // 標示波長
+                const x0 = 10 + 2 * scaleX;
+                ctx.strokeStyle = C.cyan; ctx.lineWidth = 1.2;
+                ctx.beginPath();
+                ctx.moveTo(x0, mid + 88); ctx.lineTo(x0 + p.lam * scaleX, mid + 88);
+                ctx.moveTo(x0, mid + 83); ctx.lineTo(x0, mid + 93);
+                ctx.moveTo(x0 + p.lam * scaleX, mid + 83); ctx.lineTo(x0 + p.lam * scaleX, mid + 93);
+                ctx.stroke();
+                label(ctx, `λ = ${p.lam.toFixed(1)} cm`, x0 + p.lam * scaleX / 2, mid + 80, C.cyan, 11, 'center');
+            }
+        };
+
+        /* 2. 繩波的反射與透射 --------------------------------------------- */
+        LABS.reflection = {
+            name: '繩波的反射與透射',
+            tag: 'N03',
+            hint: '一個脈衝波向右前進。切換端點條件，觀察反射波是否上下顛倒；切到兩段繩時，還會同時產生反射波與透射波。',
+            note: '判斷口訣：對面接「重繩」等效於固定端（反射波上下顛倒），接「輕繩」等效於自由端（不顛倒）。透射波永遠不顛倒。',
+            height: 260,
+            modes: [
+                { key: 'fixed', label: '固定端（牆）' },
+                { key: 'free', label: '自由端（小環）' },
+                { key: 'l2h', label: '輕繩 → 重繩' },
+                { key: 'h2l', label: '重繩 → 輕繩' }
+            ],
+            controls: [
+                { key: 'ratio', label: '兩段繩的線密度比 μ₂/μ₁', min: 2, max: 9, step: 1, value: 4, only: ['l2h', 'h2l'], fmt: (v) => `${v} : 1` }
+            ],
+            readouts: (p) => {
+                const heavyRight = p.mode === 'l2h';
+                if (p.mode === 'fixed') return [
+                    { label: '反射波上下', value: '顛倒' }, { label: '反射波左右', value: '相反' },
+                    { label: '振幅', value: '不變' }, { label: '波速', value: '不變' }];
+                if (p.mode === 'free') return [
+                    { label: '反射波上下', value: '不顛倒' }, { label: '反射波左右', value: '相反' },
+                    { label: '端點最大高度', value: '約 2A' }, { label: '波速', value: '不變' }];
+                const r = Math.sqrt(p.ratio);
+                return [
+                    { label: '反射波上下', value: heavyRight ? '顛倒' : '不顛倒' },
+                    { label: '透射波波速', value: heavyRight ? `變慢（÷${r.toFixed(2)}）` : `變快（×${r.toFixed(2)}）` },
+                    { label: '透射波波長', value: heavyRight ? '變短' : '變長' },
+                    { label: '透射波頻率', value: '不變' }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const mid = h * 0.5;
+                const cycle = 6;
+                const tau = (t % cycle) / cycle;      // 0 → 1
+                const bx = w * 0.62;                  // 界面位置
+                const pulse = (x, center, width, amp) => amp * Math.exp(-Math.pow((x - center) / width, 2));
+                const twoRope = (p.mode === 'l2h' || p.mode === 'h2l');
+                const speedRatio = p.mode === 'l2h' ? 1 / Math.sqrt(p.ratio) : Math.sqrt(p.ratio);
+
+                // 繩子底線與界面
+                ctx.strokeStyle = 'rgba(18,49,58,0.15)'; ctx.lineWidth = twoRope ? 1 : 1;
+                if (twoRope) {
+                    ctx.lineWidth = p.mode === 'l2h' ? 1.2 : 3.2;
+                    ctx.beginPath(); ctx.moveTo(10, mid + 62); ctx.lineTo(bx, mid + 62); ctx.stroke();
+                    ctx.lineWidth = p.mode === 'l2h' ? 3.2 : 1.2;
+                    ctx.beginPath(); ctx.moveTo(bx, mid + 62); ctx.lineTo(w - 10, mid + 62); ctx.stroke();
+                    label(ctx, p.mode === 'l2h' ? '輕繩（μ 小、v 快）' : '重繩（μ 大、v 慢）', 14, mid + 78, C.muted, 11);
+                    label(ctx, p.mode === 'l2h' ? '重繩（μ 大、v 慢）' : '輕繩（μ 小、v 快）', bx + 8, mid + 78, C.muted, 11);
+                    dashed(ctx, bx, mid - 70, bx, mid + 66, C.rose);
+                }
+                axis(ctx, 10, mid, w - 10, mid);
+
+                const A = 26;
+                const width = 26;
+                let center = 20 + tau * 2 * (bx - 30);
+                let refCenter = null, transCenter = null;
+                let refAmp = 0, transAmp = 0;
+
+                if (center > bx - 10) {
+                    const over = center - (bx - 10);
+                    center = null;
+                    if (twoRope) {
+                        const rr = (Math.sqrt(p.ratio) - 1) / (Math.sqrt(p.ratio) + 1);
+                        refCenter = bx - 10 - over;
+                        refAmp = (p.mode === 'l2h' ? -1 : 1) * A * Math.abs(rr);
+                        transCenter = bx - 10 + over * speedRatio;
+                        transAmp = A * (1 - Math.abs(rr)) * (p.mode === 'h2l' ? 1.35 : 0.8);
+                    } else {
+                        refCenter = bx - 10 - over;
+                        refAmp = (p.mode === 'fixed' ? -A : A);
+                    }
+                }
+
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.6; ctx.beginPath();
+                const ropeEnd = twoRope ? (w - 10) : bx;
+                for (let X = 10; X <= ropeEnd; X += 2) {
+                    let y = 0;
+                    if (center !== null && X <= bx) y += pulse(X, center, width, A);
+                    if (refCenter !== null && X <= bx) y += pulse(X, refCenter, width, refAmp);
+                    if (transCenter !== null && X >= bx) y += pulse(X, transCenter, width * speedRatio, transAmp);
+                    const Y = mid - y;
+                    X === 10 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                }
+                ctx.stroke();
+
+                if (!twoRope) {
+                    if (p.mode === 'fixed') {
+                        ctx.fillStyle = 'rgba(18,49,58,0.18)';
+                        ctx.fillRect(bx, mid - 62, 12, 124);
+                        label(ctx, '固定端（牆）', bx + 16, mid - 50, C.rose, 11);
+                    } else {
+                        let ringY = mid;
+                        if (center !== null) ringY = mid - pulse(bx, center, width, A);
+                        if (refCenter !== null) ringY = mid - pulse(bx, refCenter, width, refAmp) - (center !== null ? 0 : 0);
+                        ctx.strokeStyle = 'rgba(18,49,58,0.35)'; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.moveTo(bx, mid - 62); ctx.lineTo(bx, mid + 62); ctx.stroke();
+                        ctx.strokeStyle = C.rose; ctx.lineWidth = 2.4;
+                        ctx.beginPath(); ctx.arc(bx, ringY, 7, 0, Math.PI * 2); ctx.stroke();
+                        label(ctx, '自由端（可上下滑動的小環）', bx + 14, mid - 50, C.rose, 11);
+                    }
+                }
+
+                if (center !== null) { arrow(ctx, center + 14, mid - 46, center + 44, mid - 46, C.blue, 1.8); }
+                if (refCenter !== null) { arrow(ctx, refCenter + 14, mid - 46, refCenter - 16, mid - 46, C.violet, 1.8); label(ctx, '反射波', refCenter - 18, mid - 54, C.violet, 11); }
+                if (transCenter !== null) { arrow(ctx, transCenter + 4, mid - 46, transCenter + 34, mid - 46, C.green, 1.8); label(ctx, '透射波', transCenter + 6, mid - 54, C.green, 11); }
+            }
+        };
+
+        /* 3. 駐波的形成 ---------------------------------------------------- */
+        LABS.standing = {
+            name: '駐波的形成',
+            tag: 'N04 / N10 / N12',
+            hint: '上方兩條細線是行進方向相反的兩列波，下方粗線是它們的疊加結果。紅點為波節（永遠不動）、綠點為波腹（振幅兩倍）。',
+            note: '兩端固定 ⇒ 兩端都是波節，$L = n\\lambda/2$；一端自由 ⇒ 該端是波腹，$L = m\\lambda/4$ 且 $m$ 只能是奇數。',
+            height: 330,
+            modes: [
+                { key: 'both', label: '兩端固定（弦／開管）' },
+                { key: 'one', label: '一端自由（閉管）' }
+            ],
+            controls: [
+                { key: 'n', label: '諧音序號', min: 1, max: 6, step: 1, value: 3, fmt: (v, p) => (p.mode === 'one' ? `m = ${2 * v - 1}` : `n = ${v}`) },
+                { key: 'L', label: '弦長／管長 L (m)', min: 0.5, max: 3, step: 0.1, value: 1.5, fmt: (v) => `${v.toFixed(1)} m` },
+                { key: 'v', label: '波速 v (m/s)', min: 60, max: 400, step: 10, value: 340, fmt: (v) => `${v} m/s` }
+            ],
+            readouts: (p) => {
+                const one = p.mode === 'one';
+                const m = one ? 2 * p.n - 1 : p.n;
+                const lam = one ? 4 * p.L / m : 2 * p.L / m;
+                const f = p.v / lam;
+                return [
+                    { label: '波長 λ', value: `${lam.toFixed(3)} m` },
+                    { label: '頻率 f', value: `${f.toFixed(1)} Hz` },
+                    { label: '波節數', value: one ? `${(m + 1) / 2}` : `${m + 1}` },
+                    { label: '波腹數', value: one ? `${(m + 1) / 2}` : `${m}` }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const one = p.mode === 'one';
+                const m = one ? 2 * p.n - 1 : p.n;
+                const x0 = 34, x1 = w - 34, span = x1 - x0;
+                const topA = h * 0.20, topB = h * 0.36, main = h * 0.72;
+                const A = 16, Amain = 30;
+                // 波數：兩端固定 k = m*pi/L；一端自由 k = m*pi/(2L)
+                const kUnit = one ? (m * Math.PI / 2) : (m * Math.PI);
+                const omega = 2.2;
+
+                label(ctx, '向右行進的波', x0, topA - 24, C.blue, 11);
+                label(ctx, '向左行進的波（反射波）', x0, topB - 20, C.violet, 11);
+                label(ctx, '疊加結果：駐波', x0, main - 62, C.cyan, 12);
+
+                const drawWave = (yc, amp, dir, color, lw) => {
+                    ctx.strokeStyle = color; ctx.lineWidth = lw;
+                    ctx.beginPath();
+                    for (let i = 0; i <= span; i += 2) {
+                        const u = i / span;
+                        const y = amp * Math.sin(kUnit * u - dir * omega * t);
+                        i === 0 ? ctx.moveTo(x0 + i, yc - y) : ctx.lineTo(x0 + i, yc - y);
+                    }
+                    ctx.stroke();
+                };
+                axis(ctx, x0, topA, x1, topA); axis(ctx, x0, topB, x1, topB);
+                drawWave(topA, A, 1, C.blue, 1.6);
+                drawWave(topB, A, -1, C.violet, 1.6);
+
+                // 駐波：2A sin(kx) cos(wt)
+                axis(ctx, x0, main, x1, main);
+                ctx.strokeStyle = 'rgba(14,139,147,0.22)'; ctx.lineWidth = 1.2;
+                [1, -1].forEach((s) => {
+                    ctx.beginPath();
+                    for (let i = 0; i <= span; i += 2) {
+                        const u = i / span;
+                        const y = s * Amain * Math.sin(kUnit * u);
+                        i === 0 ? ctx.moveTo(x0 + i, main - y) : ctx.lineTo(x0 + i, main - y);
+                    }
+                    ctx.stroke();
+                });
+                ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8; ctx.beginPath();
+                for (let i = 0; i <= span; i += 2) {
+                    const u = i / span;
+                    const y = Amain * Math.sin(kUnit * u) * Math.cos(omega * t);
+                    i === 0 ? ctx.moveTo(x0 + i, main - y) : ctx.lineTo(x0 + i, main - y);
+                }
+                ctx.stroke();
+
+                // 波節與波腹
+                for (let j = 0; j * Math.PI <= kUnit + 1e-6; j++) {
+                    const u = j * Math.PI / kUnit;
+                    if (u > 1.0001) break;
+                    ctx.fillStyle = C.rose;
+                    ctx.beginPath(); ctx.arc(x0 + u * span, main, 4.5, 0, Math.PI * 2); ctx.fill();
+                }
+                for (let j = 0; (j + 0.5) * Math.PI <= kUnit + 1e-6; j++) {
+                    const u = (j + 0.5) * Math.PI / kUnit;
+                    if (u > 1.0001) break;
+                    ctx.fillStyle = C.green;
+                    ctx.beginPath(); ctx.arc(x0 + u * span, main, 4.5, 0, Math.PI * 2); ctx.fill();
+                }
+
+                // 端點標示
+                ctx.fillStyle = 'rgba(18,49,58,0.2)';
+                ctx.fillRect(x0 - 10, main - 46, 8, 92);
+                if (one) {
+                    ctx.strokeStyle = 'rgba(18,49,58,0.35)'; ctx.lineWidth = 2.4;
+                    ctx.beginPath(); ctx.moveTo(x1 + 6, main - 46); ctx.lineTo(x1 + 6, main + 46); ctx.stroke();
+                    label(ctx, '自由端（腹點）', x1 - 4, main + 62, C.green, 11, 'right');
+                } else {
+                    ctx.fillRect(x1 + 2, main - 46, 8, 92);
+                    label(ctx, '固定端（節點）', x1 - 4, main + 62, C.rose, 11, 'right');
+                }
+                label(ctx, '固定端（節點）', x0 - 6, main + 62, C.rose, 11);
+                label(ctx, `● 波節　● 波腹`, x0, h - 8, C.muted, 11);
+            }
+        };
+
+        /* 4. 惠更斯原理與折射 ---------------------------------------------- */
+        LABS.huygens = {
+            name: '惠更斯原理與水波折射',
+            tag: 'N05 / N06',
+            hint: '上半部是深水區（波速快、波長長），下半部是淺水區（波速慢、波長短）。灰色小圓是波前上各點發出的子波，它們的包絡線就是新的波前。',
+            note: '折射的唯一原因是波速改變。波速變慢 ⇒ 波長變短 ⇒ 折射線偏向法線；頻率則兩區完全相同。',
+            height: 340,
+            controls: [
+                { key: 'th1', label: '入射角 θ₁', min: 5, max: 80, step: 1, value: 45, fmt: (v) => `${v}°` },
+                { key: 'vr', label: '波速比 v₂/v₁', min: 0.3, max: 1.6, step: 0.05, value: 0.65, fmt: (v) => v.toFixed(2) },
+                { key: 'lam', label: '深水區波長 λ₁ (px)', min: 20, max: 60, step: 2, value: 36, fmt: (v) => `${v}` }
+            ],
+            readouts: (p) => {
+                const s2 = Math.sin(rad(p.th1)) * p.vr;
+                const total = Math.abs(s2) > 1;
+                return [
+                    { label: '折射角 θ₂', value: total ? '全反射（無折射）' : `${deg(Math.asin(s2)).toFixed(1)}°` },
+                    { label: 'λ₂ / λ₁ = v₂ / v₁', value: p.vr.toFixed(2) },
+                    { label: 'sinθ₁ / sinθ₂', value: total ? '—' : (Math.sin(rad(p.th1)) / s2).toFixed(3) },
+                    { label: '頻率', value: '兩區相同' }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const iy = h * 0.5;
+                ctx.fillStyle = 'rgba(11,111,146,0.05)'; ctx.fillRect(0, 0, w, iy);
+                ctx.fillStyle = 'rgba(201,117,15,0.06)'; ctx.fillRect(0, iy, w, h - iy);
+                ctx.strokeStyle = C.rose; ctx.lineWidth = 1.6;
+                ctx.beginPath(); ctx.moveTo(0, iy); ctx.lineTo(w, iy); ctx.stroke();
+                label(ctx, `深水區　v₁（波長 ${p.lam} px）`, 12, 18, C.blue, 11);
+                label(ctx, `淺水區　v₂ = ${p.vr.toFixed(2)} v₁`, 12, h - 12, C.orange, 11);
+
+                const th1 = rad(p.th1);
+                const s2 = Math.sin(th1) * p.vr;
+                const total = Math.abs(s2) > 1;
+                const th2 = total ? null : Math.asin(s2);
+                const cx = w * 0.5;
+
+                // 法線
+                dashed(ctx, cx, 12, cx, h - 12, 'rgba(18,49,58,0.35)');
+                label(ctx, '法線', cx + 6, 26, C.muted, 10);
+
+                // 入射與折射波前（垂直於射線）
+                const lam1 = p.lam, lam2 = p.lam * p.vr;
+                const drawFronts = (angle, lam, region, color, phase) => {
+                    // 射線方向單位向量
+                    const dx = Math.sin(angle), dy = Math.cos(angle);
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.8;
+                    for (let n = -8; n <= 8; n++) {
+                        const s = n * lam + (phase % lam);
+                        // 波前是通過點 (cx + dx*s, iy + dy*s*region) 且垂直於射線的直線
+                        const px0 = cx + dx * s * (region > 0 ? 1 : -1) * (region > 0 ? 1 : 1);
+                        const py0 = iy + dy * s * (region > 0 ? 1 : -1);
+                        const ex = -dy, ey = dx;
+                        const L = 420;
+                        let ax = px0 - ex * L, ay = py0 - ey * L;
+                        let bx2 = px0 + ex * L, by = py0 + ey * L;
+                        ctx.save();
+                        ctx.beginPath();
+                        if (region > 0) ctx.rect(0, iy, w, h - iy); else ctx.rect(0, 0, w, iy);
+                        ctx.clip();
+                        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(bx2, by); ctx.stroke();
+                        ctx.restore();
+                    }
+                };
+                const phase = (t * 30) % 1000;
+                drawFronts(th1, lam1, -1, 'rgba(11,111,146,0.75)', phase);
+                if (!total) drawFronts(th2, lam2, 1, 'rgba(201,117,15,0.8)', phase * p.vr);
+
+                // 惠更斯子波：界面上相隔 λ₁/sinθ₁ 的各點依序被波前掃過，
+                // 早 n 個週期被掃過的點，其子波半徑為 n·λ₂ ⇒ 這些圓的公切線就是折射波前。
+                if (!total) {
+                    const faceStep = lam1 / Math.max(Math.sin(th1), 0.12);
+                    ctx.strokeStyle = 'rgba(18,49,58,0.34)'; ctx.lineWidth = 1;
+                    for (let n = 0; n <= 5; n++) {
+                        const fx = cx - n * faceStep;
+                        if (fx < 8) break;
+                        ctx.save();
+                        ctx.beginPath(); ctx.rect(0, iy, w, h - iy); ctx.clip();
+                        ctx.beginPath(); ctx.arc(fx, iy, n * lam2, 0, Math.PI * 2); ctx.stroke();
+                        ctx.restore();
+                        ctx.fillStyle = 'rgba(18,49,58,0.5)';
+                        ctx.beginPath(); ctx.arc(fx, iy, 2.4, 0, Math.PI * 2); ctx.fill();
+                    }
+                    label(ctx, '子波半徑 = n·λ₂，公切線即新波前', 12, iy + 34, C.muted, 10);
+                }
+
+                // 射線
+                const inLen = 150;
+                arrow(ctx, cx - Math.sin(th1) * inLen, iy - Math.cos(th1) * inLen, cx, iy, C.blue, 2.2);
+                if (total) {
+                    arrow(ctx, cx, iy, cx + Math.sin(th1) * 130, iy - Math.cos(th1) * 130, C.rose, 2.2);
+                    label(ctx, '全反射', cx + Math.sin(th1) * 132, iy - Math.cos(th1) * 132, C.rose, 12);
+                } else {
+                    arrow(ctx, cx, iy, cx + Math.sin(th2) * 150, iy + Math.cos(th2) * 150, C.orange, 2.2);
+                }
+
+                // 角度弧
+                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(cx, iy, 44, -Math.PI / 2 - th1, -Math.PI / 2); ctx.stroke();
+                label(ctx, `θ₁=${p.th1}°`, cx - 30 - Math.sin(th1) * 30, iy - 46, C.blue, 11, 'center');
+                if (!total) {
+                    ctx.beginPath(); ctx.arc(cx, iy, 44, Math.PI / 2 - th2, Math.PI / 2); ctx.stroke();
+                    label(ctx, `θ₂=${deg(th2).toFixed(0)}°`, cx + 34 + Math.sin(th2) * 20, iy + 52, C.orange, 11, 'center');
+                }
+            }
+        };
+
+        /* 5. 水波槽雙點波源干涉 -------------------------------------------- */
+        LABS.ripple = {
+            name: '水波槽雙點波源干涉',
+            tag: 'N07 / N19',
+            hint: '兩個同相點波源產生的干涉圖樣。白色代表兩波峰重疊、黑色代表兩波谷重疊；灰色的靜止曲線就是節線。調整波源間距與波長，看腹線與節線的條數如何改變。',
+            note: '兩波源連線上滿足駐波條件：相鄰節點間距 λ/2。同相波源的中垂線必為中央腹線，因此腹線總數必為奇數、節線總數必為偶數。',
+            height: 340,
+            controls: [
+                { key: 'd', label: '波源間距 d (cm)', min: 2, max: 16, step: 0.5, value: 8, fmt: (v) => `${v.toFixed(1)} cm` },
+                { key: 'lam', label: '波長 λ (cm)', min: 1, max: 6, step: 0.25, value: 2.5, fmt: (v) => `${v.toFixed(2)} cm` }
+            ],
+            readouts: (p) => {
+                const nMax = Math.floor(p.d / p.lam);
+                const mMax = Math.floor(p.d / p.lam + 0.5);
+                return [
+                    { label: 'd / λ', value: (p.d / p.lam).toFixed(2) },
+                    { label: '腹線總數', value: `${2 * nMax + 1} 條` },
+                    { label: '節線總數', value: `${2 * mMax} 條` },
+                    { label: '連線上相鄰節點間距', value: `${(p.lam / 2).toFixed(2)} cm` }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const scale = w / 24;                 // 24 cm 對應畫布寬
+                const cx = w / 2, cy = h / 2;
+                const s1 = { x: cx - p.d * scale / 2, y: cy };
+                const s2 = { x: cx + p.d * scale / 2, y: cy };
+                const k = 2 * Math.PI / (p.lam * scale);
+                const omega = 3.2;
+                const step = 4;
+                const img = ctx.createImageData(Math.ceil(w / step) * step, Math.ceil(h / step) * step);
+
+                for (let y = 0; y < h; y += step) {
+                    for (let x = 0; x < w; x += step) {
+                        const r1 = Math.hypot(x - s1.x, y - s1.y);
+                        const r2 = Math.hypot(x - s2.x, y - s2.y);
+                        const a1 = Math.cos(k * r1 - omega * t) / Math.sqrt(Math.max(r1, 18));
+                        const a2 = Math.cos(k * r2 - omega * t) / Math.sqrt(Math.max(r2, 18));
+                        const v = (a1 + a2) * 9;
+                        const g = Math.max(0, Math.min(255, Math.round(146 + v * 120)));
+                        for (let dy = 0; dy < step; dy++) {
+                            for (let dx = 0; dx < step; dx++) {
+                                const idx = (((y + dy) * img.width) + (x + dx)) * 4;
+                                img.data[idx] = g * 0.86; img.data[idx + 1] = g * 0.95; img.data[idx + 2] = g;
+                                img.data[idx + 3] = 255;
+                            }
+                        }
+                    }
+                }
+                ctx.putImageData(img, 0, 0);
+
+                // 節線（波程差 = 半波長奇數倍）以曲線疊畫
+                const mMax = Math.floor(p.d / p.lam + 0.5);
+                ctx.strokeStyle = 'rgba(194,38,74,0.55)'; ctx.lineWidth = 1.4;
+                for (let m = 1; m <= mMax; m++) {
+                    [-1, 1].forEach((sgn) => {
+                        const c = p.d * scale / 2;
+                        const a = sgn * (m - 0.5) * p.lam * scale / 2;
+                        if (Math.abs(a) >= c) return;
+                        const b2 = c * c - a * a;
+                        ctx.beginPath();
+                        let started = false;
+                        for (let y = -h; y <= h; y += 3) {
+                            const x = a * Math.sqrt(1 + (y * y) / b2);
+                            const X = cx + x, Y = cy + y;
+                            if (X < 0 || X > w) { started = false; continue; }
+                            started ? ctx.lineTo(X, Y) : (ctx.moveTo(X, Y), started = true);
+                        }
+                        ctx.stroke();
+                    });
+                }
+                // 中央腹線
+                dashed(ctx, cx, 0, cx, h, 'rgba(18,128,92,0.8)');
+
+                [s1, s2].forEach((s, i) => {
+                    ctx.fillStyle = C.rose;
+                    ctx.beginPath(); ctx.arc(s.x, s.y, 5, 0, Math.PI * 2); ctx.fill();
+                    label(ctx, `S${i + 1}`, s.x - 6, s.y - 10, '#fff', 12);
+                });
+                ctx.fillStyle = 'rgba(255,255,255,0.82)';
+                ctx.fillRect(6, 6, 250, 36);
+                label(ctx, '－－ 中央腹線（中垂線）', 12, 20, '#0d6b4f', 11);
+                label(ctx, '—— 節線（波程差為半波長的奇數倍）', 12, 36, '#a81a42', 11);
+            }
+        };
+
+        /* 6. 縱波的疏密與波形 ---------------------------------------------- */
+        LABS.longitudinal = {
+            name: '縱波的疏密與波形',
+            tag: 'N08 / N09',
+            hint: '最上排是空氣分子的實際位置（縱向振動形成疏密）；中間是分子位移對位置的圖；最下是壓力變化圖。三張圖對照著看，就能理解位移與壓力為何差 λ/4。',
+            note: '密部中央：位移 0、壓力最大、振動速率最大；疏部中央：位移 0、壓力最小；疏密之間：位移最大、壓力變化為 0、振動速率為 0。',
+            height: 360,
+            controls: [
+                { key: 'lam', label: '波長 λ (px)', min: 60, max: 200, step: 5, value: 120, fmt: (v) => `${v}` },
+                { key: 'A', label: '位移振幅 (px)', min: 4, max: 22, step: 1, value: 13, fmt: (v) => `${v}` }
+            ],
+            readouts: () => [
+                { label: '密部中央', value: '位移 0、壓力最大' },
+                { label: '疏部中央', value: '位移 0、壓力最小' },
+                { label: '疏密之間', value: '位移最大、ΔP = 0' },
+                { label: '位移圖與壓力圖', value: '相差 λ/4' }
+            ],
+            draw: (ctx, w, h, p, t) => {
+                const rowMol = h * 0.16, rowDisp = h * 0.52, rowP = h * 0.86;
+                const k = 2 * Math.PI / p.lam;
+                const omega = 2.0;
+                const disp = (x) => p.A * Math.sin(k * x - omega * t);
+
+                // 分子
+                for (let x = 6; x < w - 6; x += 9) {
+                    for (let r = -1; r <= 1; r++) {
+                        const X = x + disp(x);
+                        ctx.fillStyle = 'rgba(18,49,58,0.55)';
+                        ctx.beginPath(); ctx.arc(X, rowMol + r * 13, 2.1, 0, Math.PI * 2); ctx.fill();
+                    }
+                }
+                label(ctx, '空氣分子的實際位置（縱波）', 10, rowMol - 26, C.ink, 12);
+
+                // 位移圖
+                axis(ctx, 10, rowDisp, w - 10, rowDisp);
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.2; ctx.beginPath();
+                for (let X = 10; X <= w - 10; X += 2) {
+                    const Y = rowDisp - disp(X);
+                    X === 10 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                }
+                ctx.stroke();
+                label(ctx, '位移 y – 位置 x（y > 0 代表分子向右）', 10, rowDisp - 34, C.blue, 12);
+
+                // 壓力圖：ΔP ∝ -dy/dx，相位落後 λ/4
+                axis(ctx, 10, rowP, w - 10, rowP);
+                ctx.strokeStyle = C.rose; ctx.lineWidth = 2.2; ctx.beginPath();
+                for (let X = 10; X <= w - 10; X += 2) {
+                    const Y = rowP + p.A * Math.cos(k * X - omega * t);
+                    X === 10 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                }
+                ctx.stroke();
+                label(ctx, '壓力變化 ΔP – 位置 x', 10, rowP - 30, C.rose, 12);
+
+                // 標出密部與疏部中央（ΔP 極值處）
+                for (let n = -2; n < 12; n++) {
+                    const X = ((omega * t / k) + (n * p.lam / 2)) % (w + p.lam);
+                    if (X < 20 || X > w - 20) continue;
+                    const isDense = Math.cos(k * X - omega * t) < -0.9;
+                    const isRare = Math.cos(k * X - omega * t) > 0.9;
+                    if (!isDense && !isRare) continue;
+                    dashed(ctx, X, rowMol + 20, X, rowP + 26, isDense ? 'rgba(194,38,74,0.35)' : 'rgba(11,111,146,0.3)');
+                    label(ctx, isDense ? '密部中央' : '疏部中央', X, rowMol + 34, isDense ? C.rose : C.blue, 10, 'center');
+                }
+            }
+        };
+
+        /* 7. 弦、開管與閉管的諧音 ------------------------------------------ */
+        LABS.pipes = {
+            name: '弦、開管與閉管的諧音',
+            tag: 'N10 / N12',
+            hint: '同一個長度 L、同一個波速 v，三種樂器能產生的諧音完全不同。切換樂器種類並調整諧音序號，比較駐波圖形、波長與頻率。',
+            note: '閉管只有奇數諧音，且同長度時基頻只有開管的一半——這就是閉管聽起來低八度的原因。',
+            height: 320,
+            modes: [
+                { key: 'string', label: '兩端固定的弦' },
+                { key: 'open', label: '開管樂器' },
+                { key: 'closed', label: '閉管樂器' }
+            ],
+            controls: [
+                { key: 'idx', label: '第幾個可存在的諧音', min: 1, max: 5, step: 1, value: 2, fmt: (v, p) => (p.mode === 'closed' ? `m = ${2 * v - 1}` : `n = ${v}`) },
+                { key: 'L', label: '長度 L (m)', min: 0.2, max: 2, step: 0.05, value: 0.6, fmt: (v) => `${v.toFixed(2)} m` },
+                { key: 'v', label: '波速 v (m/s)', min: 100, max: 400, step: 10, value: 340, fmt: (v) => `${v} m/s` }
+            ],
+            readouts: (p) => {
+                const closed = p.mode === 'closed';
+                const m = closed ? 2 * p.idx - 1 : p.idx;
+                const lam = closed ? 4 * p.L / m : 2 * p.L / m;
+                const f = p.v / lam;
+                const f1 = p.v / (closed ? 4 * p.L : 2 * p.L);
+                return [
+                    { label: '諧音名稱', value: `第 ${m} 諧音${p.idx === 1 ? '（基音）' : `（第 ${p.idx - 1} 泛音）`}` },
+                    { label: '波長 λ', value: `${lam.toFixed(3)} m` },
+                    { label: '頻率 f', value: `${f.toFixed(1)} Hz` },
+                    { label: '基頻 f₁', value: `${f1.toFixed(1)} Hz` }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const closed = p.mode === 'closed';
+                const isString = p.mode === 'string';
+                const m = closed ? 2 * p.idx - 1 : p.idx;
+                const x0 = 44, x1 = w - 44, span = x1 - x0;
+                const mid = h * 0.5;
+                const A = 44;
+                const kUnit = closed ? (m * Math.PI / 2) : (m * Math.PI);
+                const omega = 2.4;
+
+                // 管壁 / 弦的端點
+                if (isString) {
+                    ctx.fillStyle = 'rgba(18,49,58,0.2)';
+                    ctx.fillRect(x0 - 10, mid - 60, 8, 120);
+                    ctx.fillRect(x1 + 2, mid - 60, 8, 120);
+                } else {
+                    ctx.strokeStyle = 'rgba(18,49,58,0.28)'; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(x0, mid - 58); ctx.lineTo(x1, mid - 58);
+                    ctx.moveTo(x0, mid + 58); ctx.lineTo(x1, mid + 58); ctx.stroke();
+                    if (closed) { ctx.beginPath(); ctx.moveTo(x1, mid - 58); ctx.lineTo(x1, mid + 58); ctx.stroke(); }
+                }
+
+                // 駐波（位移振幅包絡）
+                const phase = Math.cos(omega * t);
+                ctx.strokeStyle = 'rgba(14,139,147,0.2)'; ctx.lineWidth = 1.2;
+                [1, -1].forEach((s) => {
+                    ctx.beginPath();
+                    for (let i = 0; i <= span; i += 2) {
+                        const u = i / span;
+                        const shape = closed ? Math.sin(kUnit * u) : Math.sin(kUnit * u);
+                        ctx.lineTo(x0 + i, mid - s * A * shape);
+                    }
+                    ctx.stroke();
+                });
+                ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8; ctx.beginPath();
+                for (let i = 0; i <= span; i += 2) {
+                    const u = i / span;
+                    ctx.lineTo(x0 + i, mid - A * Math.sin(kUnit * u) * phase);
+                }
+                ctx.stroke();
+
+                // 節點與腹點
+                for (let j = 0; j * Math.PI <= kUnit + 1e-6; j++) {
+                    const u = j * Math.PI / kUnit;
+                    if (u > 1.0001) break;
+                    ctx.fillStyle = C.rose;
+                    ctx.beginPath(); ctx.arc(x0 + u * span, mid, 4.5, 0, Math.PI * 2); ctx.fill();
+                }
+                for (let j = 0; (j + 0.5) * Math.PI <= kUnit + 1e-6; j++) {
+                    const u = (j + 0.5) * Math.PI / kUnit;
+                    if (u > 1.0001) break;
+                    ctx.fillStyle = C.green;
+                    ctx.beginPath(); ctx.arc(x0 + u * span, mid, 4.5, 0, Math.PI * 2); ctx.fill();
+                }
+
+                const leftTag = isString ? '固定端（位移節點）' : '開口（位移腹點）';
+                const rightTag = isString ? '固定端（位移節點）' : (closed ? '閉口端（位移節點）' : '開口（位移腹點）');
+                label(ctx, leftTag, x0 - 8, mid + 84, isString ? C.rose : C.green, 11);
+                label(ctx, rightTag, x1 + 6, mid + 84, (isString || closed) ? C.rose : C.green, 11, 'right');
+                label(ctx, closed ? 'L = m λ/4，m = 1, 3, 5, …' : 'L = n λ/2，n = 1, 2, 3, …', x0, 24, C.ink, 12);
+                label(ctx, closed ? `f = m v / 4L` : `f = n v / 2L`, x0, 42, C.blue, 12);
+
+                // 長度標示
+                ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
+                ctx.beginPath();
+                ctx.moveTo(x0, h - 26); ctx.lineTo(x1, h - 26);
+                ctx.moveTo(x0, h - 31); ctx.lineTo(x0, h - 21);
+                ctx.moveTo(x1, h - 31); ctx.lineTo(x1, h - 21);
+                ctx.stroke();
+                label(ctx, `L = ${p.L.toFixed(2)} m`, (x0 + x1) / 2, h - 32, C.muted, 11, 'center');
+            }
+        };
+
+        /* 8. 諧音疊加與音色 ------------------------------------------------- */
+        LABS.timbre = {
+            name: '諧音疊加與音色',
+            tag: 'N11',
+            hint: '三條細線分別是基音、第二諧音與第三諧音，粗線是它們疊加後的波形。改變振幅比，波形會完全改變，但合成波的週期始終等於基音的週期。',
+            note: '這就是「音調由基音決定、音色由波形決定」的數學根據：所有諧音都是基頻的整數倍，最小共同週期就是基音的週期。',
+            height: 300,
+            controls: [
+                { key: 'a1', label: '基音振幅', min: 0, max: 10, step: 1, value: 6, fmt: (v) => `${v}` },
+                { key: 'a2', label: '第二諧音振幅', min: 0, max: 10, step: 1, value: 3, fmt: (v) => `${v}` },
+                { key: 'a3', label: '第三諧音振幅', min: 0, max: 10, step: 1, value: 2, fmt: (v) => `${v}` }
+            ],
+            readouts: (p) => [
+                { label: '振幅比', value: `${p.a1} : ${p.a2} : ${p.a3}` },
+                { label: '合成波頻率', value: '= 基音頻率 f₁' },
+                { label: '音調', value: '不隨振幅比改變' },
+                { label: '音色', value: '隨波形改變' }
+            ],
+            draw: (ctx, w, h, p, t) => {
+                const x0 = 20, x1 = w - 20, span = x1 - x0;
+                const top = h * 0.28, mid = h * 0.72;
+                const period = span / 2;             // 畫面顯示兩個基音週期
+                const k1 = 2 * Math.PI / period;
+                const shift = (t * 60) % period;
+
+                axis(ctx, x0, top, x1, top);
+                const harm = [[p.a1, 1, C.blue], [p.a2, 2, C.violet], [p.a3, 3, C.orange]];
+                harm.forEach(([a, n, color]) => {
+                    if (a === 0) return;
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.4; ctx.globalAlpha = 0.75;
+                    ctx.beginPath();
+                    for (let i = 0; i <= span; i += 2) ctx.lineTo(x0 + i, top - a * 4 * Math.sin(n * k1 * (i + shift)));
+                    ctx.stroke(); ctx.globalAlpha = 1;
+                });
+                label(ctx, '各諧音（藍：基音　紫：第二諧音　橘：第三諧音）', x0, top - 52, C.muted, 11);
+
+                axis(ctx, x0, mid, x1, mid);
+                ctx.strokeStyle = C.cyan; ctx.lineWidth = 2.8; ctx.beginPath();
+                for (let i = 0; i <= span; i += 2) {
+                    const s = p.a1 * Math.sin(k1 * (i + shift)) + p.a2 * Math.sin(2 * k1 * (i + shift)) + p.a3 * Math.sin(3 * k1 * (i + shift));
+                    ctx.lineTo(x0 + i, mid - s * 4);
+                }
+                ctx.stroke();
+                label(ctx, '疊加後的波形（決定音色）', x0, mid - 62, C.cyan, 12);
+
+                // 標出一個基音週期
+                ctx.strokeStyle = C.rose; ctx.lineWidth = 1.2;
+                const px0 = x0 + 10;
+                ctx.beginPath();
+                ctx.moveTo(px0, mid + 62); ctx.lineTo(px0 + period, mid + 62);
+                ctx.moveTo(px0, mid + 57); ctx.lineTo(px0, mid + 67);
+                ctx.moveTo(px0 + period, mid + 57); ctx.lineTo(px0 + period, mid + 67);
+                ctx.stroke();
+                label(ctx, '合成波的週期 = 基音週期 T₁', px0 + period / 2, mid + 56, C.rose, 11, 'center');
+            }
+        };
+
+        /* 9. 司乃耳定律與全反射 -------------------------------------------- */
+        LABS.snell = {
+            name: '司乃耳定律與全反射',
+            tag: 'N13 / N15',
+            hint: '調整入射角與兩側介質的折射率。當光由光密進入光疏且入射角達到臨界角時，折射線會消失、只剩下反射線——那就是全反射。',
+            note: '全反射的兩個條件缺一不可：必須是 n₁ > n₂（光密 → 光疏），且入射角 ≥ 臨界角 θ_c（sinθ_c = n₂/n₁）。',
+            height: 340,
+            controls: [
+                { key: 'th1', label: '入射角 θ₁', min: 0, max: 89, step: 1, value: 40, fmt: (v) => `${v}°` },
+                { key: 'n1', label: '入射側折射率 n₁', min: 1, max: 2.5, step: 0.05, value: 1.5, fmt: (v) => v.toFixed(2) },
+                { key: 'n2', label: '出射側折射率 n₂', min: 1, max: 2.5, step: 0.05, value: 1.0, fmt: (v) => v.toFixed(2) }
+            ],
+            readouts: (p) => {
+                const s2 = p.n1 * Math.sin(rad(p.th1)) / p.n2;
+                const tir = s2 > 1;
+                const canTir = p.n1 > p.n2;
+                return [
+                    { label: '折射角 θ₂', value: tir ? '不存在（全反射）' : `${deg(Math.asin(s2)).toFixed(1)}°` },
+                    { label: '臨界角 θ_c', value: canTir ? `${deg(Math.asin(p.n2 / p.n1)).toFixed(1)}°` : '不存在（疏→密）' },
+                    { label: '光速比 v₁ : v₂', value: `${(1 / p.n1).toFixed(2)} : ${(1 / p.n2).toFixed(2)}` },
+                    { label: '目前狀態', value: tir ? '全反射' : (p.n1 > p.n2 ? '偏離法線' : (p.n1 < p.n2 ? '偏向法線' : '不偏折')) }
+                ];
+            },
+            draw: (ctx, w, h, p) => {
+                const iy = h * 0.5, cx = w * 0.5;
+                ctx.fillStyle = `rgba(11,111,146,${0.04 + (p.n1 - 1) * 0.05})`; ctx.fillRect(0, 0, w, iy);
+                ctx.fillStyle = `rgba(201,117,15,${0.04 + (p.n2 - 1) * 0.05})`; ctx.fillRect(0, iy, w, h - iy);
+                ctx.strokeStyle = 'rgba(18,49,58,0.4)'; ctx.lineWidth = 1.6;
+                ctx.beginPath(); ctx.moveTo(0, iy); ctx.lineTo(w, iy); ctx.stroke();
+                label(ctx, `介質 1：n₁ = ${p.n1.toFixed(2)}${p.n1 > p.n2 ? '（光密）' : p.n1 < p.n2 ? '（光疏）' : ''}`, 12, 20, C.blue, 12);
+                label(ctx, `介質 2：n₂ = ${p.n2.toFixed(2)}${p.n2 > p.n1 ? '（光密）' : p.n2 < p.n1 ? '（光疏）' : ''}`, 12, h - 12, C.orange, 12);
+
+                dashed(ctx, cx, 10, cx, h - 10, 'rgba(18,49,58,0.35)');
+                label(ctx, '法線', cx + 6, 34, C.muted, 10);
+
+                const th1 = rad(p.th1);
+                const s2 = p.n1 * Math.sin(th1) / p.n2;
+                const tir = s2 > 1;
+                const R = Math.min(w, h) * 0.42;
+
+                // 入射線
+                arrow(ctx, cx - Math.sin(th1) * R, iy - Math.cos(th1) * R, cx, iy, C.blue, 2.4);
+                label(ctx, '入射線', cx - Math.sin(th1) * R - 6, iy - Math.cos(th1) * R - 6, C.blue, 11);
+
+                // 反射線
+                ctx.globalAlpha = tir ? 1 : 0.55;
+                arrow(ctx, cx, iy, cx + Math.sin(th1) * R, iy - Math.cos(th1) * R, C.rose, tir ? 2.6 : 1.8);
+                ctx.globalAlpha = 1;
+                label(ctx, tir ? '全反射（光全部回到介質 1）' : '反射線', cx + Math.sin(th1) * R * 0.55, iy - Math.cos(th1) * R * 0.55 - 8, C.rose, 11);
+
+                if (!tir) {
+                    const th2 = Math.asin(s2);
+                    arrow(ctx, cx, iy, cx + Math.sin(th2) * R, iy + Math.cos(th2) * R, C.orange, 2.4);
+                    label(ctx, '折射線', cx + Math.sin(th2) * R * 0.7 + 6, iy + Math.cos(th2) * R * 0.7, C.orange, 11);
+                    ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.arc(cx, iy, 46, Math.PI / 2 - th2, Math.PI / 2); ctx.stroke();
+                    label(ctx, `θ₂ = ${deg(th2).toFixed(0)}°`, cx + 52, iy + 46, C.orange, 11);
+                }
+
+                ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.arc(cx, iy, 46, -Math.PI / 2 - th1, -Math.PI / 2); ctx.stroke();
+                label(ctx, `θ₁ = ${p.th1}°`, cx - 96, iy - 38, C.blue, 11);
+
+                // 臨界角參考線
+                if (p.n1 > p.n2) {
+                    const thc = Math.asin(p.n2 / p.n1);
+                    dashed(ctx, cx, iy, cx - Math.sin(thc) * R, iy - Math.cos(thc) * R, 'rgba(107,70,193,0.7)');
+                    label(ctx, `臨界角 ${deg(thc).toFixed(1)}°`, cx - Math.sin(thc) * R - 4, iy - Math.cos(thc) * R + 16, C.violet, 11, 'right');
+                }
+            }
+        };
+
+        /* 10. 薄透鏡成像作圖 ----------------------------------------------- */
+        LABS.lens = {
+            name: '薄透鏡成像作圖',
+            tag: 'N16 / N17',
+            hint: '三條主要光線同時作圖：平行主軸的光線、通過焦點的光線、通過鏡心的光線。拖動物距與焦距，觀察像距、放大率與成像性質如何隨之改變。',
+            note: '符號法則：凸透鏡 f 取正、凹透鏡 f 取負；q > 0 為鏡後實像、q < 0 為鏡前虛像；m = −q/p，m > 0 正立、m < 0 倒立。',
+            height: 340,
+            modes: [
+                { key: 'convex', label: '凸透鏡（f > 0）' },
+                { key: 'concave', label: '凹透鏡（f < 0）' }
+            ],
+            controls: [
+                { key: 'p', label: '物距 p (cm)', min: 5, max: 90, step: 1, value: 30, fmt: (v) => `${v} cm` },
+                { key: 'f', label: '焦距 |f| (cm)', min: 8, max: 45, step: 1, value: 20, fmt: (v) => `${v} cm` },
+                { key: 'ho', label: '物高 (cm)', min: 2, max: 14, step: 1, value: 8, fmt: (v) => `${v} cm` }
+            ],
+            readouts: (p) => {
+                const f = p.mode === 'concave' ? -p.f : p.f;
+                if (Math.abs(p.p - f) < 1e-6) return [
+                    { label: '像距 q', value: '無窮遠' }, { label: '放大率 m', value: '—' },
+                    { label: '成像性質', value: '折射光平行，無法成像' }, { label: '焦距 f', value: `${f} cm` }];
+                const q = 1 / (1 / f - 1 / p.p);
+                const m = -q / p.p;
+                const kind = `${m > 0 ? '正立' : '倒立'}${Math.abs(m) > 1 ? '放大' : (Math.abs(m) < 1 ? '縮小' : '等大')}${q > 0 ? '實像' : '虛像'}`;
+                return [
+                    { label: '像距 q', value: `${q.toFixed(1)} cm（${q > 0 ? '鏡後' : '鏡前'}）` },
+                    { label: '放大率 m', value: m.toFixed(2) },
+                    { label: '像高', value: `${(m * p.ho).toFixed(1)} cm` },
+                    { label: '成像性質', value: kind }
+                ];
+            },
+            draw: (ctx, w, h, p) => {
+                const concave = p.mode === 'concave';
+                const f = concave ? -p.f : p.f;
+                const axisY = h * 0.56;
+                const noImage = Math.abs(p.p - f) < 1e-6;
+                const q = noImage ? null : 1 / (1 / f - 1 / p.p);
+                const m = noImage ? null : -q / p.p;
+
+                // 依「需要顯示的最大距離」自動縮放，讓物、像與焦點都留在畫面內
+                const needCm = Math.max(p.p, Math.abs(q === null ? 0 : q), 2 * p.f) * 1.18 + 6;
+                const cx = w * 0.5;
+                const scale = (w * 0.5 - 14) / needCm;
+                const hoMax = Math.max(p.ho, Math.abs(m === null ? 0 : m * p.ho));
+                const vScale = Math.min(7, (h * 0.36) / Math.max(hoMax, 1));
+                const sx = (cm) => cx + cm * scale;
+                const sy = (cm) => axisY - cm * vScale;
+
+                axis(ctx, 12, axisY, w - 12, axisY);
+                label(ctx, '主軸', w - 40, axisY + 16, C.muted, 10);
+
+                // 透鏡本體
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                if (!concave) {
+                    ctx.moveTo(cx, axisY - 68); ctx.quadraticCurveTo(cx + 14, axisY, cx, axisY + 68);
+                    ctx.moveTo(cx, axisY - 68); ctx.quadraticCurveTo(cx - 14, axisY, cx, axisY + 68);
+                } else {
+                    ctx.moveTo(cx - 9, axisY - 68); ctx.quadraticCurveTo(cx + 5, axisY, cx - 9, axisY + 68);
+                    ctx.moveTo(cx + 9, axisY - 68); ctx.quadraticCurveTo(cx - 5, axisY, cx + 9, axisY + 68);
+                    ctx.moveTo(cx - 9, axisY - 68); ctx.lineTo(cx + 9, axisY - 68);
+                    ctx.moveTo(cx - 9, axisY + 68); ctx.lineTo(cx + 9, axisY + 68);
+                }
+                ctx.stroke();
+
+                // 焦點與兩倍焦距
+                [[-p.f, 'F'], [p.f, 'F'], [-2 * p.f, '2F'], [2 * p.f, '2F']].forEach(([d, name]) => {
+                    const X = sx(d);
+                    if (X < 8 || X > w - 8) return;
+                    ctx.fillStyle = C.violet;
+                    ctx.beginPath(); ctx.arc(X, axisY, 3.4, 0, Math.PI * 2); ctx.fill();
+                    label(ctx, name, X, axisY + 18, C.violet, 10, 'center');
+                });
+
+                const Ox = sx(-p.p), Oy = sy(p.ho);
+                const ray = (x1, y1, x2, y2, color, dash) => {
+                    ctx.save();
+                    if (dash) ctx.setLineDash([5, 4]);
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.6;
+                    ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+                    ctx.restore();
+                };
+                // 由起點沿方向延伸到畫布右緣（或左緣）
+                const extend = (x0, y0, dx, dy, color, dash) => {
+                    const limit = dx >= 0 ? (w - 6 - x0) : (6 - x0);
+                    const k = Math.abs(dx) < 1e-9 ? 0 : limit / dx;
+                    ray(x0, y0, x0 + dx * k, y0 + dy * k, color, dash);
+                };
+
+                // ── 光線 1：平行主軸入射
+                ray(Ox, Oy, cx, Oy, C.orange);
+                if (!concave) {
+                    const Fx = sx(p.f);
+                    extend(cx, Oy, Fx - cx, axisY - Oy, C.orange);
+                } else {
+                    const Fx = sx(-p.f);                     // 虛焦點在鏡前
+                    extend(cx, Oy, cx - Fx, Oy - axisY, C.orange);
+                    ray(cx, Oy, Fx, axisY, C.orange, true);  // 反向延長線通過虛焦點
+                }
+
+                // ── 光線 2：通過鏡心，方向不變
+                extend(Ox, Oy, cx - Ox, axisY - Oy, C.rose);
+                if (q !== null && q < 0) extend(cx, axisY, Ox - cx, Oy - axisY, C.rose, true);
+
+                // ── 光線 3：（凸透鏡）通過鏡前焦點 → 折射後平行主軸
+                if (!concave && p.p > p.f + 0.5) {
+                    const Fpre = sx(-p.f);
+                    const t3 = (cx - Ox) / (Fpre - Ox);
+                    const yAtLens = Oy + (axisY - Oy) * t3;
+                    ray(Ox, Oy, cx, yAtLens, C.cyan);
+                    extend(cx, yAtLens, 1, 0, C.cyan);
+                    if (q !== null && q < 0) extend(cx, yAtLens, -1, 0, C.cyan, true);
+                }
+
+                // 物與像
+                arrow(ctx, Ox, axisY, Ox, Oy, C.green, 2.8);
+                label(ctx, '物', Ox - 16, Oy + 4, C.green, 12);
+
+                if (noImage) {
+                    label(ctx, 'p = f：折射光互相平行，無法成像', 14, 22, C.rose, 12);
+                } else {
+                    const Ix = sx(q), Iy = sy(m * p.ho);
+                    arrow(ctx, Ix, axisY, Ix, Iy, q > 0 ? C.blue : C.violet, 2.8);
+                    label(ctx, q > 0 ? '實像' : '虛像', Ix + 8, Iy + (Iy < axisY ? -6 : 15), q > 0 ? C.blue : C.violet, 12);
+                    label(ctx, `p = ${p.p} cm　f = ${f} cm　q = ${q.toFixed(1)} cm　m = ${m.toFixed(2)}`, 14, 22, C.ink, 12);
+                }
+                label(ctx, concave ? '凹透鏡：不論物體在哪裡，永遠成正立縮小虛像' : '凸透鏡：物在焦點外成倒立實像、焦點內成正立放大虛像', 14, h - 12, C.muted, 11);
+                label(ctx, '橘：平行主軸入射　粉：通過鏡心　青：通過鏡前焦點', 14, h - 28, C.muted, 10);
+            }
+        };
+
+        /* 11. 雙狹縫干涉與單狹縫繞射 ---------------------------------------- */
+        LABS.fringe = {
+            name: '雙狹縫干涉與單狹縫繞射',
+            tag: 'N19 / N20',
+            hint: '上方是屏幕上實際看到的條紋，下方是對應的光強度曲線。切換兩種裝置，注意單狹縫的中央亮紋寬度是其他亮紋的兩倍，而且亮度向兩側迅速遞減。',
+            note: '兩條公式外型相似但意義相反：雙狹縫 yₙ = nLλ/d 是「亮紋」；單狹縫 yₘ = mLλ/a 是「暗紋」。',
+            height: 330,
+            modes: [
+                { key: 'double', label: '雙狹縫干涉' },
+                { key: 'single', label: '單狹縫繞射' }
+            ],
+            controls: [
+                { key: 'lam', label: '波長 λ (nm)', min: 400, max: 700, step: 5, value: 550, fmt: (v) => `${v} nm` },
+                { key: 'w', label: '縫距 d／縫寬 a (μm)', min: 1, max: 12, step: 0.2, value: 2.2, fmt: (v) => `${v.toFixed(1)} μm` },
+                { key: 'L', label: '屏幕距離 L (m)', min: 0.3, max: 2.5, step: 0.1, value: 1.0, fmt: (v) => `${v.toFixed(1)} m` }
+            ],
+            readouts: (p) => {
+                const lam = p.lam * 1e-9, ww = p.w * 1e-6;
+                const dy = p.L * lam / ww;
+                const single = p.mode === 'single';
+                return [
+                    { label: single ? '暗紋間距 Lλ/a' : '條紋間距 Lλ/d', value: `${(dy * 100).toFixed(2)} cm` },
+                    { label: '中央亮紋寬度', value: `${((single ? 2 : 1) * dy * 100).toFixed(2)} cm` },
+                    { label: single ? '第一暗紋位置' : '第一亮紋位置', value: `${(dy * 100).toFixed(2)} cm` },
+                    { label: '浸入水中（n = 1.33）', value: `間距 ${(dy * 100 / 1.33).toFixed(2)} cm` }
+                ];
+            },
+            draw: (ctx, w, h, p) => {
+                const single = p.mode === 'single';
+                const lam = p.lam * 1e-9, ww = p.w * 1e-6;
+                const dy = p.L * lam / ww;           // 公尺
+                const halfSpan = Math.max(dy * (single ? 3.2 : 3.6), 1e-4);   // 依條紋間距自動縮放顯示範圍
+                const pxPerM = (w - 40) / (2 * halfSpan);
+                const cx = w / 2;
+                const stripTop = 26, stripH = 78;
+                const curveBase = h - 34, curveH = 120;
+
+                // 顏色近似（依波長）
+                const wl = p.lam;
+                let rgb;
+                if (wl < 440) rgb = [130, 0, 200];
+                else if (wl < 490) rgb = [0, 90, 235];
+                else if (wl < 510) rgb = [0, 180, 190];
+                else if (wl < 580) rgb = [70, 200, 60];
+                else if (wl < 645) rgb = [235, 160, 0];
+                else rgb = [225, 40, 40];
+
+                const intensity = (y) => {
+                    // y 以公尺為單位（屏幕上與中央線的距離）
+                    const beta = Math.PI * ww * y / (lam * p.L);
+                    if (single) {
+                        if (Math.abs(beta) < 1e-9) return 1;
+                        const s = Math.sin(beta) / beta;
+                        return s * s;
+                    }
+                    return Math.pow(Math.cos(beta), 2);
+                };
+
+                // 條紋帶
+                for (let X = 20; X <= w - 20; X++) {
+                    const y = (X - cx) / pxPerM;
+                    const I = intensity(y);
+                    ctx.fillStyle = `rgb(${Math.round(rgb[0] * I + 12 * (1 - I))},${Math.round(rgb[1] * I + 20 * (1 - I))},${Math.round(rgb[2] * I + 26 * (1 - I))})`;
+                    ctx.fillRect(X, stripTop, 1, stripH);
+                }
+                ctx.strokeStyle = 'rgba(18,49,58,0.2)'; ctx.lineWidth = 1;
+                ctx.strokeRect(20, stripTop, w - 40, stripH);
+                label(ctx, single ? '單狹縫繞射：屏幕上的條紋' : '雙狹縫干涉：屏幕上的條紋', 20, stripTop - 8, C.ink, 12);
+
+                // 強度曲線
+                axis(ctx, 20, curveBase, w - 20, curveBase);
+                ctx.strokeStyle = `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`; ctx.lineWidth = 2.2;
+                ctx.beginPath();
+                for (let X = 20; X <= w - 20; X++) {
+                    const y = (X - cx) / pxPerM;
+                    ctx.lineTo(X, curveBase - intensity(y) * curveH);
+                }
+                ctx.stroke();
+                label(ctx, '相對光強度', 20, curveBase - curveH - 6, C.muted, 11);
+
+                // 標尺與條紋位置
+                dashed(ctx, cx, stripTop, cx, curveBase, 'rgba(255,255,255,0.5)');
+                for (let n = 1; n <= 6; n++) {
+                    const yy = n * dy;
+                    const X = cx + yy * pxPerM;
+                    if (X > w - 24) break;
+                    [cx - yy * pxPerM, X].forEach((XX) => {
+                        dashed(ctx, XX, curveBase - curveH - 4, XX, curveBase, 'rgba(18,49,58,0.18)');
+                        label(ctx, single ? `暗${n}` : `亮${n}`, XX, curveBase + 16, C.muted, 10, 'center');
+                    });
+                }
+                label(ctx, `中央`, cx, curveBase + 16, C.rose, 10, 'center');
+                label(ctx, `Δy = Lλ/${single ? 'a' : 'd'} = ${(dy * 100).toFixed(2)} cm`, w - 22, stripTop - 8, C.ink, 12, 'right');
+            }
+        };
+
+        /* =====================================================================
+         * 互動實驗室的兩個檢視
+         * ===================================================================*/
+        function renderLabIndex() {
+            const cards = Object.keys(labMeta).map((id) => {
+                const nodes = ALL_NODES.filter((c) => nodeMeta[c].lab === id);
+                const chips = nodes.map((c) => `<span class="module-node-chip" onclick="event.stopPropagation();navigateTo('node-${c}')">${c} ${nodeMeta[c].title}</span>`).join('');
+                return `
+                    <div class="card module-card" onclick="navigateTo('lab-${id}')">
+                        <span class="module-badge">${LABS[id] ? LABS[id].tag : ''}</span>
+                        <h3>${labMeta[id].name}</h3>
+                        <p>${labMeta[id].desc}</p>
+                        <div class="module-nodes">${chips}</div>
+                    </div>`;
+            }).join('');
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">複習工具箱</span>
+                    <h2>互動物理實驗室</h2>
+                    <p>共 ${Object.keys(labMeta).length} 個可調參數的模擬。每個實驗都以獨立網址開啟，方便直接分享或從節點頁跳轉。動畫使用固定步長時鐘，因此在不同更新率的螢幕上速度一致；系統若設定為減少動態效果，載入時會自動暫停。</p>
+                </div>
+                <div class="card-grid">${cards}</div>`;
+        }
+
+        function renderSingleLabView(id) {
+            if (!LABS[id]) { renderLabIndex(); return; }
+            const nodes = ALL_NODES.filter((c) => nodeMeta[c].lab === id);
+            const chips = nodes.map((c) => `<button class="node-route-btn" onclick="navigateTo('node-${c}')"><b>${c}　${nodeMeta[c].title}</b><span>回到節點頁看公式與題型</span></button>`).join('');
+
+            document.getElementById('main-content').innerHTML = `
+                <div class="view-header">
+                    <span class="view-eyebrow">互動實驗　${LABS[id].tag}</span>
+                    <h2>${labMeta[id].name}</h2>
+                    <p>${labMeta[id].desc}</p>
+                </div>
+                ${labShellHtml(id)}
+                <div class="section-title">對應的知識節點</div>
+                <div class="node-route-actions">
+                    ${chips}
+                    <button class="node-route-btn" onclick="navigateTo('tool-lab')"><b>← 回到實驗室總覽</b><span>瀏覽其他 ${Object.keys(labMeta).length - 1} 個實驗</span></button>
+                </div>`;
+            mountLab(id);
+        }
+
+        /* =====================================================================
+         * 啟動
+         * ===================================================================*/
+        window.addEventListener('popstate', () => { renderRoute(routeFromLocation()); });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            buildNodeSidebar();
+            const initial = routeFromLocation();
+            history.replaceState({ waveRoute: initial }, '', `#${encodeURIComponent(initial)}`);
+            renderRoute(initial);
+        });
+    </script>
+</body>
+</html>

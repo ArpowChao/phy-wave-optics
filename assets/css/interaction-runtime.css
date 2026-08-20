@@ -1,0 +1,162 @@
+/* 互動實驗共用元件：控制列、滑桿、canvas 舞台、讀數面板 */
+.lab-shell {
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    background: var(--bg-card);
+    padding: 1.1rem 1.15rem 1.25rem;
+    box-shadow: var(--shadow-neon);
+}
+
+.lab-shell + .lab-shell { margin-top: 1.25rem; }
+
+.lab-title {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+}
+
+.lab-title h4 {
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.lab-title .lab-tag {
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.08em;
+    padding: 0.14rem 0.45rem;
+    border-radius: 999px;
+    color: var(--accent-cyan);
+    background: rgba(6, 148, 162, 0.09);
+    border: 1px solid rgba(6, 148, 162, 0.18);
+}
+
+.lab-hint {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    line-height: 1.65;
+    margin-bottom: 0.85rem;
+}
+
+.lab-stage {
+    position: relative;
+    width: 100%;
+    border-radius: 12px;
+    background: linear-gradient(180deg, hsl(205, 40%, 99%), hsl(205, 30%, 96%));
+    border: 1px solid rgba(15, 60, 80, 0.08);
+    overflow: hidden;
+}
+
+.lab-stage canvas { display: block; width: 100%; }
+
+.lab-controls {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+    gap: 0.7rem 1.1rem;
+    margin-top: 0.9rem;
+}
+
+.lab-control label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.lab-control label b {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.86rem;
+    font-weight: 800;
+    color: var(--primary-blue);
+}
+
+.lab-control input[type="range"] {
+    width: 100%;
+    accent-color: hsl(190, 95%, 34%);
+    cursor: pointer;
+}
+
+.lab-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.9rem;
+}
+
+.lab-btn {
+    font: inherit;
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 0.42rem 0.9rem;
+    border-radius: 8px;
+    border: 1px solid rgba(15, 60, 80, 0.14);
+    background: rgba(255, 255, 255, 0.9);
+    color: var(--text-main);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.lab-btn:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
+.lab-btn.is-active {
+    background: var(--accent-cyan);
+    border-color: var(--accent-cyan);
+    color: #fff;
+}
+
+.lab-readout {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.55rem;
+    margin-top: 0.9rem;
+}
+
+.lab-readout div {
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    background: rgba(6, 148, 162, 0.06);
+    border: 1px solid rgba(6, 148, 162, 0.12);
+}
+
+.lab-readout span {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: 0.03em;
+}
+
+.lab-readout strong {
+    display: block;
+    margin-top: 0.15rem;
+    font-family: 'Outfit', sans-serif;
+    font-size: 1.02rem;
+    font-weight: 800;
+    color: var(--text-main);
+}
+
+.lab-note {
+    margin-top: 0.85rem;
+    padding: 0.6rem 0.8rem;
+    border-left: 3px solid var(--accent-orange);
+    background: var(--accent-orange-light);
+    border-radius: 0 8px 8px 0;
+    font-size: 0.8rem;
+    line-height: 1.7;
+    color: var(--text-main);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .lab-shell * { animation: none !important; transition: none !important; }
+}
+
+@media (max-width: 640px) {
+    .lab-controls { grid-template-columns: 1fr; }
+    .lab-shell { padding: 0.9rem 0.85rem 1rem; }
+}
