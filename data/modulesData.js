@@ -5,14 +5,14 @@
  */
 
 const nodeMeta = {
-    N01: { module: 1, section: '§1-1', title: '波動的性質與繩波波速', lab: 'travelling' },
-    N02: { module: 1, section: '§1-2', title: '週期波與波速公式', lab: 'travelling' },
+    N01: { module: 1, section: '§1-1', title: '波動的性質與繩波波速', lab: 'transverse' },
+    N02: { module: 1, section: '§1-2', title: '週期波與波速公式', lab: 'transverse' },
     N03: { module: 1, section: '§1-3', title: '波的反射與透射', lab: 'reflection' },
     N04: { module: 1, section: '§1-4', title: '疊加原理與駐波', lab: 'standing' },
     N05: { module: 1, section: '§1-5', title: '波前與惠更斯原理', lab: 'huygens' },
-    N06: { module: 1, section: '§1-6', title: '水波的反射與折射', lab: 'huygens' },
+    N06: { module: 1, section: '§1-6', title: '水波的反射與折射', lab: 'ripple' },
     N07: { module: 1, section: '§1-6', title: '水波的干涉與繞射', lab: 'ripple' },
-    N08: { module: 2, section: '§2-1', title: '聲波的傳播與聲速', lab: 'longitudinal' },
+    N08: { module: 2, section: '§2-1', title: '聲波的傳播與聲速', lab: 'sound' },
     N09: { module: 2, section: '§2-1', title: '聲波的波形：位移與壓力', lab: 'longitudinal' },
     N10: { module: 2, section: '§2-2', title: '管弦樂器的駐波', lab: 'pipes' },
     N11: { module: 2, section: '§2-2', title: '音調、響度與音色', lab: 'timbre' },
@@ -23,22 +23,24 @@ const nodeMeta = {
     N16: { module: 3, section: '§3-3', title: '透鏡成像與薄透鏡公式', lab: 'lens' },
     N17: { module: 3, section: '§3-3', title: '光學儀器與視力矯正', lab: 'lens' },
     N18: { module: 4, section: '§4-1', title: '光的波動說與科學史', lab: null },
-    N19: { module: 4, section: '§4-2', title: '楊氏雙狹縫干涉', lab: 'fringe' },
-    N20: { module: 4, section: '§4-3', title: '單狹縫繞射', lab: 'fringe' }
+    N19: { module: 4, section: '§4-2', title: '楊氏雙狹縫干涉', lab: 'young' },
+    N20: { module: 4, section: '§4-3', title: '單狹縫繞射', lab: 'diffraction' }
 };
 
 const labMeta = {
-    travelling: { name: '行進波與質點振動', desc: '調整振幅、波長、頻率，觀察波形前進時介質質點只作上下簡諧運動。' },
-    reflection: { name: '繩波的反射與透射', desc: '切換固定端／自由端，或設定兩段繩的線密度比，比較反射波與透射波。' },
-    standing: { name: '駐波的形成', desc: '兩列反向行進波疊加成駐波，標出波節與波腹並比較各諧音。' },
-    huygens: { name: '惠更斯原理與折射', desc: '以子波包絡線畫出新波前，觀察深淺水區交界的波長與偏折變化。' },
-    ripple: { name: '水波槽雙波源干涉', desc: '調整波源間距與波長，即時計算腹線與節線的條數與位置。' },
-    longitudinal: { name: '縱波的疏密與波形', desc: '把空氣分子的縱向位移轉成位移圖與壓力圖，找出密部與疏部中央。' },
+    transverse: { name: '橫波：行進波與質點振動', desc: '整排質點只上下振動；用「波形平移一小段」的鬼影判斷質點瞬時運動方向，並同時對照 y–x 圖與 y–t 圖。' },
+    reflection: { name: '繩波的反射與透射', desc: '以不對稱脈衝呈現固定端／自由端反射的上下顛倒與左右相反，並比較兩段繩交界的反射波與透射波。' },
+    standing: { name: '駐波的形成', desc: '兩列反向行進波疊加成駐波，標出波節、波腹、λ/2 與 λ/4 尺寸線，以及波形拉直瞬間質點速率最大的關鍵時刻。' },
+    huygens: { name: '惠更斯原理與波前', desc: '波前上每一點視為新點波源，子波的包絡線即為下一個波前。' },
+    ripple: { name: '水波槽：反射・折射・干涉・繞射', desc: '一個水波槽涵蓋 §1-6 全部現象：反射定律、深淺水區折射、雙波源干涉的波程差與腹節線、狹縫繞射的 d/λ 效應。' },
+    sound: { name: '聲波的傳播', desc: '疏密相間的球面波、聲速與溫度、進入密介質變快變長（與光相反），以及回聲與聲納的來回時間。' },
+    longitudinal: { name: '縱波：空氣分子、位移與壓力', desc: '重現講義的四層對照圖：未振動前分子位置、振動後實際疏密與位移箭頭、位移圖、壓力圖。' },
     pipes: { name: '弦、開管與閉管的諧音', desc: '比較兩端固定弦、開管與閉管的駐波圖形、波長與可存在的諧音。' },
     timbre: { name: '諧音疊加與音色', desc: '調整各諧音的振幅比，觀察合成波形改變但基音頻率不變。' },
     snell: { name: '司乃耳定律與全反射', desc: '調整入射角與兩側折射率，觀察折射線偏折方向與臨界角。' },
     lens: { name: '薄透鏡成像作圖', desc: '拖曳物體位置與焦距，即時完成三條主要光線的成像作圖。' },
-    fringe: { name: '雙狹縫干涉與單狹縫繞射', desc: '調整波長、縫距與縫寬，比較兩種條紋的寬度與亮度分布。' }
+    young: { name: '光的干涉實驗（楊氏雙狹縫）', desc: '從光源、單狹縫到雙狹縫的完整裝置與干涉場，並拖動屏幕上的 P 點看波程差 Δℓ = d sinθ 在整數與半整數倍波長之間變化。' },
+    diffraction: { name: '光的繞射實驗（單狹縫）', desc: '縫上眾多點光源的惠更斯子波、最大光程差 a sinθ，以及暗紋「等分成兩區成對抵消」的關鍵論證。' }
 };
 
 const modulesData = {
