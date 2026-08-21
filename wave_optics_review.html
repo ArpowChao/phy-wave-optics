@@ -463,6 +463,16 @@
             return list.filter((item) => [].concat(item.node).includes(code));
         }
 
+        /* 一個節點可以對應一個或多個互動實驗 */
+        function labsOfNode(code) {
+            const meta = nodeMeta[code];
+            if (!meta || !meta.lab) return [];
+            return [].concat(meta.lab);
+        }
+        function nodesOfLab(labId) {
+            return ALL_NODES.filter((c) => labsOfNode(c).includes(labId));
+        }
+
         function buildNodeSidebar() {
             const host = document.getElementById('node-nav-container');
             let html = '';
@@ -633,11 +643,12 @@
                 const meta = nodeMeta[code];
                 const fCount = itemsForNode(mod.formulas, code).length;
                 const qCount = questionBank.filter((q) => q.node === code).length;
+                const labs = labsOfNode(code).filter((l) => labMeta[l]);
                 return `
                     <div class="card module-card" onclick="navigateTo('node-${code}')">
                         <span class="module-badge">${code}　${meta.section}</span>
                         <h3>${meta.title}</h3>
-                        <p>核心公式卡 ${fCount} 張・分級題庫 ${qCount} 題${meta.lab ? `・互動實驗「${labMeta[meta.lab].name}」` : ''}</p>
+                        <p>核心公式卡 ${fCount} 張・分級題庫 ${qCount} 題${labs.length ? `・互動實驗「${labs.map((l) => labMeta[l].name).join('」「')}」` : ''}</p>
                     </div>`;
             }).join('');
 
@@ -721,7 +732,7 @@
                 </div>
 
                 <div class="node-route-actions">
-                    ${meta.lab ? `<button class="node-route-btn" onclick="navigateTo('lab-${meta.lab}')"><b>🔬 開啟互動實驗</b><span>${labMeta[meta.lab].name}</span></button>` : ''}
+                    ${labsOfNode(code).filter((l) => labMeta[l]).map((l) => `<button class="node-route-btn" onclick="navigateTo('lab-${l}')"><b>🔬 開啟互動實驗</b><span>${labMeta[l].name}</span></button>`).join('')}
                     <button class="node-route-btn" onclick="openBankForNode('${code}')"><b>✏️ 練這個節點的題目</b><span>${quizCount} 題，含記憶到分析四個層級</span></button>
                     <button class="node-route-btn" onclick="navigateTo('module-${meta.module}')"><b>🧭 回到模組導讀</b><span>${mod.title}</span></button>
                 </div>
@@ -1144,12 +1155,21 @@
             const modes = (lab.modes || []).map((m, i) =>
                 `<button type="button" class="lab-btn ${i === 0 ? 'is-active' : ''}" data-mode="${m.key}">${m.label}</button>`
             ).join('');
+            const scrub = lab.cycle ? `
+                    <div class="lab-scrub">
+                        <span class="scrub-label">⏱ 時間軸</span>
+                        <button type="button" class="scrub-btn" data-role="step-back" aria-label="退一格">⏴</button>
+                        <input type="range" id="${id}-scrub" min="0" max="1000" step="1" value="0" aria-label="拖曳以慢慢看過程">
+                        <button type="button" class="scrub-btn" data-role="step-fwd" aria-label="進一格">⏵</button>
+                        <b id="${id}-scrub-out">0.00 s</b>
+                    </div>` : '';
             return `
                 <div class="lab-shell" id="lab-${id}">
                     <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
                     <div class="lab-hint">${lab.hint}</div>
                     ${modes ? `<div class="lab-buttons" data-role="modes">${modes}</div>` : ''}
                     <div class="lab-stage"><canvas id="${id}-canvas"></canvas></div>
+                    ${scrub}
                     <div class="lab-controls">${controls}</div>
                     <div class="lab-buttons">
                         <button type="button" class="lab-btn" data-role="toggle">⏸ 暫停</button>
@@ -1226,6 +1246,44 @@
             });
             if (!running) toggleBtn.textContent = '▶ 播放';
 
+            /* 時間軸：拖曳或逐格前後時自動暫停，讓學生慢慢看疊加、反射的過程 */
+            const scrubInput = lab.cycle ? document.getElementById(`${id}-scrub`) : null;
+            const scrubOut = lab.cycle ? document.getElementById(`${id}-scrub-out`) : null;
+            // cycle 可以是數字，也可以是依參數計算的函式（例如週期 T = 1/f）
+            const cycleOf = () => {
+                const c = (typeof lab.cycle === 'function') ? lab.cycle(params) : lab.cycle;
+                return (Number.isFinite(c) && c > 0.02) ? c : 2;
+            };
+            const showScrub = () => {
+                if (!scrubInput) return;
+                const cyc = cycleOf();
+                const phase = ((simTime % cyc) + cyc) % cyc;
+                scrubInput.value = String(Math.round(phase / cyc * 1000));
+                if (scrubOut) scrubOut.textContent = `${phase.toFixed(2)} s`;
+            };
+            const pausePlayback = () => {
+                if (!running) return;
+                running = false;
+                toggleBtn.textContent = '▶ 播放';
+            };
+            if (scrubInput) {
+                activeDisposers.addEventListener(scrubInput, 'input', () => {
+                    pausePlayback();
+                    simTime = Number(scrubInput.value) / 1000 * cycleOf();
+                    if (scrubOut) scrubOut.textContent = `${simTime.toFixed(2)} s`;
+                    syncOutputs(); paint();
+                });
+                const stepBy = (frac) => {
+                    pausePlayback();
+                    const cyc = cycleOf();
+                    simTime = (((simTime + frac * cyc) % cyc) + cyc) % cyc;
+                    showScrub(); paint();
+                };
+                activeDisposers.addEventListener(host.querySelector('[data-role="step-back"]'), 'click', () => stepBy(-1 / 48));
+                activeDisposers.addEventListener(host.querySelector('[data-role="step-fwd"]'), 'click', () => stepBy(1 / 48));
+                showScrub();
+            }
+
             activeDisposers.addEventListener(host.querySelector('[data-role="reset"]'), 'click', () => {
                 (lab.controls || []).forEach((c) => {
                     params[c.key] = Number(c.value);
@@ -1233,6 +1291,7 @@
                     if (input) input.value = c.value;
                 });
                 simTime = 0;
+                showScrub();
                 syncOutputs(); paint();
             });
 
@@ -1241,8 +1300,12 @@
                 paint();
             });
 
+            let scrubTick = 0;
             activeDisposers.runLoop((dt) => {
-                if (running) simTime += dt;
+                if (running) {
+                    simTime += dt;
+                    if (scrubInput && (scrubTick = (scrubTick + 1) % 6) === 0) showScrub();
+                }
                 paint();
             });
 
@@ -1257,10 +1320,11 @@
         /* 2. 繩波的反射與透射 --------------------------------------------- */
         LABS.reflection = {
             name: '繩波的反射與透射',
+            cycle: 5.2,                                     // 脈衝一趟來回
             tag: 'N03',
-            hint: '脈衝波刻意做成「前緣陡、後緣緩」的不對稱形狀——這樣反射之後「左右相反」才看得出來。切換端點條件，比較反射波是否上下顛倒；切到兩段繩時會同時產生反射波與透射波。',
-            note: '判斷口訣：對面接「重繩」等效於固定端（反射波上下顛倒），接「輕繩」等效於自由端（不顛倒）。反射波一律左右相反；透射波則永遠不顛倒、也不左右相反。',
-            height: 268,
+            hint: '繩子的粗細就直接畫成線寬：細繩＝線密度小、粗繩＝線密度大。脈衝刻意做成「前緣陡、後緣緩」的不對稱形狀，反射後的「左右相反」才看得出來。當入射波與反射波在交界附近重疊時，會另外用虛線畫出兩個成分波，實線則是它們相加後的實際繩形——用下方的時間軸慢慢拖，就能看清楚疊加的過程。',
+            note: '判斷口訣：對面接「重繩」等效於固定端（反射波上下顛倒），接「輕繩」等效於自由端（不顛倒）。反射波一律左右相反；透射波則永遠不顛倒、也不左右相反。反射波與透射波的頻率都不變，只有透射波的波速與波長會改變。',
+            height: 300,
             modes: [
                 { key: 'fixed', label: '固定端（牆）' },
                 { key: 'free', label: '自由端（小環）' },
@@ -1328,39 +1392,50 @@
                     ctr = bx - 10 + over * speed2;
                 }
 
-                /* 繩子背景（粗細代表線密度） */
-                ctx.strokeStyle = 'rgba(18,49,58,0.16)';
+                /* 繩子的線寬直接代表線密度：細繩畫細、粗繩畫粗（繩子本身就是那條波） */
+                const LW_LIGHT = 2.0, LW_HEAVY = 7.0, LW_ONE = 3.0;
+                const lwLeft = twoRope ? (p.mode === 'l2h' ? LW_LIGHT : LW_HEAVY) : LW_ONE;
+                const lwRight = twoRope ? (p.mode === 'l2h' ? LW_HEAVY : LW_LIGHT) : LW_ONE;
+
                 if (twoRope) {
-                    ctx.lineWidth = p.mode === 'l2h' ? 1.4 : 3.6;
-                    ctx.beginPath(); ctx.moveTo(10, mid + 64); ctx.lineTo(bx, mid + 64); ctx.stroke();
-                    ctx.lineWidth = p.mode === 'l2h' ? 3.6 : 1.4;
-                    ctx.beginPath(); ctx.moveTo(bx, mid + 64); ctx.lineTo(w - 10, mid + 64); ctx.stroke();
-                    label(ctx, p.mode === 'l2h' ? '輕繩 μ₁（v 快）' : '重繩 μ₁（v 慢）', 14, mid + 80, C.muted, 11);
-                    label(ctx, p.mode === 'l2h' ? '重繩 μ₂（v 慢）' : '輕繩 μ₂（v 快）', bx + 8, mid + 80, C.muted, 11);
                     dashed(ctx, bx, mid - 62, bx, mid + 68, C.rose);
+                    label(ctx, p.mode === 'l2h' ? '輕繩 μ₁（細、v 快）' : '重繩 μ₁（粗、v 慢）', 14, mid + 78, C.muted, 11);
+                    label(ctx, p.mode === 'l2h' ? '重繩 μ₂（粗、v 慢）' : '輕繩 μ₂（細、v 快）', bx + 8, mid + 78, C.muted, 11);
+                    label(ctx, '交界', bx, mid + 92, C.rose, 10, 'center');
                 }
                 axis(ctx, 10, mid, twoRope ? w - 10 : bx, mid);
 
-                /* 繩波本體 */
-                const ropeEnd = twoRope ? (w - 10) : bx;
-                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.6; ctx.beginPath();
-                for (let X = 10; X <= ropeEnd; X += 2) {
-                    let y = 0;
-                    if (ci !== null && X <= bx) y += A * shape(X - ci);
-                    if (cr !== null && X <= bx) {
-                        // 反射波：左右相反（−u）；固定端與「接重繩」再乘上 −1 造成上下顛倒
-                        const flipY = (p.mode === 'fixed') ? -1 : (twoRope ? Math.sign(rr) : 1);
-                        const amp = twoRope ? A * Math.abs(rr) : A;
-                        y += flipY * amp * shape(-(X - cr));
+                /* 三條曲線：入射波、反射波（各自虛線）與實際繩形（兩者之和，實線）
+                   ⇒ 在交界附近可以看見「疊加」的過程 */
+                const yInc = (X) => (ci !== null && X <= bx) ? A * shape(X - ci) : 0;
+                const yRef = (X) => {
+                    if (cr === null || X > bx) return 0;
+                    const flipY = (p.mode === 'fixed') ? -1 : (twoRope ? Math.sign(rr) : 1);
+                    const amp = twoRope ? A * Math.abs(rr) : A;
+                    return flipY * amp * shape(-(X - cr));
+                };
+                const yTr = (X) => (ctr !== null && X >= bx && twoRope) ? A * tt * shape((X - ctr) / speed2) : 0;
+
+                const overlapping = (ci !== null && cr !== null) || (cr !== null && Math.abs(cr - bx) < 90);
+                const curve = (fn, x0c, x1c, style, lw, dash) => {
+                    ctx.save();
+                    if (dash) ctx.setLineDash([5, 4]);
+                    ctx.strokeStyle = style; ctx.lineWidth = lw; ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    for (let X = x0c; X <= x1c; X += 2) {
+                        const Y = mid - fn(X);
+                        X === x0c ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
                     }
-                    if (ctr !== null && X >= bx && twoRope) {
-                        // 透射波：不顛倒、也不左右相反，只是寬度隨波速改變
-                        y += A * tt * shape((X - ctr) / speed2);
-                    }
-                    const Y = mid - y;
-                    X === 10 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                    ctx.stroke(); ctx.restore();
+                };
+                // 成分波（僅在有重疊時顯示，避免畫面太雜）
+                if (cr !== null) {
+                    if (ci !== null) curve(yInc, 10, bx, 'rgba(11,111,146,0.45)', 1.6, true);
+                    curve(yRef, 10, bx, 'rgba(107,70,193,0.5)', 1.6, true);
                 }
-                ctx.stroke();
+                // 實際繩形：左段用左邊的線寬、右段用右邊的線寬
+                curve((X) => yInc(X) + yRef(X), 10, bx, C.blue, lwLeft, false);
+                if (twoRope) curve(yTr, bx, w - 10, C.blue, lwRight, false);
 
                 /* 端點裝置 */
                 if (!twoRope) {
@@ -1369,9 +1444,7 @@
                         ctx.fillRect(bx, mid - 62, 12, 124);
                         label(ctx, '固定端（牆）', bx + 16, mid - 48, C.rose, 11);
                     } else {
-                        let ringY = mid;
-                        if (ci !== null) ringY = mid - A * shape(bx - ci);
-                        if (cr !== null) ringY = mid - A * shape(-(bx - cr));
+                        const ringY = mid - (yInc(bx) + yRef(bx));
                         ctx.strokeStyle = 'rgba(18,49,58,0.32)'; ctx.lineWidth = 3;
                         ctx.beginPath(); ctx.moveTo(bx, mid - 62); ctx.lineTo(bx, mid + 62); ctx.stroke();
                         ctx.strokeStyle = C.rose; ctx.lineWidth = 2.4;
@@ -1421,6 +1494,7 @@
         /* 4. 波前與惠更斯原理 ---------------------------------------------- */
         LABS.huygens = {
             name: '波前與惠更斯原理',
+            cycle: 2.6,                                     // 子波長大一個 λ 的時間
             tag: 'N05',
             hint: '前兩個模式重現講義圖 (a)(b)：條狀波源產生直線波前、點狀波源產生圓形波前，實線是波峰波前、虛線是波谷波前，綠色箭頭是傳播方向。後兩個模式重現圖 (c)(d)：把舊波前上的每一點當成新的點波源，子波的包絡線就是新的波前。',
             note: '兩個必記結論：① 波前是「振動情形相同」的點所連成的線，不一定要是波峰或波谷。② 波的傳播方向恆與波前垂直（夾角 90°）——這是之後所有折射、繞射作圖的起點。',
@@ -1661,6 +1735,7 @@
         /* 8. 諧音疊加與音色 ------------------------------------------------- */
         LABS.timbre = {
             name: '諧音疊加與音色',
+            cycle: 2.62,
             tag: 'N11',
             hint: '三條細線分別是基音、第二諧音與第三諧音，粗線是它們疊加後的波形。改變振幅比，波形會完全改變，但合成波的週期始終等於基音的週期。',
             note: '這就是「音調由基音決定、音色由波形決定」的數學根據：所有諧音都是基頻的整數倍，最小共同週期就是基音的週期。',
@@ -1920,6 +1995,7 @@
         /* 7. 弦、開管與閉管的諧音 ------------------------------------------ */
         LABS.pipes = {
             name: '弦、開管與閉管的諧音',
+            cycle: 2.62,
             tag: 'N10 / N12',
             hint: '同一個長度 L、同一個波速 v，三種樂器能產生的諧音完全不同。青色是「位移」駐波、粉紅色是「壓力」駐波——兩者的波節與波腹恰好互換，這是閉管題最常被問倒的地方。',
             note: '端點條件：弦的固定端＝位移節點；管的開口端＝位移腹點、壓力節點；管的閉口端＝位移節點、壓力腹點。閉管只有奇數諧音，且同長度時基頻只有開管的一半。',
@@ -2052,6 +2128,7 @@
         };
         LABS.standing = {
             name: '駐波的形成',
+            cycle: 4.0,                                     // 駐波的一個週期 T
             tag: 'N04 / N10 / N12',
             hint: '藍色虛線＝向右行進波，綠色虛線＝向左行進波，青色粗線＝兩者疊加的合成波。紫線是 ±2A 包絡線，淡青色是前幾個時刻留下的合成波形——請確認波形只在包絡線內原地伸縮，一步也沒有前進。橘色尺寸線標出 λ、λ/2、λ/4 三個必背距離。',
             note: '最愛考的誘答：$t=\\frac{2T}{8}$、$\\frac{6T}{8}$ 時合成波變成一直線，那是「所有質點同時通過平衡位置」，此刻振動<b>速率最大</b>，不是靜止！反而在最大位移（$t=0$、$\\frac{4T}{8}$）時各質點速度為零。另外：兩端固定 ⇒ $L=n\\lambda/2$；一端自由 ⇒ $L=m\\lambda/4$ 且 $m$ 只能取奇數。',
@@ -2430,6 +2507,7 @@
         };
         LABS.longitudinal = {
             name: '縱波：空氣分子、位移與壓力',
+            cycle: 3.0,
             tag: 'N09',
             hint: '四層上下對齊：①未振動前等間距的分子 ②某瞬間被推擠後的實際位置（彩色追蹤分子上的箭頭＝相對原位置移動的方向與大小）③位移 Δx–位置 x 圖 ④壓力變化 ΔP–位置 x 圖。貫穿四層的彩色虛線指出：紅＝密部正中央、藍＝疏部正中央、綠／紫＝疏密間中央。',
             note: '最容易考錯的是「位移 ≠ 振動速率」。密部中央與疏部中央的分子位移為零，但它們正通過平衡點，振動速率最大；疏密間中央位移最大，振動速率反而為零。ΔP 圖比 Δx 圖落後 λ/4：位移為零處 ΔP 量值最大，位移最大處 ΔP＝0。',
@@ -2723,6 +2801,7 @@
         /* 1. 橫波：行進波與質點振動 ---------------------------------------- */
         LABS.transverse = {
             name: '橫波：行進波與質點振動',
+            cycle: (p) => 1 / Math.max(p.f, 0.05),          // 一個完整週期 T
             tag: 'N01 / N02',
             hint: '上圖是 y–x 圖（橫軸位置，讀波長 λ），下圖是被觀察質點的 y–t 圖（橫軸時間，讀週期 T）。橘色虛線是「把波形往前平移一小段」的鬼影——比較實線與鬼影的高低，就知道每個質點下一刻往上還是往下，這正是大考判斷質點運動方向的標準作法。',
             note: '三個必記結論：① 質點的 x 座標永遠不變，只上下振動，絕不會有向左或向右的速度。② 質點在平衡位置速率最大、在波峰波谷速率為零。③ 波速 v 只由介質決定，把頻率調高時 v 不變、只有波長變短。',
@@ -2876,6 +2955,7 @@
         /* 5. 水波槽：反射、折射、干涉、繞射 -------------------------------- */
         LABS.ripple = {
             name: '水波槽：反射・折射・干涉・繞射',
+            cycle: 2.0,
             tag: 'N05 / N06 / N07',
             hint: '一個水波槽涵蓋 §1-6 的四個現象。反射與折射模式看得到入射線、法線與角度；干涉模式可以拖動 P 點，即時算出波程差是幾個波長，判定它落在腹線還是節線上；繞射模式則靠 d/λ 決定波散得開不開。',
             note: '水波槽的判讀口訣：① 反射前後在同一介質 ⇒ λ、v、f 全不變。② 深水區波長長、淺水區波長短，頻率兩區相同。③ 波程差整數倍 λ ⇒ 腹點；半波長奇數倍 ⇒ 節點。④ d/λ 愈接近 1，繞射愈明顯。',
@@ -2948,7 +3028,7 @@
                         ctx.save(); clipTank();
                         ctx.strokeStyle = color; ctx.lineWidth = lw;
                         for (let n = -10; n <= 10; n++) {
-                            const s = n * lam - ph;
+                            const s = n * lam + ph;          // +ph：波前沿射線方向前進
                             const px = ox + dirx * s, py = by + diry * s;
                             const L = TW + TH;
                             ctx.beginPath();
@@ -3012,7 +3092,7 @@
                         ctx.clip();
                         ctx.strokeStyle = color; ctx.lineWidth = 2;
                         for (let n = -12; n <= 12; n++) {
-                            const s = n * lam - phase;
+                            const s = n * lam + phase;       // +phase：入射波往界面、折射波往外
                             const px = ox + dirx * s, py = iy + diry * s;
                             const L = TW + TH;
                             ctx.beginPath();
@@ -3157,7 +3237,7 @@
                 ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, TW, by - y0); ctx.clip();
                 ctx.strokeStyle = 'rgba(11,111,146,0.6)'; ctx.lineWidth = 2;
                 for (let n = 0; n < 14; n++) {
-                    const Y = by - n * lam - ph;
+                    const Y = by - lam + ph - n * lam;   // 波前往下走向狹縫
                     if (Y < y0 - 2) break;
                     ctx.beginPath(); ctx.moveTo(x0, Y); ctx.lineTo(x1, Y); ctx.stroke();
                 }
@@ -3220,6 +3300,7 @@
         /* 6. 聲波的傳播 ---------------------------------------------------- */
         LABS.sound = {
             name: '聲波的傳播',
+            cycle: 2.4,
             tag: 'N08',
             hint: '音叉振動時把周圍空氣一疏一密地推出去。深色環是密部（壓力大）、淺色環是疏部（壓力小），環的間距就是波長。三個模式分別對應大考最常考的三件事：聲速與溫度、聲波進入密介質「變快變長」（與光相反），以及回聲與聲納的來回時間。',
             note: '最容易錯的一句話：聲波由空氣進入水或固體時，波速「變快」、波長「變長」——這與光由空氣進入玻璃（變慢、變短）恰好相反。頻率則永遠由波源決定，穿越界面時不變。',
@@ -3344,7 +3425,7 @@
                     ctx.save(); ctx.beginPath(); ctx.rect(x0, y0, TW, iy - y0); ctx.clip();
                     ctx.strokeStyle = 'rgba(11,111,146,0.7)'; ctx.lineWidth = 2.4;
                     for (let n = 0; n < 30; n++) {
-                        const Y = iy - n * lamAirPx - ph;
+                        const Y = iy - lamAirPx + ph - n * lamAirPx;   // 往下走向界面
                         if (Y < y0 - 2) break;
                         ctx.beginPath(); ctx.moveTo(x0 + 6, Y); ctx.lineTo(x1 - 6, Y); ctx.stroke();
                     }
@@ -3353,7 +3434,7 @@
                     ctx.save(); ctx.beginPath(); ctx.rect(x0, iy, TW, y1 - iy); ctx.clip();
                     ctx.strokeStyle = 'rgba(6,148,162,0.85)'; ctx.lineWidth = 2.4;
                     for (let n = 0; n < 30; n++) {
-                        const Y = iy + n * lamWaterPx - ph * (vWater / vAir);
+                        const Y = iy + ph * (vWater / vAir) + n * lamWaterPx;   // 往下離開界面
                         if (Y > y1 + 2) break;
                         if (Y < iy - 1) continue;
                         ctx.beginPath(); ctx.moveTo(x0 + 6, Y); ctx.lineTo(x1 - 6, Y); ctx.stroke();
@@ -3435,6 +3516,7 @@
         /* 12. 光的干涉實驗（楊氏雙狹縫） ------------------------------------ */
         LABS.young = {
             name: '光的干涉實驗（楊氏雙狹縫）',
+            cycle: 1.85,
             tag: 'N19',
             hint: '「實驗裝置」模式重現楊氏 1801 年的裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
             note: '圖中尺寸未按實際比例作圖：實際上 d < 1 mm、L ≈ 1 m，故 L ≫ d、θ → 0，才能用 sinθ ≈ tanθ = y/L 的小角近似。亮紋 Δℓ = nλ（n = 0,1,2…），暗紋 Δℓ = (m−½)λ（m = 1,2,3…）。',
@@ -3755,6 +3837,7 @@
         /* 13. 光的繞射實驗（單狹縫） --------------------------------------- */
         LABS.diffraction = {
             name: '光的繞射實驗（單狹縫）',
+            cycle: 1.96,
             tag: 'N20',
             hint: '三個模式對應課本的三段推理：① 縫上排滿點光源，子波互相干涉而擴散（惠更斯原理）；② 最大光程差 Δℓ_AB = a sinθ ≈ a·y/L；③ 把縫等分成偶數區，區與區成對抵消 ⇒ 暗紋。第三個模式就是「為什麼 a sinθ = mλ 是暗紋而不是亮紋」的完整論證。',
             note: '外型相似、意義相反：雙狹縫 yₙ = n·Lλ/d 是「亮紋」公式；單狹縫 yₘ = m·Lλ/a 是「暗紋」公式。單狹縫的中央亮紋寬度 2Lλ/a 是其他亮紋（Lλ/a）的兩倍，且亮度向兩側迅速遞減。',
@@ -3888,7 +3971,7 @@
                     ctx.save(); ctx.beginPath(); ctx.rect(0, y0, xSl, TH); ctx.clip();
                     ctx.strokeStyle = col(0.55); ctx.lineWidth = 2;
                     for (let n = 0; n < 20; n++) {
-                        const X = xSl - ((t * 30) % lamPix) - n * lamPix;
+                        const X = xSl - lamPix + ((t * 30) % lamPix) - n * lamPix;   // 往右走向狹縫
                         if (X < 0) break;
                         ctx.beginPath(); ctx.moveTo(X, y0); ctx.lineTo(X, y1); ctx.stroke();
                     }
@@ -4105,6 +4188,118 @@
                 label(ctx, `⇒ P 點為第 ${m} 暗紋，位置 y = ${m}·Lλ/a = ${(m * dyR * 1000).toFixed(2)} mm`, 18, h - 13, C.rose, 12);
             }
         };
+        /* 3. 波的疊加原理與獨立性 ------------------------------------------ */
+        LABS.superpose = {
+            name: '波的疊加原理與獨立性',
+            tag: 'N04',
+            cycle: 6.0,
+            hint: '兩個脈衝相向而行。上方是即時畫面：綠色虛線是 a 波、紫色虛線是 b 波、橘色實線是兩者「位移相加」後的實際繩形。下方把整個過程拆成五格快照，一眼看完「接近 → 開始重疊 → 完全重疊 → 分開 → 各自復原」。用時間軸慢慢拖，可以停在任何一刻比較三條線。',
+            note: '兩個必考重點：① 疊加是「位移相加」（向量和），不是振幅相加——一上一下的脈衝重疊時會互相抵消，不會變高。② 波的獨立性：交會之後兩波各自維持原來的波形、振幅與行進方向繼續前進，宛如從未相遇。',
+            height: 520,
+            modes: [
+                { key: 'constructive', label: '建設性干涉（同側）' },
+                { key: 'destructive', label: '破壞性干涉（異側）' },
+                { key: 'unequal', label: '不等高脈衝（大考題型）' }
+            ],
+            controls: [
+                { key: 'wid', label: '脈衝寬度', min: 0.03, max: 0.10, step: 0.005, value: 0.055, fmt: (v) => `${(v * 100).toFixed(1)}%` },
+                { key: 'amp', label: 'a 波振幅 A₁', min: 0.5, max: 1.2, step: 0.05, value: 1.0, fmt: (v) => `${v.toFixed(2)} A` }
+            ],
+            readouts: (p) => {
+                const a1 = p.amp;
+                const a2 = p.mode === 'destructive' ? -p.amp : (p.mode === 'unequal' ? p.amp * 0.55 : p.amp);
+                const peak = a1 + a2;
+                return [
+                    { label: 'a 波振幅', value: `${a1.toFixed(2)} A（向上）` },
+                    { label: 'b 波振幅', value: `${Math.abs(a2).toFixed(2)} A（${a2 >= 0 ? '向上' : '向下'}）` },
+                    { label: '完全重疊時的位移', value: `${peak >= 0 ? '+' : ''}${peak.toFixed(2)} A${Math.abs(peak) < 0.02 ? '（完全抵消）' : ''}` },
+                    { label: '交會之後', value: '兩波各自復原（波的獨立性）' }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const CYC = 6.0;
+                const u = ((t % CYC) + CYC) % CYC / CYC;                 // 0 → 1
+                const a1 = p.amp;
+                const a2 = p.mode === 'destructive' ? -p.amp : (p.mode === 'unequal' ? p.amp * 0.55 : p.amp);
+                const wid = Math.max(p.wid, 0.02);
+                const g = (z) => Math.exp(-z * z);
+                // 位置以「畫面比例」表示：a 波由左往右，b 波由右往左
+                const xaOf = (uu) => 0.12 + 0.76 * uu;
+                const xbOf = (uu) => 0.88 - 0.76 * uu;
+                const yA = (xr, uu) => a1 * g((xr - xaOf(uu)) / wid);
+                const yB = (xr, uu) => a2 * g((xr - xbOf(uu)) / wid);
+
+                const X0 = 26, X1 = Math.max(X0 + 120, w - 16), SPAN = X1 - X0;
+                const px = (xr) => X0 + xr * SPAN;
+
+                /* ---------- 畫一列（成分波虛線 + 合成波實線） ---------- */
+                const row = (yc, amp, uu, opts) => {
+                    const o = opts || {};
+                    axis(ctx, X0, yc, X1, yc);
+                    const poly = (fn, color, lw, dash) => {
+                        ctx.save();
+                        if (dash) ctx.setLineDash([5, 4]);
+                        ctx.strokeStyle = color; ctx.lineWidth = lw;
+                        ctx.beginPath();
+                        for (let i = 0; i <= 260; i++) {
+                            const xr = i / 260;
+                            const Y = yc - fn(xr) * amp;
+                            i === 0 ? ctx.moveTo(px(xr), Y) : ctx.lineTo(px(xr), Y);
+                        }
+                        ctx.stroke(); ctx.restore();
+                    };
+                    poly((xr) => yA(xr, uu), 'rgba(18,128,92,0.85)', o.thin ? 1.2 : 1.8, true);
+                    poly((xr) => yB(xr, uu), 'rgba(107,70,193,0.85)', o.thin ? 1.2 : 1.8, true);
+                    poly((xr) => yA(xr, uu) + yB(xr, uu), '#e08a12', o.thin ? 2.0 : 3.2, false);
+                    if (o.arrows) {
+                        const ax = px(xaOf(uu)), bx = px(xbOf(uu));
+                        arrow(ctx, ax + 10, yc - amp * a1 * 0.55 - 12, ax + 46, yc - amp * a1 * 0.55 - 12, C.green, 1.8);
+                        label(ctx, 'a 波', ax + 10, yc - amp * a1 * 0.55 - 18, C.green, 11);
+                        arrow(ctx, bx - 10, yc - amp * a2 * 0.55 - 12, bx - 46, yc - amp * a2 * 0.55 - 12, C.violet, 1.8);
+                        label(ctx, 'b 波', bx - 10, yc - amp * a2 * 0.55 - 18, C.violet, 11, 'right');
+                    }
+                };
+
+                /* ---------- 上：即時畫面 ---------- */
+                const liveY = h * 0.245;
+                const liveAmp = Math.min(46, h * 0.115);
+                label(ctx, '即時畫面：- - - 綠＝a 波　- - - 紫＝b 波　—— 橘＝兩者位移相加後的實際繩形', X0, 18, C.ink, 12);
+                row(liveY, liveAmp, u, { arrows: true });
+
+                // 在重疊區標出「相加」的箭頭
+                const xm = (xaOf(u) + xbOf(u)) / 2;
+                if (Math.abs(xaOf(u) - xbOf(u)) < wid * 3.2) {
+                    const X = px(xm);
+                    const va = yA(xm, u), vb = yB(xm, u);
+                    dashed(ctx, X, liveY - liveAmp * 1.25, X, liveY + liveAmp * 1.25, 'rgba(224,138,18,0.5)');
+                    label(ctx, `位移相加：${va >= 0 ? '+' : ''}${va.toFixed(2)}A ${vb >= 0 ? '+' : '−'} ${Math.abs(vb).toFixed(2)}A = ${(va + vb >= 0 ? '+' : '')}${(va + vb).toFixed(2)}A`,
+                        Math.min(X + 8, w - 8), liveY - liveAmp * 1.25 + 12, '#b06a00', 11, X > w * 0.66 ? 'right' : 'left');
+                }
+
+                /* ---------- 下：五格快照，看完整過程 ---------- */
+                const PH = [0.10, 0.36, 0.50, 0.64, 0.90];
+                const CAP = ['① 尚未相遇', '② 開始重疊', '③ 完全重疊', '④ 開始分開', '⑤ 各自復原'];
+                const top = h * 0.40, bottom = h - 26;
+                const gap = (bottom - top) / PH.length;
+                const snapAmp = Math.min(20, gap * 0.30);
+                label(ctx, '整個過程（由上而下依時間排列）', X0, top - 10, C.ink, 12);
+                PH.forEach((ph, i) => {
+                    const yc = top + gap * (i + 0.5);
+                    row(yc, snapAmp, ph, { thin: true });
+                    label(ctx, CAP[i], X0 - 4, yc - gap * 0.34, C.muted, 10);
+                    // 目前時間落在哪一格就highlight
+                    if (Math.abs(u - ph) < 0.06) {
+                        ctx.strokeStyle = 'rgba(224,138,18,0.55)'; ctx.lineWidth = 1.4;
+                        ctx.strokeRect(X0 - 8, yc - gap * 0.42, SPAN + 16, gap * 0.84);
+                    }
+                });
+                label(ctx, p.mode === 'destructive' ? '③ 一上一下 ⇒ 位移互相抵消，繩子幾乎拉平（不是變高！）'
+                    : (p.mode === 'unequal' ? '③ 兩波高度不同 ⇒ 相加後仍有殘餘位移' : '③ 同側相加 ⇒ 位移變大'),
+                    X1 - 4, top + gap * 2 + gap * 0.5 - gap * 0.34, p.mode === 'destructive' ? C.rose : C.green, 10, 'right');
+                label(ctx, '⑤ 交會之後兩波維持原本的波形與方向 ⇒ 波的獨立性', X0, h - 6, C.muted, 11);
+            }
+        };
+
 
 
 
@@ -4119,7 +4314,7 @@
          * ===================================================================*/
         function renderLabIndex() {
             const cards = Object.keys(labMeta).map((id) => {
-                const nodes = ALL_NODES.filter((c) => nodeMeta[c].lab === id);
+                const nodes = nodesOfLab(id);
                 const chips = nodes.map((c) => `<span class="module-node-chip" onclick="event.stopPropagation();navigateTo('node-${c}')">${c} ${nodeMeta[c].title}</span>`).join('');
                 return `
                     <div class="card module-card" onclick="navigateTo('lab-${id}')">
@@ -4144,7 +4339,7 @@
             const id = parts[0];
             const initialMode = parts[1] || null;
             if (!LABS[id]) { renderLabIndex(); return; }
-            const nodes = ALL_NODES.filter((c) => nodeMeta[c].lab === id);
+            const nodes = nodesOfLab(id);
             const chips = nodes.map((c) => `<button class="node-route-btn" onclick="navigateTo('node-${c}')"><b>${c}　${nodeMeta[c].title}</b><span>回到節點頁看公式與題型</span></button>`).join('');
 
             document.getElementById('main-content').innerHTML = `

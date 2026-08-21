@@ -8,7 +8,7 @@ const nodeMeta = {
     N01: { module: 1, section: '§1-1', title: '波動的性質與繩波波速', lab: 'transverse' },
     N02: { module: 1, section: '§1-2', title: '週期波與波速公式', lab: 'transverse' },
     N03: { module: 1, section: '§1-3', title: '波的反射與透射', lab: 'reflection' },
-    N04: { module: 1, section: '§1-4', title: '疊加原理與駐波', lab: 'standing' },
+    N04: { module: 1, section: '§1-4', title: '疊加原理與駐波', lab: ['superpose', 'standing'] },
     N05: { module: 1, section: '§1-5', title: '波前與惠更斯原理', lab: 'huygens' },
     N06: { module: 1, section: '§1-6', title: '水波的反射與折射', lab: 'ripple' },
     N07: { module: 1, section: '§1-6', title: '水波的干涉與繞射', lab: 'ripple' },
@@ -30,6 +30,7 @@ const nodeMeta = {
 const labMeta = {
     transverse: { name: '橫波：行進波與質點振動', desc: '整排質點只上下振動；用「波形平移一小段」的鬼影判斷質點瞬時運動方向，並同時對照 y–x 圖與 y–t 圖。' },
     reflection: { name: '繩波的反射與透射', desc: '以不對稱脈衝呈現固定端／自由端反射的上下顛倒與左右相反，並比較兩段繩交界的反射波與透射波。' },
+    superpose: { name: '波的疊加原理與獨立性', desc: '兩個脈衝相向而行：成分波用虛線、相加後的實際繩形用實線；下方五格快照拆解「接近 → 重疊 → 分開 → 復原」的完整過程。' },
     standing: { name: '駐波的形成', desc: '兩列反向行進波疊加成駐波，標出波節、波腹、λ/2 與 λ/4 尺寸線，以及波形拉直瞬間質點速率最大的關鍵時刻。' },
     huygens: { name: '惠更斯原理與波前', desc: '波前上每一點視為新點波源，子波的包絡線即為下一個波前。' },
     ripple: { name: '水波槽：反射・折射・干涉・繞射', desc: '一個水波槽涵蓋 §1-6 全部現象：反射定律、深淺水區折射、雙波源干涉的波程差與腹節線、狹縫繞射的 d/λ 效應。' },

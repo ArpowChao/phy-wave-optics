@@ -160,3 +160,59 @@
     .lab-controls { grid-template-columns: 1fr; }
     .lab-shell { padding: 0.9rem 0.85rem 1rem; }
 }
+
+/* 時間軸：可手動拖曳、逐格前後，用來慢慢看疊加或反射的過程 */
+.lab-scrub {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.8rem;
+    padding: 0.5rem 0.65rem;
+    border-radius: 10px;
+    background: rgba(107, 70, 193, 0.05);
+    border: 1px solid rgba(107, 70, 193, 0.14);
+}
+
+.lab-scrub .scrub-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-violet);
+    white-space: nowrap;
+}
+
+.lab-scrub input[type="range"] {
+    flex: 1;
+    min-width: 80px;
+    accent-color: hsl(264, 52%, 46%);
+    cursor: pointer;
+}
+
+.lab-scrub .scrub-btn {
+    font: inherit;
+    font-size: 0.82rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.32rem 0.5rem;
+    border-radius: 7px;
+    border: 1px solid rgba(107, 70, 193, 0.28);
+    background: #fff;
+    color: var(--accent-violet);
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.lab-scrub .scrub-btn:hover { background: var(--accent-violet); color: #fff; }
+
+.lab-scrub b {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 800;
+    color: var(--accent-violet);
+    min-width: 66px;
+    text-align: right;
+}
+
+@media (max-width: 640px) {
+    .lab-scrub { flex-wrap: wrap; }
+    .lab-scrub input[type="range"] { order: 3; flex-basis: 100%; }
+}
