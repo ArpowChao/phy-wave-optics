@@ -1317,179 +1317,6 @@
          * 互動實驗：各實驗定義
          * ===================================================================*/
         const LABS = {};
-        /* 2. 繩波的反射與透射 --------------------------------------------- */
-        LABS.reflection = {
-            name: '繩波的反射與透射',
-            cycle: 5.2,                                     // 脈衝一趟來回
-            tag: 'N03',
-            hint: '繩子的粗細就直接畫成線寬：細繩＝線密度小、粗繩＝線密度大。脈衝刻意做成「前緣陡、後緣緩」的不對稱形狀，反射後的「左右相反」才看得出來。當入射波與反射波在交界附近重疊時，會另外用虛線畫出兩個成分波，實線則是它們相加後的實際繩形——用下方的時間軸慢慢拖，就能看清楚疊加的過程。',
-            note: '判斷口訣：對面接「重繩」等效於固定端（反射波上下顛倒），接「輕繩」等效於自由端（不顛倒）。反射波一律左右相反；透射波則永遠不顛倒、也不左右相反。反射波與透射波的頻率都不變，只有透射波的波速與波長會改變。',
-            height: 300,
-            modes: [
-                { key: 'fixed', label: '固定端（牆）' },
-                { key: 'free', label: '自由端（小環）' },
-                { key: 'l2h', label: '輕繩 → 重繩' },
-                { key: 'h2l', label: '重繩 → 輕繩' }
-            ],
-            controls: [
-                { key: 'ratio', label: '兩段繩的線密度比 μ₂/μ₁', min: 2, max: 9, step: 1, value: 4, only: ['l2h', 'h2l'], fmt: (v) => `${v} : 1` }
-            ],
-            readouts: (p) => {
-                if (p.mode === 'fixed') return [
-                    { label: '反射波上下', value: '顛倒' },
-                    { label: '反射波左右', value: '相反' },
-                    { label: '振幅／波速', value: '皆不變' },
-                    { label: '等效於', value: '接重繩（μ₂ → ∞）' }];
-                if (p.mode === 'free') return [
-                    { label: '反射波上下', value: '不顛倒' },
-                    { label: '反射波左右', value: '相反' },
-                    { label: '端點最大高度', value: '約 2A' },
-                    { label: '等效於', value: '接輕繩（μ₂ → 0）' }];
-                const heavyRight = p.mode === 'l2h';
-                const r = Math.sqrt(Math.max(p.ratio, 1));
-                return [
-                    { label: '反射波上下', value: heavyRight ? '顛倒' : '不顛倒' },
-                    { label: '透射波波速', value: heavyRight ? `變慢（÷ ${r.toFixed(2)}）` : `變快（× ${r.toFixed(2)}）` },
-                    { label: '透射波波長', value: heavyRight ? '變短' : '變長' },
-                    { label: '頻率', value: '反射、透射皆不變' }
-                ];
-            },
-            draw: (ctx, w, h, p, t) => {
-                const mid = h * 0.62;
-                const twoRope = (p.mode === 'l2h' || p.mode === 'h2l');
-                const bx = Math.max(w * 0.60, 180);          // 界面 / 端點位置
-                const A = 26;
-
-                /* 不對稱脈衝：右側（前緣）陡、左側（後緣）緩。
-                   u > 0 是脈衝的前方，用較小的寬度；u < 0 是後方，用較大的寬度。
-                   反射時把 u 換成 −u，就會呈現「左右相反」。 */
-                const FRONT = 11, BACK = 34;
-                const shape = (u) => {
-                    const s = u >= 0 ? FRONT : BACK;
-                    const z = u / s;
-                    return Math.exp(-z * z);
-                };
-
-                /* 波速比：兩繩張力相同 ⇒ v ∝ 1/√μ */
-                const ratio = Math.max(p.ratio, 1);
-                const speed2 = p.mode === 'l2h' ? 1 / Math.sqrt(ratio) : Math.sqrt(ratio);
-                /* 反射與透射振幅係數（一維波動的標準結果，這裡以 √μ 之比表示） */
-                const rr = p.mode === 'l2h' ? -(Math.sqrt(ratio) - 1) / (Math.sqrt(ratio) + 1)
-                    : (1 - Math.sqrt(1 / ratio)) / (1 + Math.sqrt(1 / ratio));
-                const tt = 1 + rr;
-
-                /* 動畫：脈衝由左向右，抵達界面後轉為反射（＋透射） */
-                const travel = bx - 34;
-                const cycle = 5.2;
-                const tau = (t % cycle) / cycle;
-                const s = tau * 2 * travel;                   // 走過的總路程
-                let ci = null, cr = null, ctr = null;
-                if (s <= travel) {
-                    ci = 24 + s;
-                } else {
-                    const over = s - travel;
-                    cr = bx - 10 - over;
-                    ctr = bx - 10 + over * speed2;
-                }
-
-                /* 繩子的線寬直接代表線密度：細繩畫細、粗繩畫粗（繩子本身就是那條波） */
-                const LW_LIGHT = 2.0, LW_HEAVY = 7.0, LW_ONE = 3.0;
-                const lwLeft = twoRope ? (p.mode === 'l2h' ? LW_LIGHT : LW_HEAVY) : LW_ONE;
-                const lwRight = twoRope ? (p.mode === 'l2h' ? LW_HEAVY : LW_LIGHT) : LW_ONE;
-
-                if (twoRope) {
-                    dashed(ctx, bx, mid - 62, bx, mid + 68, C.rose);
-                    label(ctx, p.mode === 'l2h' ? '輕繩 μ₁（細、v 快）' : '重繩 μ₁（粗、v 慢）', 14, mid + 78, C.muted, 11);
-                    label(ctx, p.mode === 'l2h' ? '重繩 μ₂（粗、v 慢）' : '輕繩 μ₂（細、v 快）', bx + 8, mid + 78, C.muted, 11);
-                    label(ctx, '交界', bx, mid + 92, C.rose, 10, 'center');
-                }
-                axis(ctx, 10, mid, twoRope ? w - 10 : bx, mid);
-
-                /* 三條曲線：入射波、反射波（各自虛線）與實際繩形（兩者之和，實線）
-                   ⇒ 在交界附近可以看見「疊加」的過程 */
-                const yInc = (X) => (ci !== null && X <= bx) ? A * shape(X - ci) : 0;
-                const yRef = (X) => {
-                    if (cr === null || X > bx) return 0;
-                    const flipY = (p.mode === 'fixed') ? -1 : (twoRope ? Math.sign(rr) : 1);
-                    const amp = twoRope ? A * Math.abs(rr) : A;
-                    return flipY * amp * shape(-(X - cr));
-                };
-                const yTr = (X) => (ctr !== null && X >= bx && twoRope) ? A * tt * shape((X - ctr) / speed2) : 0;
-
-                const overlapping = (ci !== null && cr !== null) || (cr !== null && Math.abs(cr - bx) < 90);
-                const curve = (fn, x0c, x1c, style, lw, dash) => {
-                    ctx.save();
-                    if (dash) ctx.setLineDash([5, 4]);
-                    ctx.strokeStyle = style; ctx.lineWidth = lw; ctx.lineCap = 'round';
-                    ctx.beginPath();
-                    for (let X = x0c; X <= x1c; X += 2) {
-                        const Y = mid - fn(X);
-                        X === x0c ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
-                    }
-                    ctx.stroke(); ctx.restore();
-                };
-                // 成分波（僅在有重疊時顯示，避免畫面太雜）
-                if (cr !== null) {
-                    if (ci !== null) curve(yInc, 10, bx, 'rgba(11,111,146,0.45)', 1.6, true);
-                    curve(yRef, 10, bx, 'rgba(107,70,193,0.5)', 1.6, true);
-                }
-                // 實際繩形：左段用左邊的線寬、右段用右邊的線寬
-                curve((X) => yInc(X) + yRef(X), 10, bx, C.blue, lwLeft, false);
-                if (twoRope) curve(yTr, bx, w - 10, C.blue, lwRight, false);
-
-                /* 端點裝置 */
-                if (!twoRope) {
-                    if (p.mode === 'fixed') {
-                        ctx.fillStyle = 'rgba(18,49,58,0.2)';
-                        ctx.fillRect(bx, mid - 62, 12, 124);
-                        label(ctx, '固定端（牆）', bx + 16, mid - 48, C.rose, 11);
-                    } else {
-                        const ringY = mid - (yInc(bx) + yRef(bx));
-                        ctx.strokeStyle = 'rgba(18,49,58,0.32)'; ctx.lineWidth = 3;
-                        ctx.beginPath(); ctx.moveTo(bx, mid - 62); ctx.lineTo(bx, mid + 62); ctx.stroke();
-                        ctx.strokeStyle = C.rose; ctx.lineWidth = 2.4;
-                        ctx.beginPath(); ctx.arc(bx, ringY, 7, 0, Math.PI * 2); ctx.stroke();
-                        label(ctx, '自由端（小環可上下滑動）', bx + 16, mid - 48, C.rose, 11);
-                    }
-                }
-
-                /* 行進方向箭頭 */
-                if (ci !== null) arrow(ctx, ci + 16, mid - 46, ci + 46, mid - 46, C.blue, 1.8);
-                if (cr !== null && cr > 20) {
-                    arrow(ctx, cr + 14, mid - 46, cr - 16, mid - 46, C.violet, 1.8);
-                    label(ctx, '反射波', cr - 18, mid - 54, C.violet, 11);
-                }
-                if (ctr !== null && ctr < w - 30) {
-                    arrow(ctx, ctr + 6, mid - 46, ctr + 36, mid - 46, C.green, 1.8);
-                    label(ctx, '透射波', ctr + 8, mid - 54, C.green, 11);
-                }
-
-                /* 左上角：入射脈衝與反射脈衝的形狀對照（把「左右相反」講清楚） */
-                const flipYNow = (p.mode === 'fixed' || (twoRope && rr < 0)) ? -1 : 1;
-                const iw = Math.max(84, Math.min(160, (w - 60) * 0.30));
-                const ih = 54, gap = 16, ix = 14, iy = 12;
-                const boxW = iw * 2 + gap + 20, boxH = ih + 26;
-                ctx.fillStyle = 'rgba(255,255,255,0.9)';
-                ctx.strokeStyle = 'rgba(18,49,58,0.14)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.rect(ix - 8, iy - 6, boxW, boxH); ctx.fill(); ctx.stroke();
-                const mini = (ox, flipX, flipY, color, cap) => {
-                    const base = iy + ih * 0.52;
-                    dashed(ctx, ox, base, ox + iw, base, 'rgba(18,49,58,0.18)');
-                    ctx.strokeStyle = color; ctx.lineWidth = 2;
-                    ctx.beginPath();
-                    for (let k = 0; k <= iw; k += 2) {
-                        const u = (k - iw * 0.5) * (4.2 * FRONT / iw) * 2.2;
-                        const v = shape(flipX * u) * flipY;
-                        const Y = base - v * (ih * 0.40);
-                        k === 0 ? ctx.moveTo(ox + k, Y) : ctx.lineTo(ox + k, Y);
-                    }
-                    ctx.stroke();
-                    label(ctx, cap, ox + iw / 2, iy + ih + 10, color, 10, 'center');
-                };
-                mini(ix, 1, 1, C.blue, '入射脈衝（前緣陡）');
-                mini(ix + iw + gap, -1, flipYNow, C.violet, flipYNow < 0 ? '反射：顛倒＋左右相反' : '反射：左右相反、不顛倒');
-            }
-        };
 
         /* 4. 波前與惠更斯原理 ---------------------------------------------- */
         LABS.huygens = {
@@ -4299,6 +4126,228 @@
                 label(ctx, '⑤ 交會之後兩波維持原本的波形與方向 ⇒ 波的獨立性', X0, h - 6, C.muted, 11);
             }
         };
+        /* 2. 繩波的反射與透射 --------------------------------------------- */
+        LABS.reflection = {
+            name: '繩波的反射與透射',
+            tag: 'N03',
+            cycle: 7.0,
+            hint: '繩子的線寬直接代表線密度：細繩＝線密度小、粗繩＝線密度大。入射波（藍虛線）與反射波（紫虛線）在整個過程中同時存在，實線是兩者「位移相加」後的實際繩形——所以在端點附近可以完整看到疊加的過程。右上角的小圖是端點（或交界）的位移隨時間變化：固定端恆為零、自由端可達 2A。用時間軸慢慢拖最清楚。',
+            note: '反射波其實就是「鏡像波」：把入射波以端點為鏡面左右翻轉，固定端再上下顛倒（反射係數 −1）、自由端不顛倒（+1）。兩者隨時相加，就自然得到固定端位移恆為零、自由端最大高度 2A 的結果。',
+            height: 340,
+            modes: [
+                { key: 'fixed', label: '固定端（牆）' },
+                { key: 'free', label: '自由端（小環）' },
+                { key: 'l2h', label: '輕繩 → 重繩' },
+                { key: 'h2l', label: '重繩 → 輕繩' }
+            ],
+            controls: [
+                { key: 'ratio', label: '兩段繩的線密度比 μ₂/μ₁', min: 2, max: 9, step: 1, value: 4, only: ['l2h', 'h2l'], fmt: (v) => `${v} : 1` }
+            ],
+            readouts: (p) => {
+                if (p.mode === 'fixed') return [
+                    { label: '反射係數 r', value: '−1（上下顛倒）' },
+                    { label: '端點位移', value: '恆為零（入射＋反射剛好抵消）' },
+                    { label: '反射波左右', value: '相反（鏡像）' },
+                    { label: '等效於', value: '接重繩（μ₂ → ∞）' }];
+                if (p.mode === 'free') return [
+                    { label: '反射係數 r', value: '＋1（不顛倒）' },
+                    { label: '端點最大位移', value: '2A（入射＋反射同號相加）' },
+                    { label: '反射波左右', value: '相反（鏡像）' },
+                    { label: '等效於', value: '接輕繩（μ₂ → 0）' }];
+                const ratio = p.mode === 'l2h' ? p.ratio : 1 / p.ratio;   // μ₂/μ₁
+                const r = (1 - Math.sqrt(ratio)) / (1 + Math.sqrt(ratio));
+                return [
+                    { label: '反射係數 r', value: `${r.toFixed(2)}（${r < 0 ? '上下顛倒' : '不顛倒'}）` },
+                    { label: '透射係數 t = 1 + r', value: (1 + r).toFixed(2) },
+                    { label: '透射波波速', value: r < 0 ? `變慢（÷ ${Math.sqrt(ratio).toFixed(2)}）` : `變快（× ${Math.sqrt(1 / ratio).toFixed(2)}）` },
+                    { label: '頻率', value: '反射、透射皆不變' }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const CYC = 7.0;
+                const mid = h * 0.60;
+                const twoRope = (p.mode === 'l2h' || p.mode === 'h2l');
+                const bx = Math.max(w * 0.62, 190);              // 端點／交界的位置
+                const A = 26;
+
+                /* 不對稱脈衝：前緣（u>0）陡、後緣（u<0）緩，反射後的「左右相反」才看得出來 */
+                const FRONT = 13, BACK = 38;
+                const shape = (u) => {
+                    const sgm = u >= 0 ? FRONT : BACK;
+                    const z = u / sgm;
+                    return z * z > 20 ? 0 : Math.exp(-z * z);
+                };
+
+                /* 反射係數 r 與透射係數 t（張力相同，阻抗 ∝ √μ） */
+                const ratio = twoRope ? (p.mode === 'l2h' ? Math.max(p.ratio, 1.01) : 1 / Math.max(p.ratio, 1.01)) : null;
+                const rCoef = p.mode === 'fixed' ? -1
+                    : p.mode === 'free' ? 1
+                        : (1 - Math.sqrt(ratio)) / (1 + Math.sqrt(ratio));
+                const tCoef = 1 + rCoef;
+                const speed2 = twoRope ? Math.sqrt(1 / ratio) : 1;      // v₂ / v₁
+
+                /* 入射脈衝中心 c 連續前進；反射波用「鏡像波」表示，兩者隨時同時存在 */
+                const u01 = (((t % CYC) + CYC) % CYC) / CYC;
+                const cStart = 10 - 3.4 * BACK;
+                const cEndRefl = 2 * bx - 10 + 3.4 * BACK;
+                const cEndTrans = twoRope ? bx + (w + 3.4 * BACK * speed2 - bx) / Math.max(speed2, 0.05) : -Infinity;
+                const cEnd = Math.max(cEndRefl, cEndTrans);
+                const c = cStart + u01 * (cEnd - cStart);
+
+                const yInc = (x) => (x <= bx ? A * shape(x - c) : 0);
+                const yRef = (x) => (x <= bx ? rCoef * A * shape((2 * bx - x) - c) : 0);   // 鏡像波
+                const yTr = (x) => (twoRope && x >= bx ? tCoef * A * shape((x - bx) / Math.max(speed2, 0.05) + bx - c) : 0);
+                const ySum = (x) => (x <= bx ? yInc(x) + yRef(x) : yTr(x));
+
+                /* 繩子：線寬直接代表線密度 */
+                const LW_LIGHT = 2.0, LW_HEAVY = 7.0, LW_ONE = 3.0;
+                const lwLeft = twoRope ? (p.mode === 'l2h' ? LW_LIGHT : LW_HEAVY) : LW_ONE;
+                const lwRight = twoRope ? (p.mode === 'l2h' ? LW_HEAVY : LW_LIGHT) : LW_ONE;
+
+                if (twoRope) {
+                    dashed(ctx, bx, mid - 66, bx, mid + 62, C.rose);
+                    label(ctx, p.mode === 'l2h' ? '輕繩 μ₁（細、v 快）' : '重繩 μ₁（粗、v 慢）', 14, mid + 76, C.muted, 11);
+                    label(ctx, p.mode === 'l2h' ? '重繩 μ₂（粗、v 慢）' : '輕繩 μ₂（細、v 快）', bx + 10, mid + 76, C.muted, 11);
+                    label(ctx, '交界', bx, mid + 90, C.rose, 10, 'center');
+                }
+                axis(ctx, 10, mid, twoRope ? w - 10 : bx, mid);
+
+                const curve = (fn, xa, xb, style, lw, dash) => {
+                    ctx.save();
+                    if (dash) ctx.setLineDash([5, 4]);
+                    ctx.strokeStyle = style; ctx.lineWidth = lw; ctx.lineCap = 'round';
+                    ctx.beginPath();
+                    for (let X = xa; X <= xb; X += 2) {
+                        const Y = mid - fn(X);
+                        X === xa ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                    }
+                    ctx.stroke(); ctx.restore();
+                };
+                /* 兩個成分波（隨時顯示）＋ 相加後的實際繩形 */
+                curve(yInc, 10, bx, 'rgba(11,111,146,0.55)', 1.7, true);
+                curve(yRef, 10, bx, 'rgba(107,70,193,0.6)', 1.7, true);
+                curve(ySum, 10, bx, C.blue, lwLeft, false);
+                if (twoRope) curve(ySum, bx, w - 10, C.blue, lwRight, false);
+
+                /* 端點裝置 */
+                const endY = mid - (yInc(bx) + yRef(bx));
+                if (!twoRope) {
+                    if (p.mode === 'fixed') {
+                        ctx.fillStyle = 'rgba(18,49,58,0.22)';
+                        ctx.fillRect(bx, mid - 66, 12, 132);
+                        label(ctx, '固定端（牆）', bx + 17, mid + 60, C.rose, 11);
+                    } else {
+                        ctx.strokeStyle = 'rgba(18,49,58,0.32)'; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.moveTo(bx, mid - 66); ctx.lineTo(bx, mid + 66); ctx.stroke();
+                        ctx.strokeStyle = C.rose; ctx.lineWidth = 2.4;
+                        ctx.beginPath(); ctx.arc(bx, endY, 7, 0, Math.PI * 2); ctx.stroke();
+                        label(ctx, '自由端（小環）', bx + 17, mid + 60, C.rose, 11);
+                    }
+                }
+
+                /* 行進方向箭頭：入射在 c、反射在鏡像位置 2bx−c、透射在 bx+speed2·(c−bx) */
+                const cRef = 2 * bx - c;
+                const cTr = bx + speed2 * (c - bx);
+                if (c > 20 && c < bx - 6) {
+                    arrow(ctx, c + 16, mid - 50, c + 48, mid - 50, C.blue, 1.8);
+                    label(ctx, '入射波', c + 16, mid - 56, C.blue, 11);
+                }
+                if (cRef > 20 && cRef < bx - 6) {
+                    arrow(ctx, cRef - 16, mid + 44, cRef - 48, mid + 44, C.violet, 1.8);
+                    label(ctx, '反射波', cRef - 16, mid + 40, C.violet, 11, 'right');
+                }
+                if (twoRope && cTr > bx + 10 && cTr < w - 26) {
+                    arrow(ctx, cTr + 8, mid - 50, cTr + 40, mid - 50, C.green, 1.8);
+                    label(ctx, '透射波', cTr + 8, mid - 56, C.green, 11);
+                }
+
+                /* 重疊區：在幾個位置畫出「入射位移 → 再加上反射位移」的堆疊刻度，
+                   讓「位移相加」不只是文字，而是看得到的線段。 */
+                let ovA = null, ovB = null;
+                for (let X = 14; X <= bx; X += 2) {
+                    if (Math.abs(yInc(X)) > 0.07 * A && Math.abs(yRef(X)) > 0.07 * A) {
+                        if (ovA === null) ovA = X;
+                        ovB = X;
+                    }
+                }
+                if (ovA !== null && ovB - ovA > 8) {
+                    const N = 6;
+                    for (let i = 0; i <= N; i++) {
+                        const X = ovA + (ovB - ovA) * i / N;
+                        const vi = yInc(X), vr = yRef(X);
+                        const yI = mid - vi, yS = mid - (vi + vr);
+                        if (Math.abs(yS - yI) < 2) continue;
+                        ctx.strokeStyle = 'rgba(224,138,18,0.9)'; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(X, yI); ctx.lineTo(X, yS); ctx.stroke();
+                        ctx.strokeStyle = 'rgba(224,138,18,0.6)'; ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(X - 3.5, yI); ctx.lineTo(X + 3.5, yI);
+                        ctx.moveTo(X - 3.5, yS); ctx.lineTo(X + 3.5, yS);
+                        ctx.stroke();
+                    }
+                    ctx.fillStyle = 'rgba(255,255,255,0.85)';
+                    ctx.fillRect(12, mid + 84, 268, 16);
+                    label(ctx, '橘色線段＝反射波在該處「加上去」的位移', 14, mid + 96, '#b06a00', 11);
+                }
+
+                /* 端點的算式提示 */
+                const overlap = Math.min(Math.abs(shape(bx - c)), 1);
+                if (overlap > 0.06) {
+                    const va = yInc(bx) / A, vb = yRef(bx) / A;
+                    dashed(ctx, bx - 2, mid - 82, bx - 2, mid + 66, 'rgba(224,138,18,0.55)');
+                    const txt = `端點：${va >= 0 ? '+' : ''}${va.toFixed(2)}A ${vb >= 0 ? '+' : '−'} ${Math.abs(vb).toFixed(2)}A = ${(va + vb >= 0 ? '+' : '')}${(va + vb).toFixed(2)}A`;
+                    label(ctx, txt, bx - 8, mid - 74, '#b06a00', 11, 'right');
+                }
+
+                /* 左上：入射與反射的形狀對照 */
+                const iw = Math.max(78, Math.min(148, (w - 60) * 0.26));
+                const ih = 50, gap = 14, ix = 12, iy = 10;
+                ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                ctx.strokeStyle = 'rgba(18,49,58,0.14)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.rect(ix - 7, iy - 5, iw * 2 + gap + 18, ih + 24); ctx.fill(); ctx.stroke();
+                const mini = (ox, flipX, amp, color, cap) => {
+                    const base = iy + ih * 0.52;
+                    dashed(ctx, ox, base, ox + iw, base, 'rgba(18,49,58,0.18)');
+                    ctx.strokeStyle = color; ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    for (let k = 0; k <= iw; k += 2) {
+                        const uu = (k - iw * 0.5) * (9.0 * FRONT / iw);
+                        ctx.lineTo(ox + k, base - shape(flipX * uu) * amp * (ih * 0.38));
+                    }
+                    ctx.stroke();
+                    label(ctx, cap, ox + iw / 2, iy + ih + 8, color, 10, 'center');
+                };
+                mini(ix, 1, 1, C.blue, '入射（前緣陡）');
+                mini(ix + iw + gap, -1, rCoef, C.violet,
+                    rCoef < 0 ? `反射 r=${rCoef.toFixed(2)}：顛倒＋左右相反` : `反射 r=${rCoef.toFixed(2)}：左右相反`);
+
+                /* 右上：端點（交界）位移隨時間的變化 */
+                const gw = Math.max(96, Math.min(178, w * 0.24)), gh = 52;
+                const gx = w - gw - 14, gy = 12;
+                ctx.fillStyle = 'rgba(255,255,255,0.92)';
+                ctx.strokeStyle = 'rgba(18,49,58,0.14)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.rect(gx - 6, gy - 5, gw + 12, gh + 26); ctx.fill(); ctx.stroke();
+                const gMid = gy + gh * 0.62;
+                axis(ctx, gx, gMid, gx + gw, gMid);
+                const endAt = (uu) => {
+                    const cc = cStart + uu * (cEnd - cStart);
+                    return tCoef * shape(bx - cc);            // (1+r)·A·shape → 以 A 為單位
+                };
+                ctx.strokeStyle = C.orange; ctx.lineWidth = 2;
+                ctx.beginPath();
+                for (let i = 0; i <= gw; i++) {
+                    const Y = gMid - endAt(i / gw) * (gh * 0.42);
+                    i === 0 ? ctx.moveTo(gx, Y) : ctx.lineTo(gx + i, Y);
+                }
+                ctx.stroke();
+                ctx.fillStyle = C.rose;
+                ctx.beginPath(); ctx.arc(gx + u01 * gw, gMid - endAt(u01) * (gh * 0.42), 3.6, 0, Math.PI * 2); ctx.fill();
+                label(ctx, twoRope ? '交界位移隨時間' : '端點位移隨時間', gx, gy + 8, C.muted, 10);
+                label(ctx, `最大 ${tCoef.toFixed(2)}A`, gx + gw, gy + gh + 16, tCoef === 0 ? C.rose : C.orange, 10, 'right');
+                if (p.mode === 'fixed') label(ctx, '恆為零', gx, gy + gh + 16, C.rose, 10);
+            }
+        };
+
 
 
 
