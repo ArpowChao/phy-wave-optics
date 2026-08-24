@@ -1326,6 +1326,22 @@
         }
 
         /* =====================================================================
+         * 離屏畫布快取（確保 High-DPI / Retina / 縮放螢幕下像素對齊不跑版）
+         * ===================================================================*/
+        let _offCanvas = null, _offCtx = null;
+        function getOffscreen(w, h) {
+            if (!_offCanvas) {
+                _offCanvas = document.createElement('canvas');
+                _offCtx = _offCanvas.getContext('2d');
+            }
+            if (_offCanvas.width !== w || _offCanvas.height !== h) {
+                _offCanvas.width = w;
+                _offCanvas.height = h;
+            }
+            return { canvas: _offCanvas, ctx: _offCtx };
+        }
+
+        /* =====================================================================
          * 互動實驗：共用框架
          * ---------------------------------------------------------------------
          * 每個實驗宣告 controls（滑桿）、modes（切換鈕）、draw（繪圖）與
@@ -3215,7 +3231,9 @@
                             }
                         }
                     }
-                    ctx.putImageData(img, x0, y0);
+                    const off = getOffscreen(iw, ih);
+                    off.ctx.putImageData(img, 0, 0);
+                    ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, tw, th);
 
                     ctx.save(); clipTank();
                     // 節線（紅）與腹線（綠）：以 S1、S2 為焦點的雙曲線
@@ -3331,7 +3349,9 @@
                         }
                     }
                 }
-                ctx.putImageData(img, x0, by);
+                const off = getOffscreen(iw, ih);
+                off.ctx.putImageData(img, 0, 0);
+                ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, by, tw, h2);
 
                 // 障礙物與狹縫
                 ctx.fillStyle = '#41606b';
@@ -3629,7 +3649,7 @@
 
                 /* ================= 模式一：實驗裝置與干涉場 ================= */
                 if (p.mode === 'setup') {
-                    const y0 = 8, y1 = h - 60, cy = (y0 + y1) / 2, TH = y1 - y0;
+                    const y0 = 8, y1 = h - 74, cy = (y0 + y1) / 2, TH = y1 - y0;
                     const xSrc = 16, xA = Math.max(66, w * 0.10), xB = Math.max(xA + 60, w * 0.26);
                     const xS = Math.max(xB + 120, w - 132);               // 屏幕位置
                     const dPix = Math.max(16, Math.min(TH * 0.30, 26 + p.d * 0.10));
@@ -3665,7 +3685,9 @@
                                 }
                             }
                         }
-                        ctx.putImageData(img, xB, y0);
+                        const off = getOffscreen(iw, ih);
+                        off.ctx.putImageData(img, 0, 0);
+                        ctx.drawImage(off.canvas, 0, 0, iw, ih, xB, y0, fw, fh);
                     }
 
                     // 光源與 S0 之前的區域
@@ -3708,7 +3730,7 @@
                     ctx.strokeStyle = C.orange; ctx.lineWidth = 1.2;
                     dashed(ctx, xA, cy, s1.x, s1.y, 'rgba(201,117,15,0.8)');
                     dashed(ctx, xA, cy, s2.x, s2.y, 'rgba(201,117,15,0.8)');
-                    label(ctx, 'S₀S₁ = S₀S₂ ⇒ S₁、S₂ 落在同一波前上 ⇒ 同相同調光', 6, y1 + 32, C.orange, 11);
+                    label(ctx, 'S₀S₁ = S₀S₂ ⇒ S₁、S₂ 落在同一波前上 ⇒ 同相同調光', 6, y1 + 34, C.orange, 11);
 
                     // 屏幕上的條紋：直接由畫面上的 S₁、S₂ 幾何算出，才會與左邊的干涉場完全吻合
                     const IatY = (py) => {
@@ -3736,8 +3758,8 @@
                         ctx.stroke();
                         label(ctx, '強度', xS + 30, y0 + 12, C.muted, 10);
                     }
-                    label(ctx, `實際的條紋間距 Δy = Lλ/d = ${(dy * 1000).toFixed(2)} mm，各亮紋等寬等亮`, 6, h - 26, C.ink, 12);
-                    label(ctx, '圖中尺寸未按實際比例（實際 L ≫ d，條紋數遠多於圖示）', 6, h - 8, C.muted, 11);
+                    label(ctx, `實際的條紋間距 Δy = Lλ/d = ${(dy * 1000).toFixed(2)} mm，各亮紋等寬等亮`, 6, h - 22, C.ink, 12);
+                    label(ctx, '圖中尺寸未按實際比例（實際 L ≫ d，條紋數遠多於圖示）', 6, h - 7, C.muted, 11);
                     return;
                 }
 
@@ -4065,7 +4087,9 @@
                             }
                         }
                     }
-                    ctx.putImageData(img, xSl, y0);
+                    const off = getOffscreen(iw, ih);
+                    off.ctx.putImageData(img, 0, 0);
+                    ctx.drawImage(off.canvas, 0, 0, iw, ih, xSl, y0, fw, fh);
 
                     // 遮板與縫上的點光源
                     ctx.fillStyle = '#3b5a66';
