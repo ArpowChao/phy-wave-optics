@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 300" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #fdfdfc; stroke: #d1d5db; stroke-width: 1.5; rx: 8px; }
+      .title { font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif; font-weight: bold; font-size: 13.5px; fill: #1e293b; }
+      .label { font-family: "Times New Roman", "PingFang TC", "Microsoft JhengHei", serif; font-size: 13px; fill: #334155; }
+      .sublabel { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 11.5px; fill: #475569; }
+      .math { font-family: "Times New Roman", Times, serif; font-style: italic; font-size: 14px; fill: #0f172a; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 6px; }
+      .slit-plate { fill: #334155; stroke: #1e293b; stroke-width: 1; }
+      .screen { fill: #f1f5f9; stroke: #475569; stroke-width: 2.5; }
+      .ray-red { stroke: #ef4444; stroke-width: 1.6; stroke-dasharray: 4,3; }
+      .fringe-red { fill: #ef4444; opacity: 0.85; }
+      .fringe-blue { fill: #3b82f6; opacity: 0.85; }
+      .dim { stroke: #64748b; stroke-width: 1.2; marker-end: url(#arrow-slate); marker-start: url(#arrow-slate); }
+    </style>
+    <marker id="arrow-slate" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#64748b"/>
+    </marker>
+  </defs>
+
+  <rect width="680" height="300" class="bg"/>
+
+  <!-- Left: Double Slit Setup -->
+  <g transform="translate(25, 20)">
+    <rect x="0" y="0" width="315" height="260" class="box"/>
+    <text x="14" y="24" class="title">(甲) 雙狹縫干涉光路與光程差 Δℓ</text>
+
+    <!-- Slits -->
+    <rect x="50" y="45" width="8" height="60" class="slit-plate"/>
+    <rect x="50" y="125" width="8" height="20" class="slit-plate"/>
+    <rect x="50" y="165" width="8" height="65" class="slit-plate"/>
+    <!-- Slit Opening S1 and S2 -->
+    <text x="30" y="118" class="math">S₁</text>
+    <text x="30" y="160" class="math">S₂</text>
+    <!-- Slit Distance d -->
+    <line x1="42" y1="110" x2="42" y2="155" class="dim"/>
+    <text x="20" y="137" class="math" fill="#0284c7">d</text>
+
+    <!-- Screen at distance L -->
+    <rect x="250" y="45" width="10" height="185" class="screen"/>
+    <text x="265" y="142" class="sublabel" font-weight="bold">屏幕</text>
+
+    <!-- Distance L Dimension -->
+    <line x1="58" y1="240" x2="250" y2="240" class="dim"/>
+    <text x="145" y="254" class="math">L</text>
+
+    <!-- Optical Rays to Point P -->
+    <line x1="58" y1="110" x2="250" y2="90" class="ray-red"/>
+    <line x1="58" y1="155" x2="250" y2="90" class="ray-red"/>
+    <!-- Path difference marker -->
+    <line x1="72" y1="107" x2="68" y2="140" stroke="#0284c7" stroke-width="1.8"/>
+    <text x="80" y="140" class="math" fill="#0284c7" font-size="11px">Δℓ = d sinθ</text>
+
+    <circle cx="250" cy="90" r="3.5" fill="#ef4444"/>
+    <text x="235" y="85" class="math">P</text>
+    <line x1="58" y1="135" x2="250" y2="135" stroke="#94a3b8" stroke-dasharray="4,4"/>
+    <text x="235" y="148" class="sublabel">中央 O</text>
+    <!-- Distance y -->
+    <line x1="262" y1="90" x2="262" y2="135" class="dim"/>
+    <text x="272" y="116" class="math" fill="#e11d48">y</text>
+  </g>
+
+  <!-- Right: Formula and Multi-Choice Analysis -->
+  <g transform="translate(350, 20)">
+    <rect x="0" y="0" width="305" height="260" class="box"/>
+    <text x="14" y="24" class="title">(乙) 白光條紋分佈與選項判定</text>
+
+    <!-- White Light Fringes on Screen -->
+    <g transform="translate(20, 38)">
+      <rect x="0" y="0" width="265" height="58" fill="#0f172a" rx="4"/>
+      <!-- Central White Fringe -->
+      <rect x="116" y="5" width="32" height="48" fill="#ffffff" rx="2"/>
+      <text x="119" y="32" font-family="sans-serif" font-size="9px" font-weight="bold" fill="#0f172a">中央白亮</text>
+
+      <!-- 1st Order Blue Fringe (Inner) -->
+      <rect x="80" y="5" width="18" height="48" class="fringe-blue" rx="1"/>
+      <rect x="166" y="5" width="18" height="48" class="fringe-blue" rx="1"/>
+      <!-- 1st Order Red Fringe (Outer) -->
+      <rect x="42" y="5" width="22" height="48" class="fringe-red" rx="1"/>
+      <rect x="202" y="5" width="22" height="48" class="fringe-red" rx="1"/>
+
+      <text x="82" y="44" font-family="sans-serif" font-size="8px" fill="#ffffff">藍</text>
+      <text x="168" y="44" font-family="sans-serif" font-size="8px" fill="#ffffff">藍</text>
+      <text x="45" y="44" font-family="sans-serif" font-size="8px" fill="#ffffff">紅</text>
+      <text x="206" y="44" font-family="sans-serif" font-size="8px" fill="#ffffff">紅</text>
+    </g>
+    <text x="20" y="112" class="sublabel">白光干涉：波長較短的藍光比紅光更靠近中央！</text>
+
+    <!-- Core Formulas and Answer Key -->
+    <rect x="15" y="125" width="275" height="120" fill="#f1f5f9" stroke="#cbd5e1" rx="4"/>
+    <text x="22" y="146" class="math" font-weight="bold" fill="#0284c7">Δy = λL / d  ,  λ' = λ / n</text>
+    <text x="22" y="168" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">(B) 正確</tspan>：浸沒水中 λ' 變短，條紋間距 Δy 減小。</text>
+    <text x="22" y="188" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">(D) 正確</tspan>：λ藍 &lt; λ紅，藍亮紋比紅亮紋更靠中央。</text>
+    <text x="22" y="208" class="sublabel">• <tspan fill="#dc2626" font-weight="bold">(E) 誘答</tspan>：相鄰兩暗紋光程差相差「一個波長 λ」。</text>
+    <text x="22" y="232" class="label" font-weight="bold" fill="#0369a1">官方公布正確解答：(B)(D)</text>
+  </g>
+</svg>

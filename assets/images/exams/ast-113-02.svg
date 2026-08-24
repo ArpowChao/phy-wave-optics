@@ -1,0 +1,105 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 300" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #fdfdfc; stroke: #d1d5db; stroke-width: 1.5; rx: 8px; }
+      .title { font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif; font-weight: bold; font-size: 13.5px; fill: #1e293b; }
+      .label { font-family: "Times New Roman", "PingFang TC", "Microsoft JhengHei", serif; font-size: 13px; fill: #334155; }
+      .sublabel { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 11.5px; fill: #475569; }
+      .math { font-family: "Times New Roman", Times, serif; font-style: italic; font-size: 14px; fill: #0f172a; }
+      .ray { stroke: #e11d48; stroke-width: 2.2; stroke-linecap: round; }
+      .interface { stroke: #0284c7; stroke-width: 2.5; stroke-linecap: round; }
+      .wave-air { stroke: #ef4444; stroke-width: 1.8; stroke-linecap: round; }
+      .wave-glass { stroke: #3b82f6; stroke-width: 1.8; stroke-linecap: round; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 6px; }
+    </style>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#e11d48"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#2563eb"/>
+    </marker>
+  </defs>
+
+  <rect width="680" height="300" class="bg"/>
+
+  <!-- Left: Light Entering Glass (v=fλ) -->
+  <g transform="translate(25, 20)">
+    <rect x="0" y="0" width="305" height="260" class="box"/>
+    <text x="14" y="24" class="title">(甲) 單色光自空氣進入玻璃 (折射率 n &gt; 1)</text>
+
+    <!-- Air and Glass Regions -->
+    <rect x="15" y="38" width="275" height="90" fill="#f8fafc" stroke="#e2e8f0"/>
+    <text x="24" y="60" class="label" font-weight="bold">空氣 (n₁ = 1.0)</text>
+    <text x="24" y="80" class="math">v₁ = c ,  f₁ = f ,  λ₁ = λ</text>
+
+    <!-- Waves in Air -->
+    <line x1="175" y1="46" x2="175" y2="120" class="wave-air"/>
+    <line x1="203" y1="46" x2="203" y2="120" class="wave-air"/>
+    <line x1="231" y1="46" x2="231" y2="120" class="wave-air"/>
+    <line x1="259" y1="46" x2="259" y2="120" class="wave-air"/>
+    <!-- Dimension for λ1 -->
+    <line x1="203" y1="110" x2="231" y2="110" stroke="#ef4444" stroke-width="1.2" marker-end="url(#arrow-red)" marker-start="url(#arrow-red)"/>
+    <text x="210" y="104" class="math" fill="#ef4444" font-size="12px">λ</text>
+
+    <rect x="15" y="128" width="275" height="118" fill="#e0f2fe" fill-opacity="0.6" stroke="#bae6fd"/>
+    <text x="24" y="152" class="label" font-weight="bold">玻璃介質 (n₂ = n &gt; 1)</text>
+    <text x="24" y="174" class="math" fill="#0369a1">v₂ = c/n &lt; c  (變慢)</text>
+    <text x="24" y="196" class="math" fill="#0369a1">f₂ = f  (頻率恆定不變)</text>
+    <text x="24" y="222" class="math" font-weight="bold" fill="#0284c7">λ₂ = λ/n &lt; λ  (波長變短！)</text>
+
+    <!-- Waves in Glass (Compressed spacing) -->
+    <line x1="175" y1="138" x2="175" y2="236" class="wave-glass"/>
+    <line x1="193" y1="138" x2="193" y2="236" class="wave-glass"/>
+    <line x1="211" y1="138" x2="211" y2="236" class="wave-glass"/>
+    <line x1="229" y1="138" x2="229" y2="236" class="wave-glass"/>
+    <line x1="247" y1="138" x2="247" y2="236" class="wave-glass"/>
+    <line x1="265" y1="138" x2="265" y2="236" class="wave-glass"/>
+    <!-- Dimension for λ2 -->
+    <line x1="211" y1="218" x2="229" y2="218" stroke="#2563eb" stroke-width="1.2" marker-end="url(#arrow-blue)" marker-start="url(#arrow-blue)"/>
+    <text x="213" y="210" class="math" fill="#2563eb" font-size="11px">λ'</text>
+
+    <!-- Boundary -->
+    <line x1="15" y1="128" x2="290" y2="128" class="interface"/>
+  </g>
+
+  <!-- Right: Thin Film Interference (Soap Bubble) & Rainbow -->
+  <g transform="translate(350, 20)">
+    <rect x="0" y="0" width="305" height="260" class="box"/>
+    <text x="14" y="24" class="title">(乙) 肥皂泡七彩：薄膜干涉現象</text>
+
+    <!-- Thin Film Diagram -->
+    <rect x="18" y="42" width="268" height="36" fill="#fef3c7" fill-opacity="0.7" stroke="#fde68a"/>
+    <text x="28" y="64" class="sublabel" font-weight="bold">肥皂水薄膜 (厚度 d)</text>
+
+    <!-- Incident Light Ray -->
+    <line x1="45" y1="12" x2="85" y2="42" class="ray" marker-end="url(#arrow-red)"/>
+    <text x="32" y="20" class="sublabel">入射日光</text>
+
+    <!-- Reflection 1 (Top surface) -->
+    <line x1="85" y1="42" x2="125" y2="12" class="ray" marker-end="url(#arrow-red)"/>
+    <text x="105" y="20" class="sublabel">反射波 1</text>
+
+    <!-- Refraction into film -->
+    <line x1="85" y1="42" x2="115" y2="78" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3,2"/>
+
+    <!-- Reflection at Bottom surface -->
+    <line x1="115" y1="78" x2="145" y2="42" stroke="#f59e0b" stroke-width="2" stroke-dasharray="3,2"/>
+
+    <!-- Reflection 2 (Out of film) -->
+    <line x1="145" y1="42" x2="185" y2="12" class="ray" marker-end="url(#arrow-red)"/>
+    <text x="168" y="20" class="sublabel">反射波 2</text>
+
+    <!-- Superposition eye -->
+    <circle cx="210" cy="10" r="7" fill="#0284c7" fill-opacity="0.2" stroke="#0284c7"/>
+    <text x="222" y="14" class="sublabel" font-weight="bold">疊加干涉</text>
+
+    <!-- Distractor notes -->
+    <line x1="15" y1="92" x2="288" y2="92" stroke="#e2e8f0"/>
+    <text x="15" y="114" class="label" font-weight="bold">【選項觀念檢核】</text>
+    <text x="15" y="138" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">選項 (B) 正確</tspan>：光入介質波速減慢，λ' = λ/n 必縮短。</text>
+    <text x="15" y="162" class="sublabel">• <tspan fill="#dc2626" font-weight="bold">選項 (C) 誘答</tspan>：肥皂泡七彩為「薄膜干涉」。</text>
+    <text x="15" y="186" class="sublabel">• <tspan fill="#dc2626" font-weight="bold">選項 (D) 誘答</tspan>：彩虹成因為水滴之「折射與反射色散」。</text>
+    <text x="15" y="210" class="sublabel">• <tspan fill="#dc2626" font-weight="bold">選項 (E) 誘答</tspan>：雙狹縫證實波動性，光電效應證實粒子性。</text>
+    <text x="15" y="238" class="label" font-weight="bold" fill="#0284c7">官方正確解答：(B)</text>
+  </g>
+</svg>

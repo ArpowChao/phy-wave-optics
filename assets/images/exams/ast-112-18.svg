@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 300" width="100%" height="100%">
+  <defs>
+    <style>
+      .bg { fill: #fdfdfc; stroke: #d1d5db; stroke-width: 1.5; rx: 8px; }
+      .title { font-family: "PingFang TC", "Microsoft JhengHei", "Noto Sans TC", sans-serif; font-weight: bold; font-size: 13.5px; fill: #1e293b; }
+      .label { font-family: "Times New Roman", "PingFang TC", "Microsoft JhengHei", serif; font-size: 13px; fill: #334155; }
+      .sublabel { font-family: "PingFang TC", "Microsoft JhengHei", sans-serif; font-size: 11.5px; fill: #475569; }
+      .math { font-family: "Times New Roman", Times, serif; font-style: italic; font-size: 14px; fill: #0f172a; }
+      .box { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 6px; }
+      .bottle { fill: #e0f2fe; stroke: #0284c7; stroke-width: 2.2; fill-opacity: 0.6; }
+      .axis { stroke: #94a3b8; stroke-width: 1.2; stroke-dasharray: 5,4; }
+      .ray { stroke: #ef4444; stroke-width: 2; stroke-linecap: round; }
+      .normal { stroke: #64748b; stroke-width: 1.2; stroke-dasharray: 4,3; }
+    </style>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1 L 10 5 L 0 9 z" fill="#ef4444"/>
+    </marker>
+  </defs>
+
+  <rect width="680" height="300" class="bg"/>
+
+  <!-- Left: Bottle Cross Section with Optics -->
+  <g transform="translate(25, 20)">
+    <rect x="0" y="0" width="345" height="260" class="box"/>
+    <text x="14" y="24" class="title">【圖 5】陽光射入裝水塑膠瓶之幾何折射光路</text>
+
+    <!-- Principal Axis -->
+    <line x1="20" y1="130" x2="325" y2="130" class="axis"/>
+
+    <!-- Water Cylinder (Bottle) -->
+    <circle cx="150" cy="130" r="75" class="bottle"/>
+    <text x="110" y="134" class="label" font-weight="bold" fill="#0369a1">水 (n = 1.33)</text>
+    <text x="15" y="55" class="sublabel">空氣 (n = 1.0)</text>
+
+    <!-- Parallel Incident Light Rays -->
+    <line x1="20" y1="85" x2="95" y2="85" class="ray" marker-end="url(#arrow-red)"/>
+    <line x1="20" y1="130" x2="75" y2="130" class="ray" marker-end="url(#arrow-red)"/>
+    <line x1="20" y1="175" x2="95" y2="175" class="ray" marker-end="url(#arrow-red)"/>
+
+    <!-- Refraction Inside Water -->
+    <line x1="95" y1="85" x2="205" y2="105" class="ray"/>
+    <line x1="75" y1="130" x2="225" y2="130" class="ray"/>
+    <line x1="95" y1="175" x2="205" y2="155" class="ray"/>
+
+    <!-- Emerging Rays to Focal Point F -->
+    <line x1="205" y1="105" x2="295" y2="130" class="ray" marker-end="url(#arrow-red)"/>
+    <line x1="225" y1="130" x2="295" y2="130" class="ray"/>
+    <line x1="205" y1="155" x2="295" y2="130" class="ray" marker-end="url(#arrow-red)"/>
+
+    <!-- Focus Marker F -->
+    <circle cx="295" cy="130" r="4.5" fill="#dc2626"/>
+    <text x="290" y="152" class="math" font-weight="bold" fill="#dc2626">F (焦點)</text>
+
+    <!-- Normal at First Incident Point -->
+    <line x1="45" y1="45" x2="150" y2="130" class="normal"/>
+    <text x="75" y="70" class="sublabel" fill="#dc2626">θa</text>
+    <text x="105" y="98" class="sublabel" fill="#2563eb">θw</text>
+
+    <text x="20" y="245" class="sublabel">凸柱狀水透鏡：將平行光折射會聚於焦點 F</text>
+  </g>
+
+  <!-- Right: Principles & Multi-Option Check -->
+  <g transform="translate(385, 20)">
+    <rect x="0" y="0" width="270" height="260" class="box"/>
+    <text x="14" y="24" class="title">司乃耳定律與選項檢驗</text>
+
+    <rect x="15" y="38" width="240" height="208" fill="#f1f5f9" stroke="#cbd5e1" rx="4"/>
+    <text x="20" y="60" class="label" font-weight="bold">【司乃耳定律】</text>
+    <text x="20" y="82" class="math" fill="#0284c7">n_a sinθ_a = n_w sinθ_w</text>
+    <text x="20" y="104" class="sublabel">光入光密介質偏向法線：θw &lt; θa</text>
+
+    <line x1="20" y1="116" x2="230" y2="116" stroke="#cbd5e1"/>
+    <text x="20" y="136" class="label" font-weight="bold">【物理量跨介質】</text>
+    <text x="20" y="158" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">(A) 正確</tspan>：週期頻率不變 (Ta = Tw)</text>
+    <text x="20" y="180" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">(C) 正確</tspan>：水折射率較大光速變慢</text>
+    <text x="20" y="202" class="sublabel">• <tspan fill="#16a34a" font-weight="bold">(E) 正確</tspan>：sinθw = (na/nw)sinθa</text>
+
+    <text x="20" y="232" class="label" font-weight="bold" fill="#0284c7">正確答案：(A)(C)(E)</text>
+  </g>
+</svg>
