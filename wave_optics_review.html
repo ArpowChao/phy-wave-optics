@@ -1600,6 +1600,88 @@
             ctx.lineTo(x2 - s * Math.cos(a + 0.4), y2 - s * Math.sin(a + 0.4));
             ctx.closePath(); ctx.fill();
         }
+        /* 畫布文字排版：把「這行放不放得下」交給程式算，而不是為每個標籤各猜一個常數（守則 §3）。
+         *   maxW   可用寬度，超過就逐級縮字，縮到 min 仍放不下則截斷加省略號
+         *   clampW 畫布寬度，給定時會把文字方塊夾在 [2, clampW-2] 之內，避免跑出畫面
+         *   plate  在文字底下鋪一層半透明白底，讓壓在波場或圖樣上的文字仍讀得到
+         * 回傳實際佔用的寬度與字級，呼叫端可據此排下一個元素。 */
+        function labelFit(ctx, text, x, y, color, size, align, opts) {
+            const o = opts || {};
+            const maxW = o.maxW || Infinity;
+            const minSize = o.min || 8;
+            const setF = (px) => { ctx.font = `${px}px Outfit, "Noto Sans TC", sans-serif`; };
+            let sz = size || 11;
+            let txt = String(text);
+            setF(sz);
+            while (ctx.measureText(txt).width > maxW && sz > minSize) { sz -= 0.5; setF(sz); }
+            if (ctx.measureText(txt).width > maxW) {
+                while (txt.length > 1 && ctx.measureText(txt + '…').width > maxW) txt = txt.slice(0, -1);
+                txt += '…';
+            }
+            const tw = ctx.measureText(txt).width;
+            let lx = x;
+            if (align === 'center') lx = x - tw / 2;
+            else if (align === 'right') lx = x - tw;
+            if (o.clampW) lx = Math.max(2, Math.min(lx, o.clampW - tw - 2));
+            if (o.plate) {
+                ctx.fillStyle = typeof o.plate === 'string' ? o.plate : 'rgba(255,255,255,0.86)';
+                ctx.fillRect(lx - 3, y - sz - 1, tw + 6, sz + 5);
+            }
+            ctx.fillStyle = color || C.muted;
+            ctx.textAlign = 'left';
+            ctx.fillText(txt, lx, y);
+            return { w: tw, size: sz, x: lx };
+        }
+
+        /* 一段長說明：優先在指定的分隔符（預設全形空白）斷句換行，斷不開才逐字換行。
+         * 回傳實際畫了幾行，呼叫端據此推進 y。比直接截斷好，因為不會掉字。 */
+        function labelWrap(ctx, text, x, y, color, size, lineH, maxW, sep) {
+            const setF = () => { ctx.font = `${size}px Outfit, "Noto Sans TC", sans-serif`; };
+            setF();
+            if (ctx.measureText(text).width <= maxW) {
+                label(ctx, text, x, y, color, size);
+                return 1;
+            }
+            const chunks = String(text).split(sep || '　').filter(Boolean);
+            const lines = [];
+            let cur = '';
+            const push = () => { if (cur) { lines.push(cur); cur = ''; } };
+            chunks.forEach((ch) => {
+                const trial = cur ? cur + (sep || '　') + ch : ch;
+                if (ctx.measureText(trial).width <= maxW) { cur = trial; return; }
+                push();
+                if (ctx.measureText(ch).width <= maxW) { cur = ch; return; }
+                /* 單一段落本身就超寬 → 逐字斷 */
+                let buf = '';
+                for (const c of ch) {
+                    if (ctx.measureText(buf + c).width > maxW) { lines.push(buf); buf = c; }
+                    else buf += c;
+                }
+                cur = buf;
+            });
+            push();
+            lines.forEach((ln, i) => label(ctx, ln, x, y + i * lineH, color, size));
+            return lines.length;
+        }
+
+        /* 一列上放左右兩段文字：同一行放得下就左右對齊，放不下就自動拆成上下兩行。
+         * 回傳實際用掉的行數，呼叫端據此決定下一列的 y。 */
+        function labelRow(ctx, xL, xR, y, lineH, left, right) {
+            const measure = (o) => {
+                ctx.font = `${o.size || 11}px Outfit, "Noto Sans TC", sans-serif`;
+                return ctx.measureText(o.text).width;
+            };
+            const wL = measure(left), wR = measure(right);
+            if (wL + wR + 16 <= xR - xL) {
+                label(ctx, left.text, xL, y, left.color, left.size || 11);
+                label(ctx, right.text, xR, y, right.color, right.size || 11, 'right');
+                return 1;
+            }
+            labelFit(ctx, left.text, xL, y, left.color, left.size || 11, 'left', { maxW: xR - xL });
+            labelFit(ctx, right.text, xL, y + lineH, right.color, right.size || 11, 'left', { maxW: xR - xL });
+            return 2;
+        }
+
         function dashed(ctx, x1, y1, x2, y2, color) {
             ctx.save(); ctx.setLineDash([4, 4]); ctx.strokeStyle = color || C.muted; ctx.lineWidth = 1;
             ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke(); ctx.restore();
@@ -1953,7 +2035,10 @@
                     // 舊波前
                     ctx.strokeStyle = 'rgba(11,111,146,0.9)'; ctx.lineWidth = 3;
                     ctx.beginPath(); ctx.moveTo(xOld, y0); ctx.lineTo(xOld, y1); ctx.stroke();
-                    label(ctx, '舊波前（此刻的波前）', xOld - 6, y0 - 10, C.blue, 12, 'right');
+                    /* 兩個波前標籤固定分成上下兩行：舊波前在上、新波前在下。
+                     * 不論畫布多窄都不會互撞，也省掉量測分支（守則 §3）。 */
+                    labelFit(ctx, '舊波前（此刻的波前）', xOld - 6, y0 - 28, C.blue, 12, 'right',
+                             { clampW: w, maxW: w - 8 });
 
                     // 子波
                     ctx.strokeStyle = 'rgba(201,117,15,0.75)'; ctx.lineWidth = 1.5;
@@ -2393,8 +2478,10 @@
                         ctx.fillStyle = C.green;
                         ctx.beginPath(); ctx.arc(x0 + u * span, yc, 4.4, 0, Math.PI * 2); ctx.fill();
                     });
-                    label(ctx, title, x0, yc - A - 14, color, 12);
-                    label(ctx, `${nodeName} ${mk.nodes.length} 個　${antiName} ${mk.antis.length} 個`, x1, yc - A - 14, C.muted, 11, 'right');
+                    /* 標題與統計同列；窄畫布放不下時自動改成上下兩行 */
+                    labelRow(ctx, x0, x1, yc - A - 26, 15,
+                             { text: title, color, size: 12 },
+                             { text: `${nodeName} ${mk.nodes.length} 個　${antiName} ${mk.antis.length} 個`, color: C.muted, size: 11 });
                 };
 
                 drawStanding(rowD, dispShape, dispType, C.cyan, 'rgba(14,139,147,0.2)', '位移駐波（空氣分子的振動幅度）', '位移節點', '位移腹點');
@@ -2404,14 +2491,17 @@
                 const leftTag = isString ? '左端 固定端：位移節點' : '左端 開口：位移腹點・壓力節點';
                 const rightTag = isString ? '右端 固定端：位移節點'
                     : (closed ? '右端 閉口端：位移節點・壓力腹點' : '右端 開口：位移腹點・壓力節點');
-                label(ctx, leftTag, x0, h - 34, isString ? C.rose : C.green, 11);
-                label(ctx, rightTag, x1, h - 34, (isString || closed) ? C.rose : C.green, 11, 'right');
+                const endRows = labelRow(ctx, x0, x1, h - 40, 14,
+                    { text: leftTag, color: isString ? C.rose : C.green, size: 11 },
+                    { text: rightTag, color: (isString || closed) ? C.rose : C.green, size: 11 });
+                /* 圖例緊接在端點標註之後，行數由上面實際用掉幾行決定 */
+                const legY = h - 40 + endRows * 14 + 2;
                 ctx.fillStyle = C.rose;
-                ctx.beginPath(); ctx.arc(x0 + 4, h - 18, 4, 0, Math.PI * 2); ctx.fill();
+                ctx.beginPath(); ctx.arc(x0 + 4, legY - 4, 4, 0, Math.PI * 2); ctx.fill();
                 ctx.fillStyle = C.green;
-                ctx.beginPath(); ctx.arc(x0 + 62, h - 18, 4, 0, Math.PI * 2); ctx.fill();
-                label(ctx, '節點', x0 + 12, h - 14, C.muted, 10);
-                label(ctx, '腹點', x0 + 70, h - 14, C.muted, 10);
+                ctx.beginPath(); ctx.arc(x0 + 62, legY - 4, 4, 0, Math.PI * 2); ctx.fill();
+                label(ctx, '節點', x0 + 12, legY, C.muted, 10);
+                label(ctx, '腹點', x0 + 70, legY, C.muted, 10);
 
                 /* 公式與長度標示 */
                 label(ctx, closed ? 'L = m λ/4，m = 1, 3, 5, …（僅奇數諧音）' : 'L = n λ/2，n = 1, 2, 3, …', x0, 20, C.ink, 12);
@@ -3132,11 +3222,17 @@
                 const yAt = (cm, tt) => p.A * Math.sin(k * cm - om * tt);
 
                 /* ---------------- 上圖：y–x ---------------- */
-                label(ctx, 'y–x 圖：橫軸是「位置 x」⇒ 讀得出波長 λ', xL, 18, C.blue, 12);
+                /* 標題與鬼影圖例共用同一列；窄畫布時 labelRow 會自動改成上下兩行 */
+                const topRows = labelRow(ctx, xL, xR - 22, 18, 15,
+                    { text: 'y–x 圖：橫軸是「位置 x」⇒ 讀得出波長 λ', color: C.blue, size: 12 },
+                    { text: '- - - 0.07T 之後的波形（鬼影）', color: C.orange, size: 11 });
                 axis(ctx, xL, yTop, xR, yTop);
+                /* 軸名靠右，先量出它的寬度，落在該範圍內的刻度數字就不畫，避免疊字 */
+                ctx.font = '10px Outfit, "Noto Sans TC", sans-serif';
+                const axisNameW = ctx.measureText('x (cm)').width + 8;
                 for (let cm = 0; cm <= SPAN_CM; cm += 5) {
                     dashed(ctx, X(cm), yTop - 46, X(cm), yTop + 46, 'rgba(18,49,58,0.05)');
-                    label(ctx, `${cm}`, X(cm), yTop + 62, C.muted, 9, 'center');
+                    if (X(cm) < xR - axisNameW) label(ctx, `${cm}`, X(cm), yTop + 62, C.muted, 9, 'center');
                 }
                 label(ctx, 'x (cm)', xR, yTop + 62, C.muted, 10, 'right');
 
@@ -3216,10 +3312,11 @@
                 // 波形前進方向
                 arrow(ctx, xR - 96, yTop - 62, xR - 22, yTop - 62, C.blue, 2);
                 label(ctx, '波形前進 →', xR - 96, yTop - 68, C.blue, 11);
-                label(ctx, '- - - 0.07T 之後的波形（鬼影）', xR - 22, 18, C.orange, 11, 'right');
+                /* 鬼影圖例已由上方的 labelRow 一併畫出 */
 
                 /* ---------------- 下圖：y–t ---------------- */
-                label(ctx, `y–t 圖：橫軸是「時間 t」⇒ 讀得出週期 T（位置固定在 x = ${pcm.toFixed(1)} cm 的那顆質點）`, xL, yBot - 62, C.rose, 12);
+                labelFit(ctx, `y–t 圖：橫軸是「時間 t」⇒ 讀得出週期 T（位置固定在 x = ${pcm.toFixed(1)} cm 的那顆質點）`,
+                         xL, yBot - 62, C.rose, 12, 'left', { maxW: xR - xL - 40 });
                 axis(ctx, xL, yBot, xR, yBot);
                 const NT = 2.2;                                        // 顯示最近 2.2 個週期
                 const tw2 = xR - xL;
@@ -3234,7 +3331,7 @@
                 // 「現在」在最右端
                 ctx.fillStyle = C.rose;
                 ctx.beginPath(); ctx.arc(xR, yBot - yAt(pcm, t) * sy, 5, 0, Math.PI * 2); ctx.fill();
-                label(ctx, '現在', xR - 10, yBot - yAt(pcm, t) * sy - 13, C.rose, 10, 'right');
+                labelFit(ctx, '現在', xR - 10, yBot - yAt(pcm, t) * sy - 13, C.rose, 10, 'right', { clampW: w, plate: 1 });
                 // 週期尺寸線
                 const pxPerT = tw2 / NT;
                 const tA = xR - pxPerT * 1.6, tB = tA + pxPerT;
@@ -3461,7 +3558,7 @@
                     }
                     const off = getOffscreen(iw, ih);
                     off.ctx.putImageData(img, 0, 0);
-                    ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, tw, th);
+                    ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, TW, TH);
 
                     ctx.save(); clipTank();
                     // 節線（紅）與腹線（綠）：以 S1、S2 為焦點的雙曲線
@@ -3579,7 +3676,7 @@
                 }
                 const off = getOffscreen(iw, ih);
                 off.ctx.putImageData(img, 0, 0);
-                ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, by, tw, h2);
+                ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, by, TW, bh);
 
                 // 障礙物與狹縫
                 ctx.fillStyle = '#41606b';
@@ -3686,10 +3783,19 @@
                     const phase = ((t * 34) % lamPx);
                     rings(sx, sy, lamPx, phase, TW * 1.05, -Math.PI, Math.PI, [11, 111, 146]);
                     fork(sx, sy, Math.sin(t * 9) * 1.6);
-                    label(ctx, '音叉（波源）', sx, sy + 34, C.ink, 11, 'center');
-                    label(ctx, '深色環＝密部（壓力大）　淺色環＝疏部（壓力小）', x0 + 8, y0 + 18, C.ink, 12);
-                    label(ctx, `v = 331 + 0.6 × ${p.temp} = ${v.toFixed(1)} m/s`, x0 + 8, y0 + 36, C.blue, 12);
-                    label(ctx, `λ = v / f = ${lamM.toFixed(3)} m`, x0 + 8, y0 + 54, C.cyan, 12);
+                    labelFit(ctx, '音叉（波源）', sx, sy + 34, C.ink, 11, 'center', { clampW: w, plate: 1 });
+                    /* 右上角聲速表的寬度隨畫布縮放，左側說明文字則以「表格左緣」為可用寬度上限 */
+                    const panelW = Math.min(200, Math.max(118, TW * 0.44));
+                    const panelX = x1 - panelW;
+                    const capMax = panelX - (x0 + 8) - 14;
+                    const capLineH = 18;
+                    let capY = y0 + 18;
+                    [['深色環＝密部（壓力大）　淺色環＝疏部（壓力小）', C.ink],
+                     [`v = 331 + 0.6 × ${p.temp} = ${v.toFixed(1)} m/s`, C.blue],
+                     [`λ = v / f = ${lamM.toFixed(3)} m`, C.cyan]
+                    ].forEach(([txt, col]) => {
+                        capY += labelWrap(ctx, txt, x0 + 8, capY, col, 12, capLineH, capMax) * capLineH;
+                    });
                     // 波長尺寸線
                     const ra = phase + 2 * lamPx, rb = ra + lamPx;
                     if (sx + rb < x1 - 10) {
@@ -3700,20 +3806,21 @@
                         ctx.moveTo(sx + ra, yy - 5); ctx.lineTo(sx + ra, yy + 5);
                         ctx.moveTo(sx + rb, yy - 5); ctx.lineTo(sx + rb, yy + 5);
                         ctx.stroke();
-                        label(ctx, 'λ（相鄰兩密部）', (sx + ra + sx + rb) / 2, yy - 8, C.cyan, 11, 'center');
+                        labelFit(ctx, 'λ（相鄰兩密部）', (sx + ra + sx + rb) / 2, yy - 8, C.cyan, 11, 'center', { clampW: w, plate: 1 });
                     }
                     // 不同介質的聲速比較表
-                    const tx = x1 - 208, ty = y0 + 14;
+                    const tx = panelX, ty = y0 + 14;
                     ctx.fillStyle = 'rgba(255,255,255,0.9)';
                     ctx.strokeStyle = 'rgba(18,49,58,0.14)'; ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.rect(tx, ty, 200, 92); ctx.fill(); ctx.stroke();
-                    label(ctx, '各介質中的聲速 (m/s)', tx + 10, ty + 18, C.ink, 11);
-                    [['鋼（固體）', '5950'], ['水（液體）', '1493'], ['空氣 20°C（氣體）', '343'], ['空氣 0°C', '331']]
+                    ctx.beginPath(); ctx.rect(tx, ty, panelW - 8, 92); ctx.fill(); ctx.stroke();
+                    labelFit(ctx, '各介質中的聲速 (m/s)', tx + 10, ty + 18, C.ink, 11, 'left', { maxW: panelW - 28 });
+                    [['鋼　固體', '5950'], ['水　液體', '1493'], ['空氣 20°C', '343'], ['空氣 0°C', '331']]
                         .forEach((r, i) => {
-                            label(ctx, r[0], tx + 10, ty + 36 + i * 15, C.muted, 10);
-                            label(ctx, r[1], tx + 190, ty + 36 + i * 15, C.blue, 10, 'right');
+                            labelFit(ctx, r[0], tx + 10, ty + 36 + i * 15, C.muted, 10, 'left', { maxW: panelW - 70 });
+                            label(ctx, r[1], tx + panelW - 18, ty + 36 + i * 15, C.blue, 10, 'right');
                         });
-                    label(ctx, '固體 > 液體 > 氣體；聲速只由介質種類與溫度決定，與頻率、振幅無關', x0 + 8, y1 + 18, C.muted, 11);
+                    labelFit(ctx, '固體 > 液體 > 氣體；聲速只由介質種類與溫度決定，與頻率、振幅無關',
+                             x0 + 8, y1 + 18, C.muted, 11, 'left', { maxW: TW - 16 });
                     return;
                 }
 
@@ -4141,7 +4248,9 @@
                 label(ctx, `Δℓ = d sinθ ≈ d·y/L = ${q.toFixed(2)} λ`, 18, h - 48, C.ink, 12);
                 label(ctx, `y = ${(q * dy * 100).toFixed(2)} cm　　Δy = Lλ/d = ${(dy * 1000).toFixed(2)} mm`, 18, h - 31, C.muted, 11);
                 label(ctx, `⇒ P 點為 ${verdict}`, 18, h - 13, vcol, 12);
-                label(ctx, '圖中尺寸未按實際比例：實際上 L ≫ d，θ → 0', w - 8, h - 13, C.muted, 10, 'right');
+                /* 比例聲明放最後一行，與上方結論句錯開，窄畫布時自動縮字 */
+                labelFit(ctx, '圖中尺寸未按實際比例：實際上 L ≫ d，θ → 0', w - 8, h - 4, C.muted, 10, 'right',
+                         { clampW: w, maxW: w - 16 });
             }
         };
         /* 13. 光的繞射實驗（單狹縫） --------------------------------------- */
@@ -4605,9 +4714,17 @@
                         ctx.strokeRect(X0 - 8, yc - gap * 0.42, SPAN + 16, gap * 0.84);
                     }
                 });
-                label(ctx, p.mode === 'destructive' ? '③ 一上一下 ⇒ 位移互相抵消，繩子幾乎拉平（不是變高！）'
-                    : (p.mode === 'unequal' ? '③ 兩波高度不同 ⇒ 相加後仍有殘餘位移' : '③ 同側相加 ⇒ 位移變大'),
-                    X1 - 4, top + gap * 2 + gap * 0.5 - gap * 0.34, p.mode === 'destructive' ? C.rose : C.green, 10, 'right');
+                /* ③ 那一列的重點說明與左側「③ 完全重疊」共用一行。
+                 * 窄畫布放不下時就不畫——畫布下方的重點框已經寫了同一句話，
+                 * 硬擠只會疊字。 */
+                const midNote = p.mode === 'destructive' ? '③ 一上一下 ⇒ 位移互相抵消，繩子幾乎拉平（不是變高！）'
+                    : (p.mode === 'unequal' ? '③ 兩波高度不同 ⇒ 相加後仍有殘餘位移' : '③ 同側相加 ⇒ 位移變大');
+                ctx.font = '10px Outfit, "Noto Sans TC", sans-serif';
+                const capW = ctx.measureText(CAP[2]).width;
+                if (ctx.measureText(midNote).width + capW + 20 <= SPAN) {
+                    label(ctx, midNote, X1 - 4, top + gap * 2 + gap * 0.5 - gap * 0.34,
+                          p.mode === 'destructive' ? C.rose : C.green, 10, 'right');
+                }
                 label(ctx, '⑤ 交會之後兩波維持原本的波形與方向 ⇒ 波的獨立性', X0, h - 6, C.muted, 11);
             }
         };
@@ -4894,6 +5011,13 @@
         /* =====================================================================
          * 啟動
          * ===================================================================*/
+        /* 開發用：?selftest=1 會載入互動實驗的自動化視覺健檢（正常瀏覽不受影響） */
+        if (/[?&]selftest=1/.test(location.search)) {
+            const st = document.createElement('script');
+            st.src = 'scripts/lab-selftest.js';
+            document.head.appendChild(st);
+        }
+
         window.addEventListener('popstate', () => { renderRoute(routeFromLocation()); });
 
         document.addEventListener('DOMContentLoaded', () => {
