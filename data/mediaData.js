@@ -92,7 +92,7 @@ const animData = {
         nodes: ['N19', 'N20'],
         video: 'assets/video/two_slits.mp4',
         poster: 'assets/images/anim/two_slits.jpg',
-        seconds: 56,
+        seconds: 55,
         misconception: 'd sinθ = nλ 與 a sinθ = mλ 外型幾乎相同，卻一個算亮紋、一個算暗紋，考場上經常記反。',
         lead: '差別不在公式，在「縫後面有幾個波源」。看懂這一點就不必再背哪個是亮、哪個是暗。',
         chapters: [
