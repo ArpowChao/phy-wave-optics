@@ -28,9 +28,9 @@
     <script src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=anim_doppler_v3"></script>
-    <script src="data/questionBank.js?v=anim_doppler_v3"></script>
-    <script src="data/mediaData.js?v=anim_doppler_v3"></script>
+    <script src="data/modulesData.js?v=anim_myth_v4"></script>
+    <script src="data/questionBank.js?v=anim_myth_v4"></script>
+    <script src="data/mediaData.js?v=anim_myth_v4"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -454,6 +454,20 @@
 
         /* ---------- 動畫講解 ---------- */
         .anim-block { border-left: 4px solid var(--accent-violet); }
+        /* 這支動畫在打哪個迷思——放在最前面，讀者一眼知道要不要看 */
+        .anim-myth {
+            font-size: 0.84rem; line-height: 1.8; color: var(--text-main);
+            background: var(--accent-rose-light);
+            border-left: 3px solid var(--accent-rose);
+            border-radius: 0 8px 8px 0;
+            padding: 0.55rem 0.75rem; margin-bottom: 0.7rem; max-width: 68ch;
+        }
+        .anim-myth b {
+            display: inline-block; margin-right: 0.5rem;
+            font-size: 0.74rem; font-weight: 800; letter-spacing: 0.04em;
+            color: var(--accent-rose);
+        }
+
         .anim-lead {
             font-size: 0.88rem; line-height: 1.85; color: var(--text-muted);
             margin-bottom: 0.85rem; max-width: 66ch;
@@ -1018,6 +1032,7 @@
             return `
                 <div class="card anim-block">
                     <h4><span class="formula-node-tag">動畫</span>${a.title}</h4>
+                    ${a.misconception ? `<div class="anim-myth"><b>常見誤解</b>${a.misconception}</div>` : ''}
                     <p class="anim-lead">${a.lead}</p>
                     <div class="anim-stage">
                         <video id="${vid}" controls preload="${(a.chapters || []).length ? 'metadata' : 'none'}" playsinline poster="${a.poster}">
@@ -1651,12 +1666,16 @@
                 if (ctx.measureText(trial).width <= maxW) { cur = trial; return; }
                 push();
                 if (ctx.measureText(ch).width <= maxW) { cur = ch; return; }
-                /* 單一段落本身就超寬 → 逐字斷 */
+                /* 單一段落本身就超寬 → 逐「詞」斷。
+                 * 中日韓字元可以單獨換行，但英數、小數點與運算子必須整組保留，
+                 * 否則 "0.680 m" 會被切成 "0.6" 和 "80 m" 這種假數字。 */
+                const tokens = ch.match(/[0-9A-Za-z.,:=+\-/×·°%]+|\s+|[^]/g) || [ch];
                 let buf = '';
-                for (const c of ch) {
-                    if (ctx.measureText(buf + c).width > maxW) { lines.push(buf); buf = c; }
-                    else buf += c;
-                }
+                tokens.forEach((tk) => {
+                    if (!buf) { buf = tk; return; }
+                    if (ctx.measureText(buf + tk).width > maxW) { lines.push(buf); buf = tk.trim() ? tk : ''; }
+                    else buf += tk;
+                });
                 cur = buf;
             });
             push();
@@ -2242,7 +2261,9 @@
                 if (p.n1 > p.n2) {
                     const thc = Math.asin(p.n2 / p.n1);
                     dashed(ctx, cx, iy, cx - Math.sin(thc) * R, iy - Math.cos(thc) * R, 'rgba(107,70,193,0.7)');
-                    label(ctx, `臨界角 ${deg(thc).toFixed(1)}°`, cx - Math.sin(thc) * R - 4, iy - Math.cos(thc) * R + 16, C.violet, 11, 'right');
+                    labelFit(ctx, `臨界角 ${deg(thc).toFixed(1)}°`,
+                             cx - Math.sin(thc) * R - 4, iy - Math.cos(thc) * R + 16,
+                             C.violet, 11, 'right', { clampW: w, plate: 1 });
                 }
             }
         };
@@ -2296,7 +2317,8 @@
                 const sy = (cm) => axisY - cm * vScale;
 
                 axis(ctx, 12, axisY, w - 12, axisY);
-                label(ctx, '主軸', w - 40, axisY + 16, C.muted, 10);
+                /* 主軸標籤放在軸線「上方」，避開下方那排 F / 2F 刻度 */
+                label(ctx, '主軸', w - 40, axisY - 8, C.muted, 10);
 
                 // 透鏡本體
                 ctx.strokeStyle = C.blue; ctx.lineWidth = 2.4;
@@ -2313,12 +2335,15 @@
                 ctx.stroke();
 
                 // 焦點與兩倍焦距
+                /* F / 2F 的刻度標籤與「主軸」同在軸線附近；窄畫布時焦點會被擠到主軸標籤上，
+                 * 故一律加底板，讓後畫的刻度蓋過去而不是糊成一團。 */
                 [[-p.f, 'F'], [p.f, 'F'], [-2 * p.f, '2F'], [2 * p.f, '2F']].forEach(([d, name]) => {
                     const X = sx(d);
                     if (X < 8 || X > w - 8) return;
                     ctx.fillStyle = C.violet;
                     ctx.beginPath(); ctx.arc(X, axisY, 3.4, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, name, X, axisY + 18, C.violet, 10, 'center');
+                    labelFit(ctx, name, X, axisY + 18, C.violet, 10, 'center',
+                             { clampW: w, plate: 1 });
                 });
 
                 const Ox = sx(-p.p), Oy = sy(p.ho);
@@ -2370,11 +2395,16 @@
                 } else {
                     const Ix = sx(q), Iy = sy(m * p.ho);
                     arrow(ctx, Ix, axisY, Ix, Iy, q > 0 ? C.blue : C.violet, 2.8);
-                    label(ctx, q > 0 ? '實像' : '虛像', Ix + 8, Iy + (Iy < axisY ? -6 : 15), q > 0 ? C.blue : C.violet, 12);
+                    labelFit(ctx, q > 0 ? '實像' : '虛像', Ix + 8,
+                             Iy + (Iy < axisY ? -6 : 15),
+                             q > 0 ? C.blue : C.violet, 12, 'left',
+                             { clampW: w, plate: 1 });
                     label(ctx, `p = ${p.p} cm　f = ${f} cm　q = ${q.toFixed(1)} cm　m = ${m.toFixed(2)}`, 14, 22, C.ink, 12);
                 }
                 label(ctx, concave ? '凹透鏡：不論物體在哪裡，永遠成正立縮小虛像' : '凸透鏡：物在焦點外成倒立實像、焦點內成正立放大虛像', 14, h - 12, C.muted, 11);
-                label(ctx, '橘：平行主軸入射　粉：通過鏡心　青：通過鏡前焦點', 14, h - 28, C.muted, 10);
+                /* 三條主要光線的圖例：一行放不下就拆成兩行，別和像的標註擠在一起 */
+                labelWrap(ctx, '橘：平行主軸入射　粉：通過鏡心　青：通過鏡前焦點',
+                          14, h - 34, C.muted, 10, 13, w - 28);
             }
         };
         /* 7. 弦、開管與閉管的諧音 ------------------------------------------ */
@@ -3178,7 +3208,9 @@
                 tag('ΔP 圖比 Δx 圖落後 λ/4', x1, Y(483), C.muted, 10, 'right', false);
 
                 /* ---------- 各層標題與波前進方向 ---------- */
-                label(ctx, '① 未振動前分子的位置（等間距）', 4, yT1, C.ink, 12);
+                /* 這一行與右側的「波前進方向」共用同一列，窄畫布放不下就自動縮字 */
+                labelFit(ctx, '① 未振動前分子的位置（等間距）', 4, yT1, C.ink, 12, 'left',
+                         { maxW: w * 0.56 });
                 label(ctx, '② 振動後某瞬間分子的位置（箭頭＝相對原位置的位移）', 4, yT2, C.ink, 12);
                 label(ctx, '③ 位移 Δx – 位置 x 關係圖（向右為正、向左為負）', 4, yT3, C.blue, 12);
                 label(ctx, '④ 壓力變化 ΔP – 位置 x 關係圖', 4, yT4, C.rose, 12);
@@ -3614,15 +3646,30 @@
                     const nearHalf = Math.abs(frac - 0.5) < 0.06;
                     const verdict = nearInt ? `腹點（第 ${Math.round(dl)} 腹線）` : (nearHalf ? `節點（第 ${Math.round(dl + 0.5)} 節線）` : '介於腹線與節線之間');
                     const vcol = nearInt ? '#7bf0c2' : (nearHalf ? '#ffb3c6' : '#ffffff');
+                    /* 左上的讀數面板與右上的圖例面板：寬度依畫布分配，
+                     * 三行讀數用同一個行高堆疊，不再各自寫死 y（守則 §3）。 */
+                    const legendW = Math.min(186, TW * 0.44);
+                    const wide = TW >= 520;                    // 夠寬才並排，否則圖例讓到下一段
+                    const readW = Math.min(300, wide ? TW - legendW - 22 : TW - 12);
+                    const lineH = 18;
                     ctx.fillStyle = 'rgba(8,30,38,0.82)';
-                    ctx.fillRect(x0 + 6, y0 + 6, Math.min(300, TW - 12), 62);
-                    label(ctx, `波程差 Δℓ = |PS₁ − PS₂| = ${(Math.abs(r1 - r2) / scale).toFixed(2)} cm`, x0 + 14, y0 + 24, '#e6f4f7', 12);
-                    label(ctx, `Δℓ / λ = ${dl.toFixed(2)}`, x0 + 14, y0 + 42, '#e6f4f7', 12);
-                    label(ctx, `⇒ P 為 ${verdict}`, x0 + 14, y0 + 60, vcol, 12);
+                    ctx.fillRect(x0 + 6, y0 + 6, readW, 3 * lineH + 12);
+                    [[`波程差 Δℓ = |PS₁ − PS₂| = ${(Math.abs(r1 - r2) / scale).toFixed(2)} cm`, '#e6f4f7'],
+                     [`Δℓ / λ = ${dl.toFixed(2)}`, '#e6f4f7'],
+                     [`⇒ P 為 ${verdict}`, vcol]
+                    ].forEach(([txt, col], i) => {
+                        labelFit(ctx, txt, x0 + 14, y0 + 24 + i * lineH, col, 12, 'left',
+                                 { maxW: readW - 18 });
+                    });
+                    /* 圖例：寬畫布放右上角，窄畫布移到讀數面板下方，避免兩塊互相壓 */
+                    const legX = wide ? x1 - 6 : x0 + 6 + legendW;
+                    const legY = wide ? y0 + 6 : y0 + 6 + 3 * lineH + 16;
                     ctx.fillStyle = 'rgba(8,30,38,0.78)';
-                    ctx.fillRect(x1 - 186, y0 + 6, 180, 40);
-                    label(ctx, '- - - 腹線（Δℓ = nλ）', x1 - 14, y0 + 22, '#7bf0c2', 11, 'right');
-                    label(ctx, '—— 節線（Δℓ = (m−½)λ）', x1 - 14, y0 + 38, '#ffb3c6', 11, 'right');
+                    ctx.fillRect(legX - legendW, legY, legendW, 2 * lineH + 6);
+                    labelFit(ctx, '- - - 腹線（Δℓ = nλ）', legX - 8, legY + 16, '#7bf0c2', 11, 'right',
+                             { clampW: w, maxW: legendW - 16 });
+                    labelFit(ctx, '—— 節線（Δℓ = (m−½)λ）', legX - 8, legY + 16 + lineH, '#ffb3c6', 11, 'right',
+                             { clampW: w, maxW: legendW - 16 });
                     label(ctx, '白＝兩波峰重疊　黑＝兩波谷重疊　灰＝節線（水面靜止）', x0 + 6, y1 + 18, C.muted, 11);
                     return;
                 }
@@ -3785,9 +3832,12 @@
                     fork(sx, sy, Math.sin(t * 9) * 1.6);
                     labelFit(ctx, '音叉（波源）', sx, sy + 34, C.ink, 11, 'center', { clampW: w, plate: 1 });
                     /* 右上角聲速表的寬度隨畫布縮放，左側說明文字則以「表格左緣」為可用寬度上限 */
-                    const panelW = Math.min(200, Math.max(118, TW * 0.44));
+                    /* 畫布太窄時，說明文字與聲速表無法並存（兩邊都會被切成碎片）。
+                     * 此時不畫表——畫布下方的即時讀數已經列出同一組數字。 */
+                    const showPanel = TW >= 430;
+                    const panelW = showPanel ? Math.min(200, TW * 0.42) : 0;
                     const panelX = x1 - panelW;
-                    const capMax = panelX - (x0 + 8) - 14;
+                    const capMax = (showPanel ? panelX - 14 : x1) - (x0 + 8);
                     const capLineH = 18;
                     let capY = y0 + 18;
                     [['深色環＝密部（壓力大）　淺色環＝疏部（壓力小）', C.ink],
@@ -3809,6 +3859,11 @@
                         labelFit(ctx, 'λ（相鄰兩密部）', (sx + ra + sx + rb) / 2, yy - 8, C.cyan, 11, 'center', { clampW: w, plate: 1 });
                     }
                     // 不同介質的聲速比較表
+                    if (!showPanel) {
+                        labelFit(ctx, '固體 > 液體 > 氣體；聲速只由介質種類與溫度決定，與頻率、振幅無關',
+                                 x0 + 8, y1 + 18, C.muted, 11, 'left', { maxW: TW - 16 });
+                        return;
+                    }
                     const tx = panelX, ty = y0 + 14;
                     ctx.fillStyle = 'rgba(255,255,255,0.9)';
                     ctx.strokeStyle = 'rgba(18,49,58,0.14)'; ctx.lineWidth = 1;
@@ -3865,8 +3920,10 @@
                     ctx.strokeStyle = 'rgba(194,38,74,0.3)'; ctx.lineWidth = 1;
                     const bx = x1 - 268, byy = iy - 46;
                     ctx.beginPath(); ctx.rect(bx, byy, 258, 40); ctx.fill(); ctx.stroke();
-                    label(ctx, '⚠ 聲波進入密介質：變快、變長', bx + 10, byy + 17, C.rose, 12);
-                    label(ctx, '　光波進入密介質：變慢、變短（相反！）', bx + 10, byy + 33, C.rose, 11);
+                    labelFit(ctx, '⚠ 聲波進入密介質：變快、變長', bx + 10, byy + 17, C.rose, 12,
+                             'left', { clampW: w, maxW: w - 20 });
+                    labelFit(ctx, '　光波進入密介質：變慢、變短（相反！）', bx + 10, byy + 33,
+                             C.rose, 11, 'left', { clampW: w, maxW: w - 20 });
                     label(ctx, '頻率由波源決定，穿越界面時完全不變', x0 + 8, y1 + 18, C.muted, 11);
                     return;
                 }
@@ -4227,7 +4284,12 @@
                 dashed(ctx, b2.x, b2.y, bA.x, bA.y, 'rgba(107,70,193,0.85)');
                 label(ctx, 'd', b1.x - 8, (b1.y + b2.y) / 2 + 4, C.orange, 11, 'right');
                 label(ctx, 'Δℓ', (b1.x + bA.x) / 2 - 4, (b1.y + bA.y) / 2 + 16, C.violet, 12);
-                label(ctx, '往 P 點', b2.x + uu.x * 150 + 4, b2.y + uu.y * 150 + 4, C.muted, 10);
+                /* 沿射線標「往 P 點」時會落到中央線那條水平線上，
+                 * 改成往射線的垂直方向偏移，兩者不會再重疊。 */
+                labelFit(ctx, '往 P 點',
+                         b2.x + uu.x * 150 - uu.y * 14,
+                         b2.y + uu.y * 150 + uu.x * 14 - 6,
+                         C.muted, 10, 'left', { clampW: w, plate: 1 });
                 ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.arc(b1.x, b1.y, 26, -thD, 0); ctx.stroke();
                 label(ctx, 'θ', b1.x + 31, b1.y - 6, C.ink, 11);
