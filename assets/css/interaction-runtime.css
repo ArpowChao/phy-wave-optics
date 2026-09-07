@@ -37,8 +37,9 @@
 .lab-hint {
     font-size: 0.82rem;
     color: var(--text-muted);
-    line-height: 1.65;
+    line-height: 1.7;
     margin-bottom: 0.85rem;
+    max-width: 72ch;
 }
 
 .lab-stage {
@@ -148,8 +149,9 @@
     background: var(--accent-orange-light);
     border-radius: 0 8px 8px 0;
     font-size: 0.8rem;
-    line-height: 1.7;
+    line-height: 1.75;
     color: var(--text-main);
+    max-width: 74ch;
 }
 
 @media (prefers-reduced-motion: reduce) {
