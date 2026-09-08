@@ -4320,19 +4320,27 @@
                         labelFit(ctx, `波程差 Δℓ = ${dlCm.toFixed(2)} cm ≈ ${dlLam.toFixed(2)} λ`, x0 + 12, y0 + 38, '#f59e0b', 11, 'left', { maxW: hudW - 16 });
                         labelFit(ctx, `⇒ ${verdict}`, x0 + 12, y0 + 54, verdictCol, 11, 'left', { maxW: hudW - 16 });
                     } else {
-                        const hintW = Math.min(340, TW - 16);
+                        /* 右上角有腹線／節線圖例時，提示框只能用剩下的寬度，
+                         * 否則兩塊會疊在一起（窄畫布尤其明顯）。 */
+                        const legReserve = (Number(p.lines) === 1 && TW >= 470)
+                            ? Math.min(200, TW * 0.45) + 14 : 0;
+                        const hintW = Math.min(340, TW - 16 - legReserve);
                         ctx.fillStyle = 'rgba(8, 30, 38, 0.76)';
                         ctx.fillRect(x0 + 6, y0 + 6, hintW, 26);
-                        labelFit(ctx, '💡 提示：在水面上點擊任意位置放置測量點 P', x0 + 12, y0 + 23, '#e6f4f7', 11, 'left', { maxW: hintW - 16 });
+                        labelFit(ctx, '💡 提示：點水面任一處放置測量點 P', x0 + 12, y0 + 23, '#e6f4f7', 11, 'left', { maxW: hintW - 16 });
                     }
                     ctx.restore();
 
                     if (Number(p.lines) === 1) {
+                        /* 畫布夠寬才並排在右上角；太窄就整塊移到提示框下方 */
                         const legW = Math.min(200, TW * 0.45);
+                        const wide = TW >= 470;
+                        const lx = wide ? x1 - 6 : x0 + 6 + legW;
+                        const ly = wide ? y0 + 6 : y0 + 40;
                         ctx.fillStyle = 'rgba(8, 30, 38, 0.78)';
-                        ctx.fillRect(x1 - legW - 6, y0 + 6, legW, 40);
-                        labelFit(ctx, '- - - 腹線 (建設性/雙曲線)', x1 - 12, y0 + 22, '#7bf0c2', 10, 'right', { maxW: legW - 12 });
-                        labelFit(ctx, '······ 節線 (破壞性/雙曲線)', x1 - 12, y0 + 38, '#ffb3c6', 10, 'right', { maxW: legW - 12 });
+                        ctx.fillRect(lx - legW, ly, legW, 40);
+                        labelFit(ctx, '- - - 腹線 (建設性/雙曲線)', lx - 6, ly + 16, '#7bf0c2', 10, 'right', { maxW: legW - 12 });
+                        labelFit(ctx, '······ 節線 (破壞性/雙曲線)', lx - 6, ly + 32, '#ffb3c6', 10, 'right', { maxW: legW - 12 });
                     }
 
                     const dOverLamNow = dCm / lamCm;
@@ -4863,7 +4871,11 @@
                 // 中央線 OO'
                 dashed(ctx, O.x, O.y, xS, O.y, 'rgba(18,49,58,0.45)');
                 label(ctx, "O'", xS - 12, O.y + 15, C.muted, 11, 'right');
-                label(ctx, '中央線', (O.x + xS) / 2, O.y - 6, C.muted, 10, 'center');
+                /* 中央線標籤：θ 角標在起點附近、「往 P 點」標在射線中段，
+                 * 水平方向怎麼挪都會撞到其中一個。改成標在中央線的「另一側」——
+                 * P 在線上方就標下方，反之亦然，射線永遠不會經過那裡。 */
+                const midSide = (P.y < O.y) ? 16 : -8;
+                label(ctx, '中央線', O.x + (xS - O.x) * 0.5, O.y + midSide, C.muted, 10, 'center');
 
                 // PS1、PS2
                 ctx.strokeStyle = col(0.9); ctx.lineWidth = 2;
