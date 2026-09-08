@@ -28,9 +28,9 @@
     <script src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=anim_myth_v4"></script>
-    <script src="data/questionBank.js?v=anim_myth_v4"></script>
-    <script src="data/mediaData.js?v=anim_myth_v4"></script>
+    <script src="data/modulesData.js?v=anim_frame_v5"></script>
+    <script src="data/questionBank.js?v=anim_frame_v5"></script>
+    <script src="data/mediaData.js?v=anim_frame_v5"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -477,7 +477,12 @@
             background: #0d1b24; border: 1px solid rgba(10, 45, 55, 0.16);
             box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.04);
         }
-        .anim-stage video { display: block; width: 100%; height: auto; background: #0d1b24; }
+        /* 明確宣告 16:9。preload 尚未取得 metadata 前，瀏覽器會用預設的
+         * 300×150（2:1）當內建比例，版面會先歪一下再跳回來。 */
+        .anim-stage video {
+            display: block; width: 100%; height: auto;
+            aspect-ratio: 16 / 9; background: #0d1b24;
+        }
         .anim-meta {
             display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
             margin: 0.7rem 0 0.2rem; font-size: 0.76rem; color: var(--text-muted);
@@ -514,6 +519,8 @@
         .anim-figs { display: grid; gap: 0.8rem; margin-top: 1rem; }
         .anim-fig { border-radius: 12px; overflow: hidden; border: 1px solid rgba(10, 45, 55, 0.14); }
         .anim-fig img { display: block; width: 100%; height: auto; background: #0d1b24; }
+        /* 影片與靜態圖都不要被容器裁切 */
+        .anim-stage video, .anim-fig img { object-fit: contain; }
         .anim-fig figcaption {
             font-size: 0.79rem; line-height: 1.75; color: var(--text-muted);
             padding: 0.6rem 0.75rem; background: rgba(10, 45, 55, 0.03);
