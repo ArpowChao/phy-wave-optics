@@ -129,7 +129,7 @@ const modulesData = {
                 name: '兩端固定弦的駐波',
                 formula: 'L = n\\dfrac{\\lambda}{2} \\;\\Rightarrow\\; \\lambda_n = \\dfrac{2L}{n},\\; f_n = \\dfrac{nv}{2L}\\quad(n = 1,2,3,\\dots)',
                 anchor: '兩端必為波節，所以弦長一定是半波長的整數倍。',
-                desc: '$n=1$ 為<b>基音（第一諧音）</b>，$n=2,3,\\dots$ 為<b>泛音（高次諧音）</b>。<br><b>命名規則</b>：第幾諧音看 $n$；第幾泛音看順序。$n=2$ 是第二諧音、第一泛音。<br>兩端固定的弦<b>奇偶諧音都有</b>，這點與閉管樂器（只有奇數諧音）恰成對比。'
+                desc: '$n=1$ 為<b>基音（第一諧音）</b>，$n=2,3,\\dots$ 為<b>泛音（高次諧音）</b>。<br><b>命名規則</b>：第幾諧音看 $n$；第幾泛音看順序。$n=2$ 是第二諧音、第一泛音。<br>兩端固定的弦<b>奇偶諧音都有</b>，這點與閉管樂器（只有奇數諧音）恰成對比。<br><b>二維圓周駐波實例</b>：<a href="https://youtube.com/shorts/RYChFBrRuvg" target="_blank" rel="noopener" style="color:var(--accent-cyan); font-weight:700;">🎬 聲音共振震碎玻璃杯（杯緣閉合圓周駐波）↗</a>'
             },
             {
                 node: 'N04',
@@ -396,7 +396,7 @@ const modulesData = {
                 name: '固有頻率與共振',
                 formula: 'f_{\\text{外界擾動}} = f_{\\text{固有}} \\;\\Rightarrow\\; \\text{振幅大幅增加}',
                 anchor: '共振要求「頻率相同」，不要求振幅相同。',
-                desc: '物體受微擾後自行振盪的頻率稱為<b>固有頻率（自然頻率）</b>；一個系統可以有很多個固有頻率（例如弦上所有的駐波頻率）。<br>外界週期性擾動的頻率與固有頻率相同時，即使擾動很小也會產生大幅振盪 $\\Rightarrow$ <b>共振</b>；聲音的共振稱為<b>共鳴</b>。<br><b>實例</b>：單擺共振（等長的擺才會被帶動）、1940 年塔可馬吊橋被風吹毀、吉他與提琴的共鳴箱增強響度。<br><b>實證短片</b>：<a href="https://youtube.com/shorts/WwC0fEPp8w4" target="_blank" rel="noopener" style="color:var(--accent-cyan); font-weight:700;">🎬 地震與大樓共振實驗（不同樓高晃動對比與 101 阻尼器）↗</a>'
+                desc: '物體受微擾後自行振盪的頻率稱為<b>固有頻率（自然頻率）</b>；一個系統可以有很多個固有頻率（例如弦上所有的駐波頻率）。<br>外界週期性擾動的頻率與固有頻率相同時，即使擾動很小也會產生大幅振盪 $\\Rightarrow$ <b>共振</b>；聲音的共振稱為<b>共鳴</b>。<br><b>實例</b>：單擺共振（等長的擺才會被帶動）、1940 年塔可馬吊橋被風吹毀、吉他與提琴的共鳴箱增強響度。<br><b>實證短片</b>：<a href="https://youtube.com/shorts/WwC0fEPp8w4" target="_blank" rel="noopener" style="color:var(--accent-cyan); font-weight:700;">🎬 地震大樓共振（101 阻尼器）↗</a> ｜ <a href="https://youtube.com/shorts/RYChFBrRuvg" target="_blank" rel="noopener" style="color:var(--primary-blue); font-weight:700;">🎬 聲音共振震碎玻璃杯（杯緣駐波與共振破杯實測）↗</a>'
             },
             {
                 node: 'N12',
