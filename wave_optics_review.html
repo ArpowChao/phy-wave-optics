@@ -139,7 +139,10 @@
         .mobile-nav-toggle { display: none; }
 
         /* ---------- 版面 ---------- */
-        .app-workspace { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+        .app-workspace {
+            flex: 1; min-width: 0; display: flex; flex-direction: column;
+            min-height: 100vh;
+        }
 
         .view-toolbar {
             position: sticky; top: 0; z-index: 30;
@@ -158,7 +161,51 @@
         .view-toolbar button:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
         .view-breadcrumb { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-left: 0.4rem; }
 
-        #main-content { padding: 2.2rem clamp(1.1rem, 4vw, 3rem) 5rem; max-width: 1180px; width: 100%; }
+        #main-content {
+            flex: 1;
+            padding: 2.2rem clamp(1.1rem, 4vw, 3rem) 2.5rem;
+            max-width: 1180px; width: 100%;
+        }
+
+        /* 系統統一頁尾 (解決滾輪滑至底端斷崖留白問題) */
+        .app-footer {
+            margin-top: auto;
+            background: rgba(255, 255, 255, 0.78);
+            backdrop-filter: blur(8px);
+            border-top: 1px solid var(--border-color);
+            padding: 1.6rem clamp(1.1rem, 4vw, 3rem);
+            color: var(--text-muted);
+            font-size: 0.82rem;
+        }
+        .footer-inner {
+            max-width: 1180px; margin: 0 auto;
+            display: flex; justify-content: space-between; align-items: center;
+            flex-wrap: wrap; gap: 1rem;
+        }
+        .footer-title {
+            font-weight: 800; color: var(--text-main); font-size: 0.92rem;
+            margin-bottom: 0.2rem;
+        }
+        .footer-desc {
+            line-height: 1.55; color: var(--text-muted); font-size: 0.8rem;
+        }
+        .footer-credit {
+            margin-top: 0.35rem; font-size: 0.78rem; color: var(--primary-blue); font-weight: 600;
+        }
+        .btn-footer-top {
+            font: inherit; font-size: 0.8rem; font-weight: 700;
+            padding: 0.4rem 0.9rem; border-radius: 8px;
+            border: 1px solid var(--border-color); background: #fff;
+            color: var(--primary-blue); cursor: pointer;
+            transition: var(--transition);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            display: inline-flex; align-items: center; gap: 0.3rem;
+        }
+        .btn-footer-top:hover {
+            border-color: var(--primary-blue);
+            background: var(--primary-blue-light);
+            transform: translateY(-1px);
+        }
 
         /* ---------- 通用元件 ---------- */
         .view-header { margin-bottom: 1.8rem; }
@@ -624,6 +671,18 @@
             <div class="view-breadcrumb" id="view-breadcrumb">學習首頁</div>
         </div>
         <main id="main-content"></main>
+        <footer class="app-footer print-hide">
+            <div class="footer-inner">
+                <div class="footer-col">
+                    <div class="footer-title">波動與光學 SUPER 複習系統</div>
+                    <div class="footer-desc">選修物理 Ch1–Ch4 · 20 個知識節點・15 個互動實驗室・分級真題詳解</div>
+                    <div class="footer-credit">感謝 新竹市立成德高中 陳家騏老師 提供水波干涉探究模擬器原始設計</div>
+                </div>
+                <div class="footer-actions">
+                    <button type="button" class="btn-footer-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ 回到頂部</button>
+                </div>
+            </div>
+        </footer>
     </div>
 
     <script>
@@ -725,8 +784,10 @@
         function renderRoute(route) {
             cleanupCurrentView();
             const main = document.getElementById('main-content');
-            main.scrollTop = 0;
-            window.scrollTo({ top: 0, behavior: 'auto' });
+            if (main) main.scrollTop = 0;
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
 
             if (route === 'home') renderHomeView();
             else if (route.startsWith('module-')) renderModuleView(route.slice(7));
@@ -959,9 +1020,19 @@
                 <div class="section-title">大考與段考題型</div>
                 ${examHtml}
 
-                <div class="node-route-actions" style="margin-top:2rem;">
-                    ${prev ? `<button class="node-route-btn" onclick="navigateTo('node-${prev}')"><b>← 上一個節點</b><span>${prev}　${nodeMeta[prev].title}</span></button>` : ''}
-                    ${next ? `<button class="node-route-btn" onclick="navigateTo('node-${next}')"><b>下一個節點 →</b><span>${next}　${nodeMeta[next].title}</span></button>` : ''}
+                <div class="card node-finish-card" style="margin-top:2.5rem; text-align:center; padding:1.6rem 1.2rem; background:linear-gradient(180deg, rgba(8,118,156,0.02) 0%, rgba(8,118,156,0.07) 100%); border:1px solid rgba(8,118,156,0.15); border-radius:14px;">
+                    <div style="font-size:0.75rem; font-weight:800; color:var(--accent-cyan); letter-spacing:0.08em; text-transform:uppercase;">🎉 本節核心複習完成</div>
+                    <h3 style="font-size:1.15rem; font-weight:800; margin:0.3rem 0 0.6rem; color:var(--text-main);">${code} ${meta.title}</h3>
+                    <p style="font-size:0.86rem; color:var(--text-muted); max-width:54ch; margin:0 auto 1.2rem; line-height:1.7;">公式與解題特徵已全數瀏覽完畢。建議直接點選下方練題鞏固觀念，或前往相鄰節點繼續前進。</p>
+                    <div style="display:flex; justify-content:center; gap:0.6rem; flex-wrap:wrap; margin-bottom:1.4rem;">
+                        <button type="button" class="node-route-btn" style="max-width:240px;" onclick="openBankForNode('${code}')"><b>✏️ 立即練習本節題目</b><span>${quizCount} 題精選試題</span></button>
+                        ${labsOfNode(code).length ? `<button type="button" class="node-route-btn" style="max-width:240px;" onclick="navigateTo('lab-${labsOfNode(code)[0]}')"><b>🔬 開啟對應互動實驗</b><span>${labMeta[labsOfNode(code)[0]].name}</span></button>` : ''}
+                        <button type="button" class="node-route-btn" style="max-width:180px;" onclick="window.scrollTo({top:0,behavior:'smooth'})"><b>↑ 回到本節頂部</b><span>重新溫習公式</span></button>
+                    </div>
+                    <div class="node-route-actions" style="margin-top:0;">
+                        ${prev ? `<button class="node-route-btn" onclick="navigateTo('node-${prev}')"><b>← 上一個節點</b><span>${prev}　${nodeMeta[prev].title}</span></button>` : ''}
+                        ${next ? `<button class="node-route-btn" onclick="navigateTo('node-${next}')"><b>下一個節點 →</b><span>${next}　${nodeMeta[next].title}</span></button>` : ''}
+                    </div>
                 </div>`;
 
             bindAnimsIn(animByNode[code] || []);
@@ -5686,7 +5757,12 @@
             document.head.appendChild(st);
         }
 
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
         window.addEventListener('popstate', () => { renderRoute(routeFromLocation()); });
+        window.addEventListener('hashchange', () => { renderRoute(routeFromLocation()); });
 
         document.addEventListener('DOMContentLoaded', () => {
             buildNodeSidebar();
