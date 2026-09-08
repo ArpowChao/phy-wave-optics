@@ -28,9 +28,9 @@
     <script src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=water3d_v7"></script>
-    <script src="data/questionBank.js?v=water3d_v7"></script>
-    <script src="data/mediaData.js?v=water3d_v7"></script>
+    <script src="data/modulesData.js?v=standing_v9"></script>
+    <script src="data/questionBank.js?v=standing_v9"></script>
+    <script src="data/mediaData.js?v=standing_v9"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -2710,7 +2710,7 @@
             name: '駐波的形成',
             cycle: 4.0,                                     // 駐波的一個週期 T
             tag: 'N04 / N10 / N12',
-            hint: '藍色虛線＝向右行進波，綠色虛線＝向左行進波，青色粗線＝兩者疊加的合成波。紫線是 ±2A 包絡線，淡青色是前幾個時刻留下的合成波形——請確認波形只在包絡線內原地伸縮，一步也沒有前進。橘色尺寸線標出 λ、λ/2、λ/4 三個必背距離。',
+            hint: '<b>藍色</b>虛線＝向右行進波，<b>橘色</b>虛線＝向左行進波，青色粗線＝兩者疊加的合成波，紫線是 ±2A 包絡線——請確認波形只在包絡線內原地伸縮，一步也沒有前進。<br>畫面太滿時把「標註詳細度」調到<b>精簡</b>，只留三條波；要看殘影、P/Q/R 探針與速度箭頭再切到<b>完整</b>。',
             note: '最愛考的誘答：$t=\\frac{2T}{8}$、$\\frac{6T}{8}$ 時合成波變成一直線，那是「所有質點同時通過平衡位置」，此刻振動<b>速率最大</b>，不是靜止！反而在最大位移（$t=0$、$\\frac{4T}{8}$）時各質點速度為零。另外：兩端固定 ⇒ $L=n\\lambda/2$；一端自由 ⇒ $L=m\\lambda/4$ 且 $m$ 只能取奇數。',
             height: 460,
             modes: [
@@ -2720,7 +2720,18 @@
             controls: [
                 { key: 'n', label: '諧音序號', min: 1, max: 6, step: 1, value: 3, fmt: (v, p) => (p.mode === 'one' ? `m = ${2 * v - 1}（奇數）` : `n = ${v}`) },
                 { key: 'L', label: '弦長／管長 L (m)', min: 0.5, max: 3, step: 0.1, value: 1.5, fmt: (v) => `${v.toFixed(1)} m` },
-                { key: 'v', label: '波速 v (m/s)', min: 60, max: 400, step: 10, value: 340, fmt: (v) => `${v} m/s` }
+                { key: 'v', label: '波速 v (m/s)', min: 60, max: 400, step: 10, value: 340, fmt: (v) => `${v} m/s` },
+                {
+                    key: 'detail',
+                    label: '標註詳細度',
+                    options: [
+                        { value: 1, label: '精簡：只看三條波' },
+                        { value: 2, label: '標準：＋波節波腹與 λ/2、λ/4' },
+                        { value: 3, label: '完整：＋殘影、探針、速度箭頭' }
+                    ],
+                    value: 2,
+                    fmt: (v) => Number(v) === 1 ? '精簡' : (Number(v) === 2 ? '標準' : '完整')
+                }
             ],
             readouts: (p) => {
                 const one = p.mode === 'one';
@@ -2737,6 +2748,10 @@
                 ];
             },
             draw: (ctx, w, h, p, t) => {
+                const RIGHT_COL = '#1f6fc4';        // 向右行進波：藍
+                const LEFT_COL = '#e07a1f';         // 向左行進波：橘
+                const DIM_COL = '#8d9aa2';          // 尺寸線改用灰，不要跟波搶注意力
+                const detail = Number(p.detail === undefined ? 2 : p.detail);
                 /* ---------- 物理量 -------------------------------------------------
                  * 右行波 y1 = A sin(kx − ωt)，左行波 y2 = A sin(kx + ωt)
                  * 疊加 y = 2A sin(kx)·cos(ωt)  ⇒ 波形不前進，只在 ±2A sin(kx) 內伸縮
@@ -2831,16 +2846,18 @@
                     poly(xa, xb, (xp) => -Amax * Math.sin(k * xp));
                     // 過去時刻的合成波（愈舊愈淡）：所有殘影共用同一組零點 ⇒ 波形沒前進
                     ctx.lineWidth = 1.6;
-                    for (let g = GH; g >= 1; g--) {
+                    for (let g = (detail >= 3 ? GH : 0); g >= 1; g--) {
                         const cg = Math.cos(phi - g * Math.PI / 8);
                         ctx.strokeStyle = `rgba(14,139,147,${(0.26 * (1 - g / (GH + 1))).toFixed(3)})`;
                         poly(xa, xb, (xp) => Amax * Math.sin(k * xp) * cg);
                     }
                     // 兩列行進波
-                    ctx.setLineDash([5, 4]); ctx.lineWidth = 1.5;
-                    ctx.strokeStyle = C.blue;
+                    /* 兩列行進波必須一眼分得出來。原本 C.blue 與 C.green 都是暗青色系，
+                     * 畫成細虛線後根本無法區別，故改用藍／橘這組對比色。 */
+                    ctx.setLineDash([6, 4]); ctx.lineWidth = 1.7;
+                    ctx.strokeStyle = RIGHT_COL;
                     poly(xa, xb, (xp) => Aph * Math.sin(k * xp - phi));
-                    ctx.strokeStyle = C.green;
+                    ctx.strokeStyle = LEFT_COL;
                     poly(xa, xb, (xp) => Aph * Math.sin(k * xp + phi));
                     ctx.setLineDash([]);
                     // 合成波（此刻）
@@ -2924,13 +2941,15 @@
                 nodes.forEach((xp, i) => {
                     ctx.fillStyle = C.rose;
                     ctx.beginPath(); ctx.arc(X(xp), yc, 4, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, `N${sub(i + 1)}`, X(xp), nodeY, C.rose, 11, 'center');
+                    if (detail >= 2) label(ctx, `N${sub(i + 1)}`, X(xp), nodeY, C.rose, 11, 'center');
                 });
                 antis.forEach((xp, i) => {
                     ctx.fillStyle = C.violet;
                     ctx.beginPath(); ctx.arc(X(xp), yc, 4, 0, Math.PI * 2); ctx.fill();
-                    dashed(ctx, X(xp), yc + Amax + 4, X(xp), antiY - 9, 'rgba(107,70,193,0.28)');
-                    label(ctx, `A${sub(i + 1)}`, X(xp), antiY, C.violet, 11, 'center');
+                    if (detail >= 2) {
+                        dashed(ctx, X(xp), yc + Amax + 4, X(xp), antiY - 9, 'rgba(107,70,193,0.28)');
+                        label(ctx, `A${sub(i + 1)}`, X(xp), antiY, C.violet, 11, 'center');
+                    }
                 });
 
                 /* ---------- 6. P、Q、R 三個標記質點（振幅隨位置而異） ------------ */
@@ -2940,7 +2959,9 @@
                     ? [['P', lam / 4], ['Q', lam * 5 / 16], ['R', lam * 7 / 16]]
                     : [['P', lam / 4], ['Q', lam * 3 / 16], ['R', lam / 16]];
                 let vShown = false;
-                marks.forEach(([nm, xp]) => {
+                /* P/Q/R 探針只在「完整」層級顯示——它們是三組線＋三個點＋三個標籤，
+                 * 是這張圖最主要的視覺負擔。 */
+                if (detail >= 3) marks.forEach(([nm, xp]) => {
                     const s = Math.sin(k * xp);
                     const amp = Amax * Math.abs(s);
                     const px = X(xp);
@@ -2959,17 +2980,17 @@
                     const vy = Amax * s * sn;
                     const len = Math.min(30, Math.abs(vy) * 0.46);
                     if (len > 3) {
-                        arrow(ctx, px, yNow, px, yNow + (vy > 0 ? len : -len), C.orange, 2);
-                        if (!vShown) { label(ctx, 'v', px + 6, yNow + (vy > 0 ? len : -len), C.orange, 10); vShown = true; }
+                        arrow(ctx, px, yNow, px, yNow + (vy > 0 ? len : -len), C.rose, 2);
+                        if (!vShown) { label(ctx, 'v', px + 6, yNow + (vy > 0 ? len : -len), C.rose, 10); vShown = true; }
                     }
                 });
                 // 各波腹也畫速度箭頭（振幅最大處速度變化最明顯）
-                antis.forEach((xp) => {
+                if (detail >= 3) antis.forEach((xp) => {
                     const s = Math.sin(k * xp);
                     const yNow = yc - Amax * s * cs;
                     const vy = Amax * s * sn;
                     const len = Math.min(30, Math.abs(vy) * 0.46);
-                    if (len > 3) arrow(ctx, X(xp), yNow, X(xp), yNow + (vy > 0 ? len : -len), C.orange, 1.8);
+                    if (len > 3) arrow(ctx, X(xp), yNow, X(xp), yNow + (vy > 0 ? len : -len), C.rose, 1.8);
                 });
 
                 /* ---------- 7. 兩列行進波的方向箭頭（跟著波峰跑） ---------------- */
@@ -2984,13 +3005,15 @@
                 const cR = X(crestAt((Math.PI / 2 + phi) / k, 0.28 * xmax));
                 const cLf = X(crestAt((Math.PI / 2 - phi) / k, 0.70 * xmax));
                 const clampX = (v) => Math.max(x0 + 19, Math.min(x1 - 19, v));
-                arrow(ctx, clampX(cR) - 15, yArr, clampX(cR) + 16, yArr, C.blue, 2);
-                arrow(ctx, clampX(cLf) + 15, yArr, clampX(cLf) - 16, yArr, C.green, 2);
+                arrow(ctx, clampX(cR) - 15, yArr, clampX(cR) + 16, yArr, RIGHT_COL, 2);
+                arrow(ctx, clampX(cLf) + 15, yArr, clampX(cLf) - 16, yArr, LEFT_COL, 2);
 
                 /* ---------- 8. 三條關鍵尺寸線 ------------------------------------ */
-                dimBar(0, lam, rowL, 'λ', '一個完整波長', C.orange);
-                dimBar(0, lam / 2, rowH, 'λ/2', '相鄰兩波節間距', C.orange);
-                dimBar(lam / 2, 3 * lam / 4, rowQ, 'λ/4', '波節到相鄰波腹', C.orange);
+                if (detail >= 3) dimBar(0, lam, rowL, 'λ', '一個完整波長', DIM_COL);
+                if (detail >= 2) {
+                    dimBar(0, lam / 2, rowH, 'λ/2', '相鄰兩波節間距', DIM_COL);
+                    dimBar(lam / 2, 3 * lam / 4, rowQ, 'λ/4', '波節到相鄰波腹', DIM_COL);
+                }
 
                 /* ---------- 9. 弦長 L 與駐波條件 -------------------------------- */
                 dimBar(0, L, brkY, `L = ${L.toFixed(1)} m`, null, C.ink);
@@ -3006,10 +3029,17 @@
                 /* ---------- 10. P、Q、R 的振幅比較 ------------------------------ */
                 const ampOf = (xp) => (2 * Math.abs(Math.sin(k * xp))).toFixed(2);
                 const base = `P ${ampOf(marks[0][1])}A　Q ${ampOf(marks[1][1])}A　R ${ampOf(marks[2][1])}A`;
-                const infoTxt = pick([`${base}　← 振幅隨位置而異，波腹處 2A 是行進波振幅 A 的兩倍`,
-                                      `${base}　← 波腹 2A ＝ 行進波的兩倍`,
-                                      base], span, 11);
-                label(ctx, infoTxt, x0, infoY, C.ink, 11);
+                /* 探針沒畫出來時就不要列它們的振幅，否則畫面上找不到 P/Q/R */
+                if (detail >= 3) {
+                    const infoTxt = pick([`${base}　← 振幅隨位置而異，波腹處 2A 是行進波振幅 A 的兩倍`,
+                                          `${base}　← 波腹 2A ＝ 行進波的兩倍`,
+                                          base], span, 11);
+                    label(ctx, infoTxt, x0, infoY, C.ink, 11);
+                } else {
+                    label(ctx, pick(['波腹的振幅 2A，是單一列行進波振幅 A 的兩倍；波節恆為 0',
+                                     '波腹 2A ＝ 行進波振幅的兩倍；波節恆為 0',
+                                     '波腹 2A、波節 0'], span, 11), x0, infoY, C.ink, 11);
+                }
 
                 /* ---------- 11. T/8 時間軸 -------------------------------------- */
                 const rTxt = `t = ${step8}T/8`;
@@ -3069,7 +3099,7 @@
                 label(ctx, short[2], x0 + 10, boxY + 54, C.ink, 11);
 
                 /* ---------- 13. 上方圖例 --------------------------------------- */
-                const longs = [[C.blue, true, '向右行進波'], [C.green, true, '向左行進波'], [C.cyan, false, '合成波（駐波）'], [C.violet, false, '包絡線 ±2A']];
+                const longs = [[RIGHT_COL, true, '向右行進波'], [LEFT_COL, true, '向左行進波'], [C.cyan, false, '合成波（駐波）'], [C.violet, false, '包絡線 ±2A']];
                 const shorts = [[C.blue, true, '右行波'], [C.green, true, '左行波'], [C.cyan, false, '合成波'], [C.violet, false, '包絡線']];
                 const widthOf = (arr) => arr.reduce((a, it) => a + 20 + 4 + tw(it[2], 10.5) + 12, 0);
                 const items = widthOf(longs) <= span ? longs : shorts;
@@ -3965,6 +3995,13 @@
                     fmt: (v) => Number(v) === 0 ? '同相 (0)' : '反相 (π)'
                 },
                 {
+                    key: 'yaw',
+                    label: '觀察方位角',
+                    min: -50, max: 50, step: 1, value: 22,
+                    only: ['3D'],
+                    fmt: (v) => `${Number(v).toFixed(0)}°（也可直接拖曳畫面）`
+                },
+                {
                     key: 'lines',
                     label: '雙曲線輔助線',
                     options: [
@@ -4040,6 +4077,8 @@
                     return { x, y };
                 };
                 let dragging = false;
+                let rotating = false;
+                let rotFrom = 0, yawFrom = 0;
                 const setPoint = (e) => {
                     const pt = getCoords(e);
                     if (!pt) return;
@@ -4047,14 +4086,32 @@
                     syncOutputs();
                     paint();
                 };
+                /* 三維模式的拖曳是旋轉視角；其他模式維持「放置測量點 P」 */
+                const setYaw = (e) => {
+                    const pt = getCoords(e);
+                    if (!pt) return;
+                    const next = Math.max(-50, Math.min(50, yawFrom + (pt.x - rotFrom) * 0.22));
+                    params.yaw = Math.round(next);
+                    const input = canvas.closest('.lab-shell')?.querySelector('[id$="-yaw"]');
+                    if (input) input.value = params.yaw;
+                    syncOutputs();
+                    paint();
+                };
                 disposers.addEventListener(canvas, 'pointerdown', (e) => {
+                    if (params.mode === '3D') {
+                        const pt = getCoords(e);
+                        if (!pt) return;
+                        rotating = true; rotFrom = pt.x; yawFrom = Number(params.yaw) || 0;
+                        return;
+                    }
                     dragging = true;
                     setPoint(e);
                 });
                 disposers.addEventListener(window, 'pointermove', (e) => {
-                    if (dragging) setPoint(e);
+                    if (rotating) setYaw(e);
+                    else if (dragging) setPoint(e);
                 });
-                const stopDrag = () => { dragging = false; };
+                const stopDrag = () => { dragging = false; rotating = false; };
                 disposers.addEventListener(window, 'pointerup', stopDrag);
                 disposers.addEventListener(window, 'pointercancel', stopDrag);
             },
@@ -4381,155 +4438,151 @@
 
                 /* ============ 三維水面起伏 ============ */
                 if (p.mode === '3D') {
-                    /* 三維是「近景」：只涵蓋俯視的一半範圍，山脊寬一倍才看得清楚，
-                     * 也才有辦法看出節線是一條平坦不動的水道。 */
+                    /* 近景：只涵蓋俯視的一半範圍，山脊寬一倍才看得出形狀 */
                     const sc3 = TW / 12;
                     const d3 = dCm * sc3;
                     const lam3 = Math.max(lamCm * sc3, 8);
                     const k3 = (2 * Math.PI) / lam3;
-                    const q1 = { x: cx - d3 / 2, y: cy };
-                    const q2 = { x: cx + d3 / 2, y: cy };
                     const isRealDecay = Number(p.decay) === 1;
-                    const amp = (r) => isRealDecay ? (1 / (1 + r * 0.003)) : 0.85;
-                    /* 水面高度：與二維模式同一組物理，只是換了比例尺並畫成起伏 */
-                    const zAt = (gx, gy) => {
-                        const r1 = Math.hypot(gx - q1.x, gy - q1.y);
-                        const r2 = Math.hypot(gx - q2.x, gy - q2.y);
-                        return amp(r1) * Math.cos(k3 * r1 - om * t + phase1)
-                             + amp(r2) * Math.cos(k3 * r2 - om * t + phase2);
+
+                    /* 世界座標以水槽中心為原點；波源在 (±d3/2, 0) */
+                    const HU = TW / 2, HV = TH / 2;
+                    const zAt = (a, b) => {
+                        const r1 = Math.hypot(a + d3 / 2, b);
+                        const r2 = Math.hypot(a - d3 / 2, b);
+                        const A1 = isRealDecay ? (1 / (1 + r1 * 0.003)) : 0.85;
+                        const A2 = isRealDecay ? (1 / (1 + r2 * 0.003)) : 0.85;
+                        return A1 * Math.cos(k3 * r1 - om * t + phase1)
+                             + A2 * Math.cos(k3 * r2 - om * t + phase2);
                     };
+                    /* 波程差（單位：波長）；用來把節線「染」進水面 */
+                    const qAt = (a, b) => (Math.hypot(a + d3 / 2, b)
+                                         - Math.hypot(a - d3 / 2, b)) / lam3;
 
-                    /* 斜投影：u 橫向、v 為深度（0 = 遠、TH = 近）、z 為高度 */
-                    const shear = Math.min(0.34 * TH, TW * 0.20);
-                    const PW = TW - shear;
-                    const depthY = TH * 0.34;
-                    const ZA = Math.max(16, Math.min(46, (0.66 * TH - 10) / 4));
-                    const yTop = y0 + 2 * ZA + 6;
-                    const projX = (u, v) => x0 + (u / TW) * PW + (v / TH) * shear;
-                    const projY = (v, z) => yTop + (v / TH) * depthY - z * ZA;
-                    const yFloor = yTop + depthY + 2 * ZA + 4;
+                    /* 方位角：繞鉛直軸旋轉。限制在 ±50°，
+                     * 超出這個範圍逐列由遠而近的畫法會出現遮擋錯誤。 */
+                    const yaw = Math.max(-50, Math.min(50, Number(p.yaw) || 0)) * Math.PI / 180;
+                    const CY = Math.cos(yaw), SY = Math.sin(yaw);
+                    const TILT = 0.46;                       // 俯角造成的深度壓縮
+                    const halfW = Math.abs(HU * CY) + Math.abs(HV * SY);
+                    const halfD = Math.abs(HU * SY) + Math.abs(HV * CY);
+                    const SX = (TW * 0.5 - 6) / halfW;
+                    const SD = SX * TILT;
+                    const ZA = Math.max(14, Math.min(44, (TH - 2 * halfD * SD - 24) / 4.4));
+                    const midY = y0 + (TH - 8) / 2 + 6;
+                    const projX = (a, b) => cx + (a * CY - b * SY) * SX;
+                    const projY = (a, b, z) => midY + (a * SY + b * CY) * SD - z * ZA;
 
-                    const NU = 104, NV = 44;
-                    /* 由遠而近逐列填色：近的列會蓋住遠的列，自然形成遮蔽 */
+                    /* 先把高度算成陣列，法線才有辦法用鄰點算，也省下重複計算 */
+                    const NU = 84, NV = 52;
+                    const Z = new Float64Array((NU + 1) * (NV + 1));
+                    const Q = new Float64Array((NU + 1) * (NV + 1));
+                    const aOf = (i) => -HU + (2 * HU) * i / NU;
+                    const bOf = (j) => -HV + (2 * HV) * j / NV;
                     for (let j = 0; j <= NV; j++) {
-                        const v = (j / NV) * TH;
-                        const gy = y0 + v;
-                        ctx.beginPath();
+                        const b = bOf(j);
                         for (let i = 0; i <= NU; i++) {
-                            const u = (i / NU) * TW;
-                            const z = zAt(x0 + u, gy);
-                            const X = projX(u, v), Y = projY(v, z);
-                            i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                            const idx = j * (NU + 1) + i;
+                            Z[idx] = zAt(aOf(i), b);
+                            Q[idx] = qAt(aOf(i), b);
                         }
-                        const xEnd = projX(TW, v), xStart = projX(0, v);
-                        ctx.lineTo(xEnd, yFloor);
-                        ctx.lineTo(xStart, yFloor);
-                        ctx.closePath();
-                        const near = j / NV;                       // 0 遠 → 1 近
-                        const g = ctx.createLinearGradient(0, projY(v, 2.1), 0, yFloor);
-                        g.addColorStop(0, `rgba(${Math.round(120 + 70 * near)}, ${Math.round(215 + 30 * near)}, 255, 0.95)`);
-                        g.addColorStop(0.35, 'rgba(24, 92, 122, 0.96)');
-                        g.addColorStop(1, 'rgba(8, 30, 40, 0.99)');
-                        ctx.fillStyle = g;
-                        ctx.fill();
-                        ctx.strokeStyle = `rgba(150, 240, 255, ${0.30 + 0.45 * near})`;
-                        ctx.lineWidth = 1.1;
-                        ctx.beginPath();
-                        for (let i = 0; i <= NU; i++) {
-                            const u = (i / NU) * TW;
-                            const z = zAt(x0 + u, gy);
-                            const X = projX(u, v), Y = projY(v, z);
-                            i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
-                        }
-                        ctx.stroke();
                     }
 
-                    /* 腹線與節線畫在水面上（用當下的真實高度，才會貼著起伏） */
-                    /* 波程差 = q·λ 的軌跡就是以兩波源為焦點的雙曲線：
-                     *     x = ± a·√(1 + y²/b²)，a = qλ/2，b² = (d/2)² − a²
-                     * 直接代公式即可，不必沿每一列掃取樣點找最近值（那是每幀數十萬次 hypot）。 */
-                    const locusX = (q, dy) => {
-                        const a = Math.abs(q) * lam3 / 2;
-                        const cF = d3 / 2;
-                        if (a > cF - 1e-6) return null;          // |Δℓ| > d：無解
-                        if (Math.abs(q) < 1e-9) return cx;
-                        const b2 = cF * cF - a * a;
-                        return cx + Math.sign(q) * a * Math.sqrt(1 + (dy * dy) / b2);
+                    /* 逐格上色。由遠而近（b 由小到大）畫，近的自然蓋住遠的。 */
+                    const nodeHit = (q) => {
+                        const r = Math.abs(q - Math.round(q - 0.5) - 0.5);
+                        return r < 0.085 ? (1 - r / 0.085) : 0;
                     };
-                    if (Number(p.lines) === 1) {
-                        const drawLocus = (target, color, dash) => {
-                            ctx.save();
-                            if (dash) ctx.setLineDash([6, 5]);
-                            ctx.strokeStyle = color; ctx.lineWidth = 2.4;
-                            ctx.beginPath();
-                            let started = false;
-                            for (let j = 0; j <= 130; j++) {
-                                const v = (j / 130) * TH;
-                                const gy = y0 + v;
-                                const gx = locusX(target, gy - cy);
-                                if (gx === null || gx < x0 || gx > x1) { started = false; continue; }
-                                const z = zAt(gx, gy);
-                                const X = projX(gx - x0, v), Y = projY(v, z);
-                                started ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
-                                started = true;
+                    for (let j = 0; j < NV; j++) {
+                        for (let i = 0; i < NU; i++) {
+                            const i0 = j * (NU + 1) + i, i1 = i0 + 1;
+                            const i2 = i0 + (NU + 1), i3 = i2 + 1;
+                            const z0 = Z[i0], z1 = Z[i1], z2 = Z[i2], z3 = Z[i3];
+                            const a0 = aOf(i), a1 = aOf(i + 1);
+                            const b0 = bOf(j), b1 = bOf(j + 1);
+
+                            /* 斜率決定明暗：面向光源的斜面亮、背光的暗 */
+                            const du = (2 * HU) / NU, dv = (2 * HV) / NV;
+                            const gx = ((z1 + z3) - (z0 + z2)) / (2 * du) * ZA;
+                            const gy = ((z2 + z3) - (z0 + z1)) / (2 * dv) * ZA;
+                            const nl = 1 / Math.sqrt(gx * gx + gy * gy + 1);
+                            /* 光從左上前方來 */
+                            const lum = Math.max(0, Math.min(1,
+                                0.30 + 0.86 * nl * (0.55 - gx * 0.42 - gy * 0.30) + 0.30 * nl));
+
+                            const zm = (z0 + z1 + z2 + z3) / 4;
+                            const hi = Math.max(0, Math.min(1, (zm + 1.8) / 3.6));   // 0 谷 → 1 峰
+                            let R = 18 + 150 * hi, G = 78 + 150 * hi, B = 108 + 138 * hi;
+                            R *= lum; G *= lum; B *= lum;
+
+                            /* 節線染色：畫在曲面裡，遮擋關係自動正確 */
+                            const nh = nodeHit((Q[i0] + Q[i1] + Q[i2] + Q[i3]) / 4);
+                            if (nh > 0) {
+                                R = R * (1 - nh) + 236 * nh * lum;
+                                G = G * (1 - nh) + 132 * nh * lum;
+                                B = B * (1 - nh) + 168 * nh * lum;
                             }
-                            ctx.stroke(); ctx.restore();
-                        };
-                        /* 腹線就是畫面上的山脊，本來就看得見；這裡只標節線，
-                         * 讓「平坦不動的水道」一眼認得出來。 */
-                        const mMax = Math.floor(d3 / lam3 + 0.5);
-                        for (let q = -mMax; q < mMax; q++) drawLocus(q + 0.5, '#ffb3c6', false);
+
+                            ctx.fillStyle = `rgb(${R | 0},${G | 0},${B | 0})`;
+                            ctx.beginPath();
+                            ctx.moveTo(projX(a0, b0), projY(a0, b0, z0));
+                            ctx.lineTo(projX(a1, b0), projY(a1, b0, z1));
+                            ctx.lineTo(projX(a1, b1), projY(a1, b1, z3));
+                            ctx.lineTo(projX(a0, b1), projY(a0, b1, z2));
+                            ctx.closePath();
+                            ctx.fill();
+                        }
                     }
 
-                    /* 三個浮標：節線上的那一個永遠不動，這是本模式最想讓學生看到的事 */
-                    const vf = TH * 0.72, gyf = y0 + vf;
-                    /* 浮標位置同樣用解析式：落點必須「正好」在節線上，
-                     * 否則面板會顯示 -0.02 這種讓人懷疑結論的殘值。 */
-                    const findU = (target) => {
-                        const gx = locusX(target, gyf - cy);
-                        if (gx === null || gx < x0 + 4 || gx > x1 - 4) return null;
-                        return gx - x0;
+                    /* 波源與浮標：節線上那個永遠不動，是這個模式的重點 */
+                    const bF = HV * 0.42;
+                    const locusA = (q) => {                    // 雙曲線解析式
+                        const aa = Math.abs(q) * lam3 / 2, cF = d3 / 2;
+                        if (aa > cF - 1e-6) return null;
+                        if (Math.abs(q) < 1e-9) return 0;
+                        return Math.sign(q) * aa * Math.sqrt(1 + (bF * bF) / (cF * cF - aa * aa));
                     };
                     const floats = [
-                        { u: findU(0), col: '#7bf0c2', name: '腹線' },
-                        { u: findU(0.5), col: '#ffb3c6', name: '節線' },
-                        { u: findU(1), col: '#7bf0c2', name: '腹線' }
-                    ].filter((o) => o.u !== null);
+                        { q: 0, col: '#8ef5c8', name: '腹線' },
+                        { q: 0.5, col: '#ff9ec2', name: '節線' },
+                        { q: 1, col: '#8ef5c8', name: '腹線' }
+                    ].map((o) => ({ ...o, a: locusA(o.q) }))
+                     .filter((o) => o.a !== null && Math.abs(o.a) < HU - 8);
+
                     floats.forEach((o) => {
-                        const z = zAt(x0 + o.u, gyf);
-                        const X = projX(o.u, vf);
-                        const Y0 = projY(vf, 0), Y = projY(vf, z);
-                        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.4;
+                        const z = zAt(o.a, bF);
+                        const X = projX(o.a, bF);
+                        const Y0 = projY(o.a, bF, 0), Y = projY(o.a, bF, z);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.55)'; ctx.lineWidth = 1.6;
                         ctx.beginPath(); ctx.moveTo(X, Y0); ctx.lineTo(X, Y); ctx.stroke();
                         ctx.fillStyle = o.col;
-                        ctx.beginPath(); ctx.arc(X, Y, 5.5, 0, Math.PI * 2); ctx.fill();
-                        ctx.strokeStyle = 'rgba(8,30,40,0.9)'; ctx.lineWidth = 1.6; ctx.stroke();
+                        ctx.beginPath(); ctx.arc(X, Y, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = 'rgba(6,26,34,0.95)'; ctx.lineWidth = 1.8; ctx.stroke();
                     });
 
-                    /* 波源位置（投影到 v = TH/2 那一列） */
-                    [[q1.x, 'S₁'], [q2.x, 'S₂']].forEach(([sxp, nm]) => {
-                        const u = sxp - x0;
-                        const z = zAt(sxp, cy);
-                        const X = projX(u, TH / 2), Y = projY(TH / 2, z);
+                    [[-d3 / 2, 'S₁'], [d3 / 2, 'S₂']].forEach(([a, nm]) => {
+                        const z = zAt(a, 0);
+                        const X = projX(a, 0), Y = projY(a, 0, z);
                         ctx.fillStyle = '#ffd166';
                         ctx.beginPath(); ctx.arc(X, Y, 6, 0, Math.PI * 2); ctx.fill();
-                        ctx.strokeStyle = 'rgba(8,30,40,0.9)'; ctx.lineWidth = 1.8; ctx.stroke();
-                        labelFit(ctx, nm, X + 9, Y - 8, '#ffe8a3', 12, 'left', { clampW: w, plate: 'rgba(8,30,40,0.7)' });
+                        ctx.strokeStyle = 'rgba(6,26,34,0.95)'; ctx.lineWidth = 1.8; ctx.stroke();
+                        labelFit(ctx, nm, X + 9, Y - 9, '#ffe8a3', 12, 'left',
+                                 { clampW: w, plate: 'rgba(6,26,34,0.72)' });
                     });
 
                     /* 說明面板 */
-                    const nodeZ = floats.find((o) => o.name === '節線');
-                    const zNode = nodeZ ? zAt(x0 + nodeZ.u, gyf) : 0;
-                    const panelW = Math.min(360, TW - 20);
-                    ctx.fillStyle = 'rgba(8, 30, 38, 0.80)';
+                    const nodeF = floats.find((o) => o.name === '節線');
+                    const zNode = nodeF ? zAt(nodeF.a, bF) : 0;
+                    const panelW = Math.min(380, TW - 20);
+                    ctx.fillStyle = 'rgba(6, 26, 34, 0.82)';
                     ctx.fillRect(x0 + 6, y0 + 6, panelW, 3 * 18 + 12);
-                    [['近景（俯視的兩倍放大）：腹線是連續的山脊與深谷', '#e6f4f7'],
-                     ['粉紅線是節線：一條永遠不動的平坦水道', '#ffb3c6'],
-                     [`節線上的浮標高度 = ${Math.abs(zNode) < 0.005 ? '0.00' : zNode.toFixed(2)}　（兩側浮標正在上下起伏）`, '#ffb3c6']
+                    [['粉紅色的水道就是節線，直接染在水面上', '#ff9ec2'],
+                     [`節線上的浮標高度 = ${Math.abs(zNode) < 0.005 ? '0.00' : zNode.toFixed(2)}　（永遠不動）`, '#ff9ec2'],
+                     [`拖曳畫面可旋轉　方位角 ${(yaw * 180 / Math.PI).toFixed(0)}°`, '#cfe9f2']
                     ].forEach(([txt, col], i) => {
                         labelFit(ctx, txt, x0 + 14, y0 + 24 + i * 18, col, 12, 'left', { maxW: panelW - 20 });
                     });
-                    labelFit(ctx, '拖曳時間軸：山脊與深谷會上下翻轉，粉紅色那條水道自始至終是平的——這就是節線「完全不振動」的意思',
+                    labelFit(ctx, '拖曳時間軸：山脊與深谷會整個上下翻轉，粉紅色的水道自始至終是平的——這就是節線「完全不振動」',
                              x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW - 12 });
                     return;
                 }

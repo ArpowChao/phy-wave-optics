@@ -51,7 +51,15 @@
         return out;
     }
 
-    const nextFrame = () => new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    /* 分頁在背景、或視窗沒有在重繪時，瀏覽器會把 requestAnimationFrame 節流到
+     * 完全不觸發，單純 await rAF 會永遠卡住。加一條逾時退路，讓健檢在任何情況
+     * 下都跑得完（畫面內容仍然正確，只是不等真正的重繪時機）。 */
+    const nextFrame = () => new Promise((resolve) => {
+        let done = false;
+        const finish = () => { if (!done) { done = true; resolve(); } };
+        requestAnimationFrame(() => requestAnimationFrame(finish));
+        setTimeout(finish, 120);
+    });
 
     async function scanAt(widthPx, routes) {
         const host = document.getElementById('main-content');
