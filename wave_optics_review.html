@@ -1718,11 +1718,21 @@
         function labShellHtml(id, prefix = '') {
             const lab = LABS[id];
             if (!lab) return '';
-            const controls = (lab.controls || []).map((c) => `
-                <div class="lab-control" id="${prefix}${id}-${c.key}-wrap">
-                    <label for="${prefix}${id}-${c.key}">${c.label}<b id="${prefix}${id}-${c.key}-out"></b></label>
-                    <input type="range" id="${prefix}${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
-                </div>`).join('');
+            const controls = (lab.controls || []).map((c) => {
+                if (c.options) {
+                    const opts = c.options.map((o) => `<option value="${o.value}" ${String(o.value) === String(c.value) ? 'selected' : ''}>${o.label}</option>`).join('');
+                    return `
+                        <div class="lab-control" id="${prefix}${id}-${c.key}-wrap">
+                            <label for="${prefix}${id}-${c.key}">${c.label}<b id="${prefix}${id}-${c.key}-out"></b></label>
+                            <select id="${prefix}${id}-${c.key}" class="lab-select">${opts}</select>
+                        </div>`;
+                }
+                return `
+                    <div class="lab-control" id="${prefix}${id}-${c.key}-wrap">
+                        <label for="${prefix}${id}-${c.key}">${c.label}<b id="${prefix}${id}-${c.key}-out"></b></label>
+                        <input type="range" id="${prefix}${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
+                    </div>`;
+            }).join('');
             const modes = (lab.modes || []).map((m, i) =>
                 `<button type="button" class="lab-btn ${i === 0 ? 'is-active' : ''}" data-mode="${m.key}">${m.label}</button>`
             ).join('');
@@ -1734,6 +1744,9 @@
                         <button type="button" class="scrub-btn" data-role="step-fwd" aria-label="進一格">⏵</button>
                         <b id="${prefix}${id}-scrub-out">0.00 s</b>
                     </div>` : '';
+            const extraBtns = (lab.extraButtons || []).map((b) =>
+                `<button type="button" class="lab-btn ${b.className || ''}" data-action="${b.action}">${b.label}</button>`
+            ).join('');
             return `
                 <div class="lab-shell" id="${prefix}lab-${id}">
                     <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
@@ -1745,6 +1758,7 @@
                     <div class="lab-buttons">
                         <button type="button" class="lab-btn" data-role="toggle">⏸ 暫停</button>
                         <button type="button" class="lab-btn" data-role="reset">↺ 回到預設值</button>
+                        ${extraBtns}
                     </div>
                     <div class="lab-readout" id="${prefix}${id}-readout"></div>
                     ${lab.note ? `<div class="lab-note">${lab.note}</div>` : ''}
@@ -1760,7 +1774,7 @@
             const disposers = customDisposers || activeDisposers;
 
             const params = {};
-            (lab.controls || []).forEach((c) => { params[c.key] = Number(c.value); });
+            (lab.controls || []).forEach((c) => { params[c.key] = isNaN(Number(c.value)) ? c.value : Number(c.value); });
             const modeKeys = lab.modes ? lab.modes.map((m) => m.key) : [];
             params.mode = lab.modes
                 ? (modeKeys.includes(initialMode) ? initialMode : lab.modes[0].key)
@@ -1797,9 +1811,20 @@
             (lab.controls || []).forEach((c) => {
                 const input = document.getElementById(prefix ? `${prefix}${id}-${c.key}` : `${id}-${c.key}`);
                 if (input) {
-                    disposers.addEventListener(input, 'input', () => {
-                        params[c.key] = Number(input.value);
+                    const evt = input.tagName === 'SELECT' ? 'change' : 'input';
+                    disposers.addEventListener(input, evt, () => {
+                        params[c.key] = isNaN(Number(input.value)) ? input.value : Number(input.value);
+                        if (c.onChange) c.onChange(params[c.key], params);
                         syncOutputs(); paint();
+                    });
+                }
+            });
+
+            (lab.extraButtons || []).forEach((b) => {
+                const btn = host.querySelector(`[data-action="${b.action}"]`);
+                if (btn && b.onClick) {
+                    disposers.addEventListener(btn, 'click', () => {
+                        b.onClick(params, { syncOutputs, paint, host });
                     });
                 }
             });
@@ -1866,10 +1891,11 @@
             if (resetBtn) {
                 disposers.addEventListener(resetBtn, 'click', () => {
                     (lab.controls || []).forEach((c) => {
-                        params[c.key] = Number(c.value);
+                        params[c.key] = isNaN(Number(c.value)) ? c.value : Number(c.value);
                         const input = document.getElementById(prefix ? `${prefix}${id}-${c.key}` : `${id}-${c.key}`);
                         if (input) input.value = c.value;
                     });
+                    if (lab.onReset) lab.onReset(params);
                     simTime = 0;
                     showScrub();
                     syncOutputs(); paint();
@@ -1889,6 +1915,20 @@
                 }
                 paint();
             });
+
+            if (typeof lab.setup === 'function') {
+                lab.setup({
+                    host,
+                    canvas,
+                    params,
+                    disposers,
+                    syncOutputs,
+                    paint,
+                    getGeom: () => geom,
+                    isPaused: () => !running,
+                    pause: pausePlayback
+                });
+            }
 
             syncOutputs();
             paint();
@@ -3754,6 +3794,537 @@
                 label(ctx, `d / λ = ${ratio.toFixed(2)}　${ratio < 1.6 ? '⇒ 繞射非常明顯，縫後接近圓形波' : (ratio < 4 ? '⇒ 繞射明顯' : '⇒ 繞射不明顯，波近乎直線穿越')}`,
                     x0 + 6, y0 + 18, C.ink, 12);
                 label(ctx, '波長與頻率在繞射前後都不變，改變的只有波前形狀與傳播方向', x0 + 6, y1 + 18, C.muted, 11);
+            }
+        };
+        /* 5b. 水波干涉探究模擬器 ------------------------------------------- */
+        LABS.water_interference = {
+            name: '水波干涉探究模擬器（成德高中 陳家騏老師提供）',
+            cycle: 2.0,
+            tag: 'N07',
+            hint: '💡 <b>空間幾何與干涉對應教學引導</b>（本模擬由成德高中 陳家騏老師提供）：<br>1. <b>凍結波形：</b>建議先點擊「⏸ 暫停」或拖曳時間軸，讓動態水波圖化為如教科書般靜止的幾何空間圖。<br>2. <b>測量對應：</b>在靜止畫面上點擊任意位置（亮紋或暗紋），即時測量波程差 $\\Delta \\ell$，驗證是否符合整數倍或半整數倍波長，將代數公式錨定在幾何點位上。<br>3. <b>疊加驗證：</b>開啟「顯示雙曲線」，驗證理論雙曲線是否穿過測量確認過的腹點與節點；切換「一維連線」，透視兩波源連線上各點的合成波形與節點靜止不動的現象。',
+            note: '本模擬由成德高中 陳家騏老師提供原始探究設計。干涉判讀關鍵：① 同相兩波源：波程差 $\\Delta \\ell = n\\lambda$ 為腹線（亮暗交替振幅 $2A$）；$\\Delta \\ell = (m - \\frac{1}{2})\\lambda$ 為節線（完全抵消靜止不動）。② 反相兩波源：中央線轉為節線，腹線與節線角色互換！③ 兩波源連線上相鄰節點（或相鄰腹點）間距恆為 $\\lambda/2$。',
+            height: 420,
+            modes: [
+                { key: '2D', label: '二維水面俯視' },
+                { key: '1D', label: '一維連線波形' }
+            ],
+            controls: [
+                {
+                    key: 'd',
+                    label: '波源間距 d (cm)',
+                    min: 1.0,
+                    max: 20.0,
+                    step: 0.05,
+                    value: 8.8,
+                    fmt: (v, p) => {
+                        const f = Number(p.freq) || 0.08;
+                        const lam = (2.0 / f) * 0.088;
+                        const ratio = Number(v) / lam;
+                        const nNear = Math.round(ratio);
+                        const nHalf = Math.round(ratio - 0.5);
+                        let degen = '';
+                        if (Math.abs(ratio - nNear) < 0.04) degen = ' [✨腹線退化]';
+                        else if (Math.abs(ratio - (nHalf + 0.5)) < 0.04) degen = ' [✨節線退化]';
+                        return `${Number(v).toFixed(2)} cm (${ratio.toFixed(2)} λ)${degen}`;
+                    }
+                },
+                {
+                    key: 'freq',
+                    label: '水波頻率',
+                    options: [
+                        { value: 0.04, label: '低頻 (波長較長 λ ≈ 3.8 cm)' },
+                        { value: 0.08, label: '中頻 (標準波長 λ ≈ 2.2 cm)' },
+                        { value: 0.16, label: '高頻 (波長較短 λ ≈ 1.2 cm)' }
+                    ],
+                    value: 0.08,
+                    fmt: (v) => Number(v) <= 0.05 ? '低頻 (波長長)' : (Number(v) <= 0.10 ? '中頻 (標準)' : '高頻 (波長短)')
+                },
+                {
+                    key: 'phase',
+                    label: '初始相位',
+                    options: [
+                        { value: 0, label: '同相 (相差 0)' },
+                        { value: 1, label: '反相 (相差 π)' }
+                    ],
+                    value: 0,
+                    fmt: (v) => Number(v) === 0 ? '同相 (0)' : '反相 (π)'
+                },
+                {
+                    key: 'lines',
+                    label: '雙曲線輔助線',
+                    options: [
+                        { value: 1, label: '顯示腹線與節線' },
+                        { value: 0, label: '隱藏輔助線' }
+                    ],
+                    value: 1,
+                    only: ['2D'],
+                    fmt: (v) => Number(v) === 1 ? '顯示' : '隱藏'
+                },
+                {
+                    key: 'decay',
+                    label: '波動衰減模型',
+                    options: [
+                        { value: 0, label: '課本理想模型 (等振幅，節線完全靜止)' },
+                        { value: 1, label: '真實水波 (隨距離衰減，節線微幅殘留)' }
+                    ],
+                    value: 0,
+                    fmt: (v) => Number(v) === 0 ? '理想等振幅 (節線完全平靜)' : '真實衰減 (殘留微波)'
+                }
+            ],
+            extraButtons: [
+                {
+                    action: 'snap_degen_int',
+                    label: '✨ 鎖定腹線退化 (d = nλ)',
+                    onClick: (p, { syncOutputs, paint, host }) => {
+                        const f = Number(p.freq) || 0.08;
+                        const lam = (2.0 / f) * 0.088;
+                        const curRatio = (Number(p.d) || 8.8) / lam;
+                        const nTarget = Math.max(1, Math.round(curRatio));
+                        p.d = Number((nTarget * lam).toFixed(2));
+                        const input = host.querySelector('[id$="-d"]');
+                        if (input) input.value = p.d;
+                        syncOutputs();
+                        paint();
+                    }
+                },
+                {
+                    action: 'snap_degen_half',
+                    label: '✨ 鎖定節線退化 (d = (m-½)λ)',
+                    onClick: (p, { syncOutputs, paint, host }) => {
+                        const f = Number(p.freq) || 0.08;
+                        const lam = (2.0 / f) * 0.088;
+                        const curRatio = (Number(p.d) || 8.8) / lam;
+                        const mTarget = Math.max(0, Math.round(curRatio - 0.5));
+                        p.d = Number(((mTarget + 0.5) * lam).toFixed(2));
+                        const input = host.querySelector('[id$="-d"]');
+                        if (input) input.value = p.d;
+                        syncOutputs();
+                        paint();
+                    }
+                },
+                {
+                    action: 'clear_p',
+                    label: '📍 清除測量點',
+                    onClick: (p, { syncOutputs, paint }) => {
+                        p.clickP = null;
+                        syncOutputs();
+                        paint();
+                    }
+                }
+            ],
+            onReset: (p) => {
+                p.clickP = null;
+            },
+            setup: ({ canvas, params, disposers, syncOutputs, paint, getGeom }) => {
+                const getCoords = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const g = getGeom();
+                    if (!rect.width || !rect.height) return null;
+                    const x = (e.clientX - rect.left) * (g.width / rect.width);
+                    const y = (e.clientY - rect.top) * (g.height / rect.height);
+                    return { x, y };
+                };
+                let dragging = false;
+                const setPoint = (e) => {
+                    const pt = getCoords(e);
+                    if (!pt) return;
+                    params.clickP = pt;
+                    syncOutputs();
+                    paint();
+                };
+                disposers.addEventListener(canvas, 'pointerdown', (e) => {
+                    dragging = true;
+                    setPoint(e);
+                });
+                disposers.addEventListener(window, 'pointermove', (e) => {
+                    if (dragging) setPoint(e);
+                });
+                const stopDrag = () => { dragging = false; };
+                disposers.addEventListener(window, 'pointerup', stopDrag);
+                disposers.addEventListener(window, 'pointercancel', stopDrag);
+            },
+            readouts: (p) => {
+                const f = Number(p.freq) || 0.08;
+                const lamCm = (2.0 / f) * 0.088;
+                const dCm = Number(p.d) || 8.8;
+                const dOverLam = dCm / lamCm;
+                const isOutPhase = Number(p.phase) === 1;
+
+                const nInt = Math.round(dOverLam);
+                const nHalf = Math.round(dOverLam - 0.5);
+                let degenStatus = '非退化（雙曲線向外發散）';
+                if (Math.abs(dOverLam - nInt) < 0.04) {
+                    degenStatus = isOutPhase
+                        ? `✨ 雙曲線退化：d = ${nInt}λ，第 ${nInt} 節線退化為兩波源外側直線射線`
+                        : `✨ 雙曲線退化：d = ${nInt}λ，第 ${nInt} 腹線退化為兩波源外側直線射線（外側波程差恆為 d）`;
+                } else if (Math.abs(dOverLam - (nHalf + 0.5)) < 0.04) {
+                    degenStatus = isOutPhase
+                        ? `✨ 雙曲線退化：d = ${(nHalf + 0.5).toFixed(1)}λ，最外側腹線退化為直線射線`
+                        : `✨ 雙曲線退化：d = ${(nHalf + 0.5).toFixed(1)}λ，最外側節線退化為直線射線（外側完全靜止）`;
+                }
+
+                const base = [
+                    { label: '波長 λ', value: `${lamCm.toFixed(2)} cm` },
+                    { label: '波源間距 d', value: `${dCm.toFixed(2)} cm (${dOverLam.toFixed(2)} λ)` },
+                    { label: '雙曲線退化狀態', value: degenStatus },
+                    { label: '初始相位狀態', value: isOutPhase ? '反相 (Δφ = π，中央線為節線)' : '同相 (Δφ = 0，中央線為腹線)' }
+                ];
+
+                if (p.clickP) {
+                    const geomW = p._geomW || 720;
+                    const geomH = p._geomH || 420;
+                    const x0 = 12, x1 = Math.max(x0 + 120, geomW - 12);
+                    const TW = x1 - x0;
+                    const scale = TW / 24;
+                    const cx = (x0 + x1) / 2, cy = (10 + geomH - 38) / 2;
+                    const s1x = cx - (dCm * scale) / 2, s1y = cy;
+                    const s2x = cx + (dCm * scale) / 2, s2y = cy;
+
+                    const r1Px = Math.hypot(p.clickP.x - s1x, p.clickP.y - s1y);
+                    const r2Px = Math.hypot(p.clickP.x - s2x, p.clickP.y - s2y);
+                    const r1Cm = r1Px / scale;
+                    const r2Cm = r2Px / scale;
+                    const diffCm = Math.abs(r1Cm - r2Cm);
+                    const diffLam = diffCm / lamCm;
+
+                    const lamPx = lamCm * scale;
+                    const k = (2 * Math.PI) / lamPx;
+                    const phase1 = 0;
+                    const phase2 = isOutPhase ? Math.PI : 0;
+                    let phaseDiffTotal = Math.abs((k * r1Px + phase1) - (k * r2Px + phase2)) % (2 * Math.PI);
+                    if (phaseDiffTotal > Math.PI) phaseDiffTotal = 2 * Math.PI - phaseDiffTotal;
+
+                    let verdict = '介於腹線與節線之間';
+                    if (phaseDiffTotal < 0.35) {
+                        verdict = '接近 腹點 (完全建設性干涉)';
+                    } else if (Math.abs(phaseDiffTotal - Math.PI) < 0.35) {
+                        verdict = '接近 節點 (完全破壞性干涉)';
+                    }
+
+                    return [
+                        ...base,
+                        { label: '測量點 P', value: `PS₁ = ${r1Cm.toFixed(2)} cm, PS₂ = ${r2Cm.toFixed(2)} cm` },
+                        { label: '波程差 Δℓ = |PS₁ − PS₂|', value: `${diffCm.toFixed(2)} cm ≈ ${diffLam.toFixed(2)} λ` },
+                        { label: '干涉判定', value: verdict }
+                    ];
+                }
+
+                return [
+                    ...base,
+                    { label: '點擊水面測量', value: '請在畫布上點擊任意位置放置測量點 P' }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                p._geomW = w; p._geomH = h;
+                const x0 = 12, x1 = Math.max(x0 + 120, w - 12), y0 = 10, y1 = h - 38;
+                const TW = x1 - x0, TH = y1 - y0;
+                const cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+                const scale = TW / 24;
+                const dCm = Math.max(Number(p.d) || 8.8, 1.0);
+                const dPx = dCm * scale;
+                const s1 = { x: cx - dPx / 2, y: cy };
+                const s2 = { x: cx + dPx / 2, y: cy };
+                const f = Number(p.freq) || 0.08;
+                const lamCm = (2.0 / f) * 0.088;
+                const lamPx = Math.max(lamCm * scale, 6);
+                const k = (2 * Math.PI) / lamPx;
+                const om = 3.2;
+                const isOutPhase = Number(p.phase) === 1;
+                const phase1 = 0;
+                const phase2 = isOutPhase ? Math.PI : 0;
+                const phaseDiff_L = (phase2 - phase1) / k;
+
+                /* ============ 二維水面俯視 ============ */
+                if (p.mode === '2D' || !p.mode) {
+                    const step = 4;
+                    const iw = Math.ceil(TW / step) * step, ih = Math.ceil(TH / step) * step;
+                    const img = ctx.createImageData(iw, ih);
+                    for (let yy = 0; yy < ih; yy += step) {
+                        for (let xx = 0; xx < iw; xx += step) {
+                            const gx = x0 + xx, gy = y0 + yy;
+                            const r1 = Math.hypot(gx - s1.x, gy - s1.y);
+                            const r2 = Math.hypot(gx - s2.x, gy - s2.y);
+                            const isRealDecay = Number(p.decay) === 1;
+                            const a1 = isRealDecay ? (1 / (1 + r1 * 0.003)) : 0.85;
+                            const a2 = isRealDecay ? (1 / (1 + r2 * 0.003)) : 0.85;
+                            const z = a1 * Math.cos(k * r1 - om * t + phase1) + a2 * Math.cos(k * r2 - om * t + phase2);
+                            const base = 118;
+                            const intensity = z * 58;
+                            const r = Math.max(0, Math.min(255, Math.round(base - 45 + intensity * 0.45)));
+                            const g = Math.max(0, Math.min(255, Math.round(base + 38 + intensity * 0.95)));
+                            const b = Math.max(0, Math.min(255, Math.round(base + 75 + intensity * 1.05)));
+                            for (let dy = 0; dy < step; dy++) {
+                                const row = (yy + dy) * iw;
+                                for (let dx = 0; dx < step; dx++) {
+                                    const idx = (row + xx + dx) * 4;
+                                    img.data[idx] = r;
+                                    img.data[idx + 1] = g;
+                                    img.data[idx + 2] = b;
+                                    img.data[idx + 3] = 255;
+                                }
+                            }
+                        }
+                    }
+                    const off = getOffscreen(iw, ih);
+                    off.ctx.putImageData(img, 0, 0);
+                    ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, TW, TH);
+
+                    ctx.strokeStyle = 'rgba(18,49,58,0.22)'; ctx.lineWidth = 1.2;
+                    ctx.strokeRect(x0, y0, TW, TH);
+
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.rect(x0, y0, TW, TH);
+                    ctx.clip();
+
+                    // 繪製雙曲線（含中垂線與外側射線退化判定）
+                    if (Number(p.lines) === 1) {
+                        const drawSingleHyperbola = (deltaL, color, dash) => {
+                            const a = Math.abs(deltaL) / 2;
+                            const c = dPx / 2;
+                            const sign = deltaL >= 0 ? 1 : -1;
+
+                            // 1. 中垂線退化
+                            if (a < 0.3) {
+                                ctx.save();
+                                ctx.strokeStyle = color;
+                                ctx.lineWidth = 2.0;
+                                if (dash) ctx.setLineDash(dash);
+                                ctx.beginPath();
+                                ctx.moveTo(cx, y0);
+                                ctx.lineTo(cx, y1);
+                                ctx.stroke();
+                                ctx.restore();
+                                return;
+                            }
+
+                            // 2. 雙曲線退化為兩波源外側射線 (|Δℓ| ≈ d，即 a ≈ c)
+                            if (Math.abs(a - c) < 1.5 || a >= c) {
+                                if (Math.abs(a - c) < 2.2) {
+                                    ctx.save();
+                                    ctx.strokeStyle = color;
+                                    ctx.lineWidth = 2.8;
+                                    if (dash) ctx.setLineDash(dash);
+                                    ctx.beginPath();
+                                    if (sign > 0) {
+                                        ctx.moveTo(s2.x, cy);
+                                        ctx.lineTo(x1, cy);
+                                    } else {
+                                        ctx.moveTo(s1.x, cy);
+                                        ctx.lineTo(x0, cy);
+                                    }
+                                    ctx.stroke();
+                                    ctx.restore();
+                                }
+                                return;
+                            }
+
+                            // 3. 一般雙曲線
+                            const b2 = c * c - a * a;
+                            if (b2 <= 0) return;
+                            const b = Math.sqrt(b2);
+                            ctx.save();
+                            ctx.strokeStyle = color;
+                            ctx.lineWidth = 1.5;
+                            if (dash) ctx.setLineDash(dash);
+                            ctx.beginPath();
+                            let started = false;
+                            for (let yy = -TH; yy <= TH; yy += 3) {
+                                const xOff = sign * a * Math.sqrt(1 + (yy * yy) / b2);
+                                const plotX = cx + xOff;
+                                const plotY = cy + yy;
+                                if (plotX < x0 - 30 || plotX > x1 + 30) {
+                                    started = false;
+                                    continue;
+                                }
+                                if (!started) {
+                                    ctx.moveTo(plotX, plotY);
+                                    started = true;
+                                } else {
+                                    ctx.lineTo(plotX, plotY);
+                                }
+                            }
+                            ctx.stroke();
+                            ctx.restore();
+                        };
+
+                        const maxN = Math.floor((dPx + Math.abs(phaseDiff_L)) / lamPx) + 1;
+                        // 腹線（亮紋雙曲線）
+                        for (let n = -maxN; n <= maxN; n++) {
+                            const dl = n * lamPx - phaseDiff_L;
+                            if (Math.abs(dl) <= dPx + 1.2) {
+                                drawSingleHyperbola(dl, '#7bf0c2', [6, 4]);
+                            }
+                        }
+                        // 節線（暗紋雙曲線）
+                        for (let m = -maxN; m <= maxN; m++) {
+                            const dl = (m + 0.5) * lamPx - phaseDiff_L;
+                            if (Math.abs(dl) <= dPx + 1.2) {
+                                drawSingleHyperbola(dl, '#ffb3c6', [3, 4]);
+                            }
+                        }
+                    }
+
+                    // 波源標註
+                    [s1, s2].forEach((s, idx) => {
+                        ctx.fillStyle = '#f1c40f';
+                        ctx.beginPath(); ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#081e26'; ctx.lineWidth = 1.5; ctx.stroke();
+                        label(ctx, `S${idx + 1}`, s.x, s.y - 9, '#ffffff', 11, 'center');
+                    });
+
+                    // 測量點 P 標註與即時連線
+                    if (p.clickP) {
+                        const px = Math.max(x0, Math.min(x1, p.clickP.x));
+                        const py = Math.max(y0, Math.min(y1, p.clickP.y));
+                        const r1 = Math.hypot(px - s1.x, py - s1.y);
+                        const r2 = Math.hypot(px - s2.x, py - s2.y);
+                        const r1Cm = r1 / scale;
+                        const r2Cm = r2 / scale;
+                        const dlCm = Math.abs(r1Cm - r2Cm);
+                        const dlLam = dlCm / lamCm;
+
+                        ctx.strokeStyle = '#f59e0b';
+                        ctx.lineWidth = 2;
+                        ctx.setLineDash([4, 4]);
+                        ctx.beginPath();
+                        ctx.moveTo(s1.x, s1.y); ctx.lineTo(px, py);
+                        ctx.moveTo(s2.x, s2.y); ctx.lineTo(px, py);
+                        ctx.stroke();
+                        ctx.setLineDash([]);
+
+                        ctx.fillStyle = '#ef4444';
+                        ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+                        label(ctx, 'P', px + 9, py - 6, '#ffffff', 12);
+
+                        let phaseDiffTotal = Math.abs((k * r1 + phase1) - (k * r2 + phase2)) % (2 * Math.PI);
+                        if (phaseDiffTotal > Math.PI) phaseDiffTotal = 2 * Math.PI - phaseDiffTotal;
+                        let verdict = '介於腹線與節線之間';
+                        let verdictCol = '#ffffff';
+                        if (phaseDiffTotal < 0.35) {
+                            verdict = '接近 腹線 (建設性干涉)';
+                            verdictCol = '#7bf0c2';
+                        } else if (Math.abs(phaseDiffTotal - Math.PI) < 0.35) {
+                            const isRealDecay = Number(p.decay) === 1;
+                            verdict = isRealDecay ? '接近 節線 (因到兩波源距離不等殘留微波)' : '接近 節線 (完全破壞性干涉，水面靜止)';
+                            verdictCol = '#ffb3c6';
+                        }
+
+                        const hudW = Math.min(290, TW * 0.65);
+                        const hudH = 58;
+                        ctx.fillStyle = 'rgba(8, 30, 38, 0.88)';
+                        ctx.fillRect(x0 + 6, y0 + 6, hudW, hudH);
+                        ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.lineWidth = 1;
+                        ctx.strokeRect(x0 + 6, y0 + 6, hudW, hudH);
+                        labelFit(ctx, `PS₁ = ${r1Cm.toFixed(2)} cm, PS₂ = ${r2Cm.toFixed(2)} cm`, x0 + 12, y0 + 22, '#e6f4f7', 11, 'left', { maxW: hudW - 16 });
+                        labelFit(ctx, `波程差 Δℓ = ${dlCm.toFixed(2)} cm ≈ ${dlLam.toFixed(2)} λ`, x0 + 12, y0 + 38, '#f59e0b', 11, 'left', { maxW: hudW - 16 });
+                        labelFit(ctx, `⇒ ${verdict}`, x0 + 12, y0 + 54, verdictCol, 11, 'left', { maxW: hudW - 16 });
+                    } else {
+                        const hintW = Math.min(340, TW - 16);
+                        ctx.fillStyle = 'rgba(8, 30, 38, 0.76)';
+                        ctx.fillRect(x0 + 6, y0 + 6, hintW, 26);
+                        labelFit(ctx, '💡 提示：在水面上點擊任意位置放置測量點 P', x0 + 12, y0 + 23, '#e6f4f7', 11, 'left', { maxW: hintW - 16 });
+                    }
+                    ctx.restore();
+
+                    if (Number(p.lines) === 1) {
+                        const legW = Math.min(200, TW * 0.45);
+                        ctx.fillStyle = 'rgba(8, 30, 38, 0.78)';
+                        ctx.fillRect(x1 - legW - 6, y0 + 6, legW, 40);
+                        labelFit(ctx, '- - - 腹線 (建設性/雙曲線)', x1 - 12, y0 + 22, '#7bf0c2', 10, 'right', { maxW: legW - 12 });
+                        labelFit(ctx, '······ 節線 (破壞性/雙曲線)', x1 - 12, y0 + 38, '#ffb3c6', 10, 'right', { maxW: legW - 12 });
+                    }
+
+                    const dOverLamNow = dCm / lamCm;
+                    const nNear = Math.round(dOverLamNow);
+                    const nHalfNear = Math.round(dOverLamNow - 0.5);
+                    if (Math.abs(dOverLamNow - nNear) < 0.04) {
+                        const degenMsg = isOutPhase ? `✨ 雙曲線退化：d = ${nNear}λ，最外側節線退化為波源外側直線` : `✨ 雙曲線退化：d = ${nNear}λ，第 ${nNear} 腹線退化為波源外側直線`;
+                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#7bf0c2', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: TW - 12 });
+                    } else if (Math.abs(dOverLamNow - (nHalfNear + 0.5)) < 0.04) {
+                        const degenMsg = isOutPhase ? `✨ 雙曲線退化：d = ${(nHalfNear + 0.5).toFixed(1)}λ，腹線退化為波源外側直線` : `✨ 雙曲線退化：d = ${(nHalfNear + 0.5).toFixed(1)}λ，節線退化為波源外側直線`;
+                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#ffb3c6', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: TW - 12 });
+                    }
+
+                    labelFit(ctx, '水波槽俯視（成德高中 陳家騏老師提供）：亮紋＝波峰重疊　暗紋＝波谷重疊　平靜處＝節線', x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW });
+                    return;
+                }
+
+
+                /* ============ 一維連線波形 ============ */
+                ctx.fillStyle = 'rgba(11, 111, 146, 0.04)';
+                ctx.fillRect(x0, y0, TW, TH);
+                ctx.strokeStyle = 'rgba(18, 49, 58, 0.16)'; ctx.lineWidth = 1;
+                ctx.strokeRect(x0, y0, TW, TH);
+
+                // 平衡位置基準線
+                ctx.strokeStyle = 'rgba(18, 49, 58, 0.28)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(x0, cy); ctx.lineTo(x1, cy); ctx.stroke();
+                labelFit(ctx, '兩波源連線上的平衡位置 (y = 0)', x0 + 8, cy - 8, C.muted, 10, 'left', { maxW: TW * 0.4 });
+                label(ctx, 'x (cm) →', x1 - 6, cy - 8, C.muted, 10, 'right');
+
+                // 駐波包絡線 (兩波源之間)
+                ctx.save();
+                ctx.strokeStyle = 'rgba(107, 70, 193, 0.35)'; ctx.lineWidth = 1.4; ctx.setLineDash([4, 4]);
+                ctx.beginPath();
+                for (let x = s1.x; x <= s2.x; x += 2) {
+                    const xRel = x - cx;
+                    const env = Math.abs(2 * Math.cos(k * xRel - phaseDiff_L * k / 2)) * 36;
+                    if (x === s1.x) ctx.moveTo(x, cy - env); else ctx.lineTo(x, cy - env);
+                }
+                for (let x = s2.x; x >= s1.x; x -= 2) {
+                    const xRel = x - cx;
+                    const env = Math.abs(2 * Math.cos(k * xRel - phaseDiff_L * k / 2)) * 36;
+                    ctx.lineTo(x, cy + env);
+                }
+                ctx.closePath();
+                ctx.stroke();
+                ctx.restore();
+
+                // 合成波曲線
+                ctx.strokeStyle = '#0b6f92'; ctx.lineWidth = 2.4;
+                ctx.beginPath();
+                for (let x = x0; x <= x1; x += 2) {
+                    const r1 = Math.abs(x - s1.x);
+                    const r2 = Math.abs(x - s2.x);
+                    const z1 = Math.cos(k * r1 - om * t + phase1);
+                    const z2 = Math.cos(k * r2 - om * t + phase2);
+                    const z = z1 + z2;
+                    const py = cy - z * 36;
+                    if (x === x0) ctx.moveTo(x, py); else ctx.lineTo(x, py);
+                }
+                ctx.stroke();
+
+                // 波源位置
+                [s1, s2].forEach((s, idx) => {
+                    ctx.fillStyle = '#f1c40f';
+                    ctx.beginPath(); ctx.arc(s.x, cy, 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#081e26'; ctx.lineWidth = 1.5; ctx.stroke();
+                    label(ctx, `S${idx + 1}`, s.x, cy + 22, C.ink, 11, 'center');
+                });
+
+                // 若有測量點 P，標示其連線上的 x 位置與瞬時振盪
+                if (p.clickP) {
+                    const px = Math.max(x0, Math.min(x1, p.clickP.x));
+                    const r1 = Math.abs(px - s1.x);
+                    const r2 = Math.abs(px - s2.x);
+                    const z1 = Math.cos(k * r1 - om * t + phase1);
+                    const z2 = Math.cos(k * r2 - om * t + phase2);
+                    const z = z1 + z2;
+                    const py = cy - z * 36;
+
+                    ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+                    ctx.beginPath(); ctx.moveTo(px, y0); ctx.lineTo(px, y1); ctx.stroke();
+                    ctx.setLineDash([]);
+
+                    ctx.fillStyle = '#ef4444';
+                    ctx.beginPath(); ctx.arc(px, py, 6, 0, Math.PI * 2); ctx.fill();
+                    ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 2; ctx.stroke();
+                    labelFit(ctx, `P (z = ${(z).toFixed(2)} A)`, px + 8, py - 8, '#ef4444', 11, 'left', { clampW: w, maxW: 140 });
+                }
+
+                labelFit(ctx, '一維連線剖面：兩波源間合成反向波為駐波；波節振幅為 0，波腹振幅達 2A', x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW });
             }
         };
         /* 6. 聲波的傳播 ---------------------------------------------------- */
