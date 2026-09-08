@@ -483,6 +483,14 @@
             display: block; width: 100%; height: auto;
             aspect-ratio: 16 / 9; background: #0d1b24;
         }
+        .anim-stage-vertical {
+            max-width: 360px; margin: 0 auto;
+            aspect-ratio: 9 / 16; height: auto; position: relative;
+        }
+        .anim-stage-vertical iframe {
+            display: block; width: 100%; height: 100%;
+            border: 0; background: #000;
+        }
         .anim-meta {
             display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem;
             margin: 0.7rem 0 0.2rem; font-size: 0.76rem; color: var(--text-muted);
@@ -1036,21 +1044,41 @@
             const nodeTags = (a.nodes || []).filter((n) => nodeMeta[n])
                 .map((n) => `<span class="module-badge">${n}</span>`).join('');
 
+            const tagLabel = a.youtubeId ? '實證影片' : '動畫';
+            const stage = a.youtubeId ? `
+                <div class="anim-stage ${a.isVertical ? 'anim-stage-vertical' : ''}" style="${a.isVertical ? '' : 'position:relative; padding-bottom:56.25%; height:0; overflow:hidden;'}">
+                    <iframe src="https://www.youtube.com/embed/${a.youtubeId}"
+                        style="${a.isVertical ? 'width:100%; height:100%; border:0;' : 'position:absolute; top:0; left:0; width:100%; height:100%; border:0;'}"
+                        title="${a.title}"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        referrerpolicy="strict-origin-when-cross-origin"
+                        allowfullscreen loading="lazy"></iframe>
+                </div>` : `
+                <div class="anim-stage">
+                    <video id="${vid}" controls preload="${(a.chapters || []).length ? 'metadata' : 'none'}" playsinline poster="${a.poster}">
+                        <source src="${a.video}" type="video/mp4">
+                        你的瀏覽器不支援內嵌影片，請直接下載 <a href="${a.video}">${a.title}</a>。
+                    </video>
+                </div>`;
+
+            const metaDesc = a.youtubeId ? `
+                <span class="anim-dur" style="color:var(--accent-cyan); background:rgba(6,148,162,0.1); border-color:rgba(6,148,162,0.25);">YouTube 實證短片</span>
+                <span><a href="${a.youtubeUrl || `https://youtube.com/watch?v=${a.youtubeId}`}" target="_blank" rel="noopener" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600;">在 YouTube 開啟原始短片 ↗</a></span>
+                ${nodeTags}
+            ` : `
+                <span class="anim-dur">${mmss(a.seconds)}</span>
+                <span>無旁白，全片以字幕講解</span>
+                ${nodeTags}
+            `;
+
             return `
                 <div class="card anim-block">
-                    <h4><span class="formula-node-tag">動畫</span>${a.title}</h4>
+                    <h4><span class="formula-node-tag">${tagLabel}</span>${a.title}</h4>
                     ${a.misconception ? `<div class="anim-myth"><b>常見誤解</b>${a.misconception}</div>` : ''}
                     <p class="anim-lead">${a.lead}</p>
-                    <div class="anim-stage">
-                        <video id="${vid}" controls preload="${(a.chapters || []).length ? 'metadata' : 'none'}" playsinline poster="${a.poster}">
-                            <source src="${a.video}" type="video/mp4">
-                            你的瀏覽器不支援內嵌影片，請直接下載 <a href="${a.video}">${a.title}</a>。
-                        </video>
-                    </div>
+                    ${stage}
                     <div class="anim-meta">
-                        <span class="anim-dur">${mmss(a.seconds)}</span>
-                        <span>無旁白，全片以字幕講解</span>
-                        ${nodeTags}
+                        ${metaDesc}
                     </div>
                     ${chapters}
                     ${points}

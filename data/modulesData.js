@@ -396,7 +396,7 @@ const modulesData = {
                 name: '固有頻率與共振',
                 formula: 'f_{\\text{外界擾動}} = f_{\\text{固有}} \\;\\Rightarrow\\; \\text{振幅大幅增加}',
                 anchor: '共振要求「頻率相同」，不要求振幅相同。',
-                desc: '物體受微擾後自行振盪的頻率稱為<b>固有頻率（自然頻率）</b>；一個系統可以有很多個固有頻率（例如弦上所有的駐波頻率）。<br>外界週期性擾動的頻率與固有頻率相同時，即使擾動很小也會產生大幅振盪 $\\Rightarrow$ <b>共振</b>；聲音的共振稱為<b>共鳴</b>。<br><b>實例</b>：單擺共振（等長的擺才會被帶動）、1940 年塔可馬吊橋被風吹毀、吉他與提琴的共鳴箱增強響度。'
+                desc: '物體受微擾後自行振盪的頻率稱為<b>固有頻率（自然頻率）</b>；一個系統可以有很多個固有頻率（例如弦上所有的駐波頻率）。<br>外界週期性擾動的頻率與固有頻率相同時，即使擾動很小也會產生大幅振盪 $\\Rightarrow$ <b>共振</b>；聲音的共振稱為<b>共鳴</b>。<br><b>實例</b>：單擺共振（等長的擺才會被帶動）、1940 年塔可馬吊橋被風吹毀、吉他與提琴的共鳴箱增強響度。<br><b>實證短片</b>：<a href="https://youtube.com/shorts/WwC0fEPp8w4" target="_blank" rel="noopener" style="color:var(--accent-cyan); font-weight:700;">🎬 地震與大樓共振實驗（不同樓高晃動對比與 101 阻尼器）↗</a>'
             },
             {
                 node: 'N12',
@@ -512,7 +512,7 @@ const modulesData = {
                         </tr>
                         <tr>
                             <td><strong>工程：塔可馬吊橋與建築防震</strong></td>
-                            <td>1940 年塔可馬吊橋因風致振動頻率接近橋的固有頻率而崩塌，是共振最著名的工程案例。</td>
+                            <td>1940 年塔可馬吊橋因風致振動頻率接近橋的固有頻率而崩塌，是共振最著名的工程案例；地震時不同高度大樓因自振頻率不同而產生選擇性劇烈晃動（<a href="https://youtube.com/shorts/WwC0fEPp8w4" target="_blank" rel="noopener" style="color:var(--primary-blue); font-weight:700;">觀看震動台模型實證短片 ↗</a>）。</td>
                             <td>共振題只要抓住「兩個頻率是否相同」，與振幅、能量大小無關。</td>
                         </tr>
                         <tr>
