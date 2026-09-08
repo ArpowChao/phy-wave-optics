@@ -28,9 +28,9 @@
     <script src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=anim_frame_v5"></script>
-    <script src="data/questionBank.js?v=anim_frame_v5"></script>
-    <script src="data/mediaData.js?v=anim_frame_v5"></script>
+    <script src="data/modulesData.js?v=interf_v6"></script>
+    <script src="data/questionBank.js?v=interf_v6"></script>
+    <script src="data/mediaData.js?v=interf_v6"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -2239,7 +2239,7 @@
                 const Rold = Math.min(w * 0.30, h * 0.34);
                 ctx.fillStyle = '#2b5f74';
                 ctx.beginPath(); ctx.arc(sx, sy, 5, 0, Math.PI * 2); ctx.fill();
-                label(ctx, '點波源', sx - 8, sy - 14, C.ink, 11, 'right');
+                labelFit(ctx, '點波源', sx - 8, sy - 14, C.ink, 11, 'right', { clampW: w, plate: 1 });
                 for (let k = 1; k <= 2; k++) {
                     const R = Rold - k * lam;
                     if (R > 10) {

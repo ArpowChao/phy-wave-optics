@@ -183,6 +183,21 @@ const modulesData = {
             },
             {
                 node: 'N07',
+                name: '腹線與節線的條數',
+                formula: 'n \\le \\dfrac{d}{\\lambda} \\qquad\\left(m - \\tfrac{1}{2}\\right) \\le \\dfrac{d}{\\lambda}',
+                anchor: '波程差不可能超過波源間距——這一條就決定了腹線與節線各有幾條。',
+                probe: {
+                    q: '兩同相點波源相距 $d = 3.4\\lambda$。中央腹線的<b>單側</b>還有幾條腹線？',
+                    opts: [
+                        { t: '(A) 2 條' },
+                        { t: '(B) 3 條', c: 1 },
+                        { t: '(C) 4 條' }
+                    ]
+                },
+                desc: '<b>來源是三角不等式</b>：P 到兩波源的距離差不可能大於兩波源的間距，即 $|\\overline{PS_1} - \\overline{PS_2}| \\le d$。<br>• 腹線：$n\\lambda \\le d \\Rightarrow n \\le d/\\lambda$。<br>• 節線：$\\left(m - \\frac{1}{2}\\right)\\lambda \\le d \\Rightarrow m \\le d/\\lambda + \\frac{1}{2}$。<br><b>算法</b>：$d = 3.4\\lambda$ 時 $n = 0, 1, 2, 3$ $\\Rightarrow$ 腹線 $3 \\times 2 + 1 = 7$ 條（含中央）；$m = 1, 2, 3$ $\\Rightarrow$ 節線 $3 \\times 2 = 6$ 條。<b>腹線恆為奇數、節線恆為偶數</b>。<br><b>邊界情形</b>：$n\\lambda$ 恰等於 $d$ 時，該條腹線退化成兩波源連線<b>外側的兩條射線</b>（此時 P 只能落在連線的延長線上，距離差才可能剛好等於 $d$），不再是水面上的雙曲線。'
+            },
+            {
+                node: 'N07',
                 name: '水波的繞射',
                 formula: '\\dfrac{d}{\\lambda} \\to 1 \\;\\Rightarrow\\; \\text{繞射愈明顯}',
                 anchor: '狹縫或障礙物尺寸與波長愈接近，繞射愈明顯。',
