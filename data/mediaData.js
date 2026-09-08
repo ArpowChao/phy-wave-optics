@@ -87,6 +87,27 @@ const animData = {
         ]
     },
 
+    rippleTankReal: {
+        title: '真實水波槽的干涉圖樣：節線特寫',
+        nodes: ['N07'],
+        youtubeId: 'wUZ6jtH6IEQ',
+        youtubeUrl: 'https://www.youtube.com/watch?v=wUZ6jtH6IEQ',
+        isVertical: false,
+        seconds: 0,
+        credit: 'YouTube 頻道 koko spice — "interference pattern - water waves"',
+        misconception: '以為節線只是「比較暗的地方」或「振幅比較小的地方」。實際上節線上的水面是<b>完全不動</b>的，那是兩列波恰好抵消的結果。',
+        lead: '模擬畫得再像，學生仍會懷疑「真的有那麼剛好嗎」。這是真實水波槽拍下來的干涉圖樣，可以直接對照三維模式裡那條平坦的水道。',
+        chapters: [
+            { t: 10, label: '節線特寫：水面完全不動' }
+        ],
+        points: [
+            '<b>約 10 秒處的節線特寫</b>：鏡頭停在一條節線上，該處水面自始至終沒有起伏——不是振幅小，是<b>完全不振動</b>。兩側的腹線則清楚地上下翻動。',
+            '這正是模擬器「三維水面起伏」模式想讓你看見的：節線是一條<b>平坦不動的水道</b>，浮標高度恆為 0；旁邊的腹線是連續起伏的山脊與深谷。',
+            '對照判準：節線滿足 $\\Delta \\ell = \\left(m - \\frac{1}{2}\\right)\\lambda$，兩列波抵達時恰好反相，合成位移<b>恆為零</b>——與時間無關，所以永遠靜止。',
+            '腹線滿足 $\\Delta \\ell = n\\lambda$，兩列波永遠同相，該處以 <b>2A</b> 的振幅上下振動，在水波槽的白紙上呈現亮暗交替向外移動的紋路。'
+        ]
+    },
+
     interference: {
         title: '干涉：為什麼是雙曲線，又為什麼變成亮紋',
         nodes: ['N07', 'N19'],

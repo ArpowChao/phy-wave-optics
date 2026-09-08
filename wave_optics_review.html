@@ -28,9 +28,9 @@
     <script src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=interf_v6"></script>
-    <script src="data/questionBank.js?v=interf_v6"></script>
-    <script src="data/mediaData.js?v=interf_v6"></script>
+    <script src="data/modulesData.js?v=water3d_v7"></script>
+    <script src="data/questionBank.js?v=water3d_v7"></script>
+    <script src="data/mediaData.js?v=water3d_v7"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -160,6 +160,9 @@
         }
         .view-toolbar button:hover { border-color: var(--accent-cyan); color: var(--accent-cyan); }
         .view-breadcrumb { font-size: 0.8rem; color: var(--text-muted); font-weight: 600; margin-left: 0.4rem; }
+
+        /* 標了 wide 的互動實驗需要更多橫向空間才看得清楚（例如水波干涉的雙曲線族） */
+        #main-content.lab-wide { max-width: 1520px; }
 
         #main-content {
             flex: 1;
@@ -559,6 +562,7 @@
             background: rgba(107, 70, 193, 0.045); color: var(--text-main);
             transition: var(--transition);
         }
+        .anim-chip { text-decoration: none; }
         .anim-chip:hover { background: var(--accent-violet); color: #fff; border-color: var(--accent-violet); }
         .anim-chip:hover time { color: rgba(255, 255, 255, 0.75); }
         .anim-chip time {
@@ -696,6 +700,9 @@
         const activeQuizLabDisposers = new Map();
 
         function cleanupCurrentView() {
+            /* 上一個檢視若是寬版實驗，離開時要把正文欄寬還原 */
+            const mc = document.getElementById('main-content');
+            if (mc) mc.classList.remove('lab-wide');
             activeQuizLabDisposers.forEach((d) => { try { d.dispose(); } catch (e) {} });
             activeQuizLabDisposers.clear();
             activeDisposers.dispose();
@@ -1090,9 +1097,13 @@
             if (!a) return '';
             const vid = `anim-${key}`;
 
+            /* YouTube 是 iframe，沒有可以 seek 的 <video>；章節改成直接開到該時間點。 */
             const chapters = (a.chapters || []).length ? `
                 <div class="anim-chapters" id="${vid}-chapters">
-                    ${a.chapters.map((c) => `<button type="button" class="anim-chip" data-t="${c.t}" onclick="seekAnim('${vid}', ${c.t})"><time>${mmss(c.t)}</time>${c.label}</button>`).join('')}
+                    ${a.chapters.map((c) => a.youtubeId
+                        ? `<a class="anim-chip" href="https://www.youtube.com/watch?v=${a.youtubeId}&t=${c.t}s" target="_blank" rel="noopener"><time>${mmss(c.t)}</time>${c.label} ↗</a>`
+                        : `<button type="button" class="anim-chip" data-t="${c.t}" onclick="seekAnim('${vid}', ${c.t})"><time>${mmss(c.t)}</time>${c.label}</button>`
+                    ).join('')}
                 </div>` : '';
 
             const figs = (!compact && (a.figures || []).length) ? `
@@ -1135,6 +1146,7 @@
             const metaDesc = a.youtubeId ? `
                 <span class="anim-dur" style="color:var(--accent-cyan); background:rgba(6,148,162,0.1); border-color:rgba(6,148,162,0.25);">${a.isVertical ? 'YouTube 實證短片' : 'YouTube 實證影片'}</span>
                 <span><a href="${a.youtubeUrl || `https://youtube.com/watch?v=${a.youtubeId}`}" target="_blank" rel="noopener" style="color:var(--accent-cyan); text-decoration:underline; font-weight:600;">在 YouTube 開啟原始影片 ↗</a></span>
+                ${a.credit ? `<span style="color:var(--text-muted);">來源：${a.credit}</span>` : ''}
                 ${nodeTags}
             ` : `
                 <span class="anim-dur">${mmss(a.seconds)}</span>
@@ -1871,6 +1883,8 @@
             if (!lab || !host || !canvas) return;
 
             const disposers = customDisposers || activeDisposers;
+
+            if (lab.wide) document.getElementById('main-content').classList.add('lab-wide');
 
             const params = {};
             (lab.controls || []).forEach((c) => { params[c.key] = isNaN(Number(c.value)) ? c.value : Number(c.value); });
@@ -3902,9 +3916,11 @@
             tag: 'N07',
             hint: '💡 <b>空間幾何與干涉對應教學引導</b>（本模擬由成德高中 陳家騏老師提供）：<br>1. <b>凍結波形：</b>建議先點擊「⏸ 暫停」或拖曳時間軸，讓動態水波圖化為如教科書般靜止的幾何空間圖。<br>2. <b>測量對應：</b>在靜止畫面上點擊任意位置（亮紋或暗紋），即時測量波程差 $\\Delta \\ell$，驗證是否符合整數倍或半整數倍波長，將代數公式錨定在幾何點位上。<br>3. <b>疊加驗證：</b>開啟「顯示雙曲線」，驗證理論雙曲線是否穿過測量確認過的腹點與節點；切換「一維連線」，透視兩波源連線上各點的合成波形與節點靜止不動的現象。',
             note: '本模擬由成德高中 陳家騏老師提供原始探究設計。干涉判讀關鍵：① 同相兩波源：波程差 $\\Delta \\ell = n\\lambda$ 為腹線（亮暗交替振幅 $2A$）；$\\Delta \\ell = (m - \\frac{1}{2})\\lambda$ 為節線（完全抵消靜止不動）。② 反相兩波源：中央線轉為節線，腹線與節線角色互換！③ 兩波源連線上相鄰節點（或相鄰腹點）間距恆為 $\\lambda/2$。',
-            height: 420,
+            height: 560,
+            wide: true,            /* 這一格允許撐出正文欄寬，見 #main-content.lab-wide */
             modes: [
                 { key: '2D', label: '二維水面俯視' },
+                { key: '3D', label: '三維水面起伏' },
                 { key: '1D', label: '一維連線波形' }
             ],
             controls: [
@@ -3956,7 +3972,7 @@
                         { value: 0, label: '隱藏輔助線' }
                     ],
                     value: 1,
-                    only: ['2D'],
+                    only: ['2D', '3D'],
                     fmt: (v) => Number(v) === 1 ? '顯示' : '隱藏'
                 },
                 {
@@ -4135,7 +4151,11 @@
 
                 /* ============ 二維水面俯視 ============ */
                 if (p.mode === '2D' || !p.mode) {
-                    const step = 4;
+                    /* 逐像素算干涉場的成本與畫布面積成正比。畫布加大之後固定 step = 4
+                     * 會讓每幀掉到 20 ms（超過 60fps 的 16.7 ms 預算），
+                     * 所以改成依面積調整區塊大小，讓運算量維持在固定水準。
+                     * 這是連續變化的場，step 5~6 在視覺上看不出差別。 */
+                    const step = Math.max(4, Math.min(8, Math.round(Math.sqrt(TW * TH / 16000))));
                     const iw = Math.ceil(TW / step) * step, ih = Math.ceil(TH / step) * step;
                     const img = ctx.createImageData(iw, ih);
                     for (let yy = 0; yy < ih; yy += step) {
@@ -4358,6 +4378,161 @@
                     return;
                 }
 
+
+                /* ============ 三維水面起伏 ============ */
+                if (p.mode === '3D') {
+                    /* 三維是「近景」：只涵蓋俯視的一半範圍，山脊寬一倍才看得清楚，
+                     * 也才有辦法看出節線是一條平坦不動的水道。 */
+                    const sc3 = TW / 12;
+                    const d3 = dCm * sc3;
+                    const lam3 = Math.max(lamCm * sc3, 8);
+                    const k3 = (2 * Math.PI) / lam3;
+                    const q1 = { x: cx - d3 / 2, y: cy };
+                    const q2 = { x: cx + d3 / 2, y: cy };
+                    const isRealDecay = Number(p.decay) === 1;
+                    const amp = (r) => isRealDecay ? (1 / (1 + r * 0.003)) : 0.85;
+                    /* 水面高度：與二維模式同一組物理，只是換了比例尺並畫成起伏 */
+                    const zAt = (gx, gy) => {
+                        const r1 = Math.hypot(gx - q1.x, gy - q1.y);
+                        const r2 = Math.hypot(gx - q2.x, gy - q2.y);
+                        return amp(r1) * Math.cos(k3 * r1 - om * t + phase1)
+                             + amp(r2) * Math.cos(k3 * r2 - om * t + phase2);
+                    };
+
+                    /* 斜投影：u 橫向、v 為深度（0 = 遠、TH = 近）、z 為高度 */
+                    const shear = Math.min(0.34 * TH, TW * 0.20);
+                    const PW = TW - shear;
+                    const depthY = TH * 0.34;
+                    const ZA = Math.max(16, Math.min(46, (0.66 * TH - 10) / 4));
+                    const yTop = y0 + 2 * ZA + 6;
+                    const projX = (u, v) => x0 + (u / TW) * PW + (v / TH) * shear;
+                    const projY = (v, z) => yTop + (v / TH) * depthY - z * ZA;
+                    const yFloor = yTop + depthY + 2 * ZA + 4;
+
+                    const NU = 104, NV = 44;
+                    /* 由遠而近逐列填色：近的列會蓋住遠的列，自然形成遮蔽 */
+                    for (let j = 0; j <= NV; j++) {
+                        const v = (j / NV) * TH;
+                        const gy = y0 + v;
+                        ctx.beginPath();
+                        for (let i = 0; i <= NU; i++) {
+                            const u = (i / NU) * TW;
+                            const z = zAt(x0 + u, gy);
+                            const X = projX(u, v), Y = projY(v, z);
+                            i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                        }
+                        const xEnd = projX(TW, v), xStart = projX(0, v);
+                        ctx.lineTo(xEnd, yFloor);
+                        ctx.lineTo(xStart, yFloor);
+                        ctx.closePath();
+                        const near = j / NV;                       // 0 遠 → 1 近
+                        const g = ctx.createLinearGradient(0, projY(v, 2.1), 0, yFloor);
+                        g.addColorStop(0, `rgba(${Math.round(120 + 70 * near)}, ${Math.round(215 + 30 * near)}, 255, 0.95)`);
+                        g.addColorStop(0.35, 'rgba(24, 92, 122, 0.96)');
+                        g.addColorStop(1, 'rgba(8, 30, 40, 0.99)');
+                        ctx.fillStyle = g;
+                        ctx.fill();
+                        ctx.strokeStyle = `rgba(150, 240, 255, ${0.30 + 0.45 * near})`;
+                        ctx.lineWidth = 1.1;
+                        ctx.beginPath();
+                        for (let i = 0; i <= NU; i++) {
+                            const u = (i / NU) * TW;
+                            const z = zAt(x0 + u, gy);
+                            const X = projX(u, v), Y = projY(v, z);
+                            i === 0 ? ctx.moveTo(X, Y) : ctx.lineTo(X, Y);
+                        }
+                        ctx.stroke();
+                    }
+
+                    /* 腹線與節線畫在水面上（用當下的真實高度，才會貼著起伏） */
+                    /* 波程差 = q·λ 的軌跡就是以兩波源為焦點的雙曲線：
+                     *     x = ± a·√(1 + y²/b²)，a = qλ/2，b² = (d/2)² − a²
+                     * 直接代公式即可，不必沿每一列掃取樣點找最近值（那是每幀數十萬次 hypot）。 */
+                    const locusX = (q, dy) => {
+                        const a = Math.abs(q) * lam3 / 2;
+                        const cF = d3 / 2;
+                        if (a > cF - 1e-6) return null;          // |Δℓ| > d：無解
+                        if (Math.abs(q) < 1e-9) return cx;
+                        const b2 = cF * cF - a * a;
+                        return cx + Math.sign(q) * a * Math.sqrt(1 + (dy * dy) / b2);
+                    };
+                    if (Number(p.lines) === 1) {
+                        const drawLocus = (target, color, dash) => {
+                            ctx.save();
+                            if (dash) ctx.setLineDash([6, 5]);
+                            ctx.strokeStyle = color; ctx.lineWidth = 2.4;
+                            ctx.beginPath();
+                            let started = false;
+                            for (let j = 0; j <= 130; j++) {
+                                const v = (j / 130) * TH;
+                                const gy = y0 + v;
+                                const gx = locusX(target, gy - cy);
+                                if (gx === null || gx < x0 || gx > x1) { started = false; continue; }
+                                const z = zAt(gx, gy);
+                                const X = projX(gx - x0, v), Y = projY(v, z);
+                                started ? ctx.lineTo(X, Y) : ctx.moveTo(X, Y);
+                                started = true;
+                            }
+                            ctx.stroke(); ctx.restore();
+                        };
+                        /* 腹線就是畫面上的山脊，本來就看得見；這裡只標節線，
+                         * 讓「平坦不動的水道」一眼認得出來。 */
+                        const mMax = Math.floor(d3 / lam3 + 0.5);
+                        for (let q = -mMax; q < mMax; q++) drawLocus(q + 0.5, '#ffb3c6', false);
+                    }
+
+                    /* 三個浮標：節線上的那一個永遠不動，這是本模式最想讓學生看到的事 */
+                    const vf = TH * 0.72, gyf = y0 + vf;
+                    /* 浮標位置同樣用解析式：落點必須「正好」在節線上，
+                     * 否則面板會顯示 -0.02 這種讓人懷疑結論的殘值。 */
+                    const findU = (target) => {
+                        const gx = locusX(target, gyf - cy);
+                        if (gx === null || gx < x0 + 4 || gx > x1 - 4) return null;
+                        return gx - x0;
+                    };
+                    const floats = [
+                        { u: findU(0), col: '#7bf0c2', name: '腹線' },
+                        { u: findU(0.5), col: '#ffb3c6', name: '節線' },
+                        { u: findU(1), col: '#7bf0c2', name: '腹線' }
+                    ].filter((o) => o.u !== null);
+                    floats.forEach((o) => {
+                        const z = zAt(x0 + o.u, gyf);
+                        const X = projX(o.u, vf);
+                        const Y0 = projY(vf, 0), Y = projY(vf, z);
+                        ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1.4;
+                        ctx.beginPath(); ctx.moveTo(X, Y0); ctx.lineTo(X, Y); ctx.stroke();
+                        ctx.fillStyle = o.col;
+                        ctx.beginPath(); ctx.arc(X, Y, 5.5, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = 'rgba(8,30,40,0.9)'; ctx.lineWidth = 1.6; ctx.stroke();
+                    });
+
+                    /* 波源位置（投影到 v = TH/2 那一列） */
+                    [[q1.x, 'S₁'], [q2.x, 'S₂']].forEach(([sxp, nm]) => {
+                        const u = sxp - x0;
+                        const z = zAt(sxp, cy);
+                        const X = projX(u, TH / 2), Y = projY(TH / 2, z);
+                        ctx.fillStyle = '#ffd166';
+                        ctx.beginPath(); ctx.arc(X, Y, 6, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = 'rgba(8,30,40,0.9)'; ctx.lineWidth = 1.8; ctx.stroke();
+                        labelFit(ctx, nm, X + 9, Y - 8, '#ffe8a3', 12, 'left', { clampW: w, plate: 'rgba(8,30,40,0.7)' });
+                    });
+
+                    /* 說明面板 */
+                    const nodeZ = floats.find((o) => o.name === '節線');
+                    const zNode = nodeZ ? zAt(x0 + nodeZ.u, gyf) : 0;
+                    const panelW = Math.min(360, TW - 20);
+                    ctx.fillStyle = 'rgba(8, 30, 38, 0.80)';
+                    ctx.fillRect(x0 + 6, y0 + 6, panelW, 3 * 18 + 12);
+                    [['近景（俯視的兩倍放大）：腹線是連續的山脊與深谷', '#e6f4f7'],
+                     ['粉紅線是節線：一條永遠不動的平坦水道', '#ffb3c6'],
+                     [`節線上的浮標高度 = ${Math.abs(zNode) < 0.005 ? '0.00' : zNode.toFixed(2)}　（兩側浮標正在上下起伏）`, '#ffb3c6']
+                    ].forEach(([txt, col], i) => {
+                        labelFit(ctx, txt, x0 + 14, y0 + 24 + i * 18, col, 12, 'left', { maxW: panelW - 20 });
+                    });
+                    labelFit(ctx, '拖曳時間軸：山脊與深谷會上下翻轉，粉紅色那條水道自始至終是平的——這就是節線「完全不振動」的意思',
+                             x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW - 12 });
+                    return;
+                }
 
                 /* ============ 一維連線波形 ============ */
                 ctx.fillStyle = 'rgba(11, 111, 146, 0.04)';
