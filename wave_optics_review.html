@@ -551,6 +551,29 @@
             border: 1px solid rgba(107, 70, 193, 0.18);
             padding: 0.14rem 0.5rem; border-radius: 99px;
         }
+        .anim-speed-control {
+            display: flex; align-items: center; gap: 0.55rem;
+            margin-top: 0.55rem; padding: 0.45rem 0.65rem;
+            border-radius: 9px; color: var(--accent-violet);
+            background: rgba(107, 70, 193, 0.05);
+            border: 1px solid rgba(107, 70, 193, 0.14);
+        }
+        .anim-speed-control label {
+            font-size: 0.76rem; font-weight: 700; white-space: nowrap;
+        }
+        .anim-speed-control .speed-limit {
+            font-size: 0.69rem; font-weight: 700; color: var(--text-muted); white-space: nowrap;
+        }
+        .anim-speed-control .speed-current {
+            font-size: 0.72rem; font-weight: 700; white-space: nowrap;
+        }
+        .anim-speed-control input[type="range"] {
+            flex: 1; min-width: 90px; accent-color: var(--accent-violet); cursor: pointer;
+        }
+        .anim-speed-control b {
+            min-width: 38px; text-align: right;
+            font-family: 'Outfit', sans-serif; font-size: 0.82rem; font-weight: 800;
+        }
 
         /* 章節時間戳 */
         .anim-chapters { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-top: 0.75rem; }
@@ -1091,6 +1114,29 @@
             });
         }
 
+        function animSpeedControlHtml(vid) {
+            return `
+                <div class="anim-speed-control">
+                    <label for="${vid}-speed">播放速度</label>
+                    <span class="speed-limit">0.1×</span>
+                    <input type="range" id="${vid}-speed" min="0.1" max="1.5" step="0.1" value="1" data-video-speed="${vid}" aria-label="播放速度，0.1 倍到 1.5 倍">
+                    <span class="speed-limit">1.5×</span>
+                    <span class="speed-current">目前 <b id="${vid}-speed-out">1.0×</b></span>
+                </div>`;
+        }
+
+        function bindAnimSpeed(vid) {
+            const video = document.getElementById(vid);
+            const input = document.querySelector(`[data-video-speed="${vid}"]`);
+            const out = document.getElementById(`${vid}-speed-out`);
+            if (!video || !input) return;
+            activeDisposers.addEventListener(input, 'input', () => {
+                const rate = Math.max(0.1, Math.min(1.5, Number(input.value) || 1));
+                video.playbackRate = rate;
+                if (out) out.textContent = `${rate.toFixed(1)}×`;
+            });
+        }
+
         /* 一支動畫的完整區塊。compact = 索引頁用，不展開圖與重點 */
         function animBlockHtml(key, compact) {
             const a = animData[key];
@@ -1120,6 +1166,7 @@
                         <div>
                             <div class="anim-extra-title">${e.title}</div>
                             <div class="anim-stage"><video id="${vid}-x${i}" controls preload="none" playsinline poster="${e.poster}"><source src="${e.src}" type="video/mp4"></video></div>
+                            ${animSpeedControlHtml(`${vid}-x${i}`)}
                         </div>`).join('')}
                 </div>` : '';
 
@@ -1141,7 +1188,8 @@
                         <source src="${a.video}" type="video/mp4">
                         你的瀏覽器不支援內嵌影片，請直接下載 <a href="${a.video}">${a.title}</a>。
                     </video>
-                </div>`;
+                </div>
+                ${animSpeedControlHtml(vid)}`;
 
             const metaDesc = a.youtubeId ? `
                 <span class="anim-dur" style="color:var(--accent-cyan); background:rgba(6,148,162,0.1); border-color:rgba(6,148,162,0.25);">${a.isVertical ? 'YouTube 實證短片' : 'YouTube 實證影片'}</span>
@@ -1181,7 +1229,11 @@
         function bindAnimsIn(keys) {
             keys.forEach((k) => {
                 const a = animData[k];
-                if (a && (a.chapters || []).length) bindAnimChapters(`anim-${k}`, a.chapters);
+                if (!a) return;
+                const vid = `anim-${k}`;
+                if ((a.chapters || []).length) bindAnimChapters(vid, a.chapters);
+                if (!a.youtubeId) bindAnimSpeed(vid);
+                (a.extraVideos || []).forEach((_, i) => bindAnimSpeed(`${vid}-x${i}`));
             });
         }
 
@@ -1854,6 +1906,13 @@
                         <input type="range" id="${prefix}${id}-scrub" min="0" max="1000" step="1" value="0" aria-label="拖曳以慢慢看過程">
                         <button type="button" class="scrub-btn" data-role="step-fwd" aria-label="進一格">⏵</button>
                         <b id="${prefix}${id}-scrub-out">0.00 s</b>
+                        <div class="lab-speed">
+                            <label for="${prefix}${id}-speed">播放速度</label>
+                            <span class="speed-limit">0.1×</span>
+                            <input type="range" id="${prefix}${id}-speed" min="0.1" max="1.5" step="0.1" value="1" aria-label="播放速度，0.1 倍到 1.5 倍">
+                            <span class="speed-limit">1.5×</span>
+                            <span class="speed-current">目前 <b id="${prefix}${id}-speed-out">1.0×</b></span>
+                        </div>
                     </div>` : '';
             const extraBtns = (lab.extraButtons || []).map((b) =>
                 `<button type="button" class="lab-btn ${b.className || ''}" data-action="${b.action}">${b.label}</button>`
@@ -1900,6 +1959,7 @@
 
             let running = !WaveRuntime.prefersReducedMotion();
             let simTime = 0;
+            let playbackRate = 1;
             let geom = WaveRuntime.fitCanvas(canvas, lab.height || 320);
 
             const syncOutputs = () => {
@@ -1964,6 +2024,8 @@
             /* 時間軸：拖曳或逐格前後時自動暫停，讓學生慢慢看疊加、反射的過程 */
             const scrubInput = lab.cycle ? document.getElementById(prefix ? `${prefix}${id}-scrub` : `${id}-scrub`) : null;
             const scrubOut = lab.cycle ? document.getElementById(prefix ? `${prefix}${id}-scrub-out` : `${id}-scrub-out`) : null;
+            const speedInput = lab.cycle ? document.getElementById(prefix ? `${prefix}${id}-speed` : `${id}-speed`) : null;
+            const speedOut = lab.cycle ? document.getElementById(prefix ? `${prefix}${id}-speed-out` : `${id}-speed-out`) : null;
             const cycleOf = () => {
                 const c = (typeof lab.cycle === 'function') ? lab.cycle(params) : lab.cycle;
                 return (Number.isFinite(c) && c > 0.02) ? c : 2;
@@ -1999,6 +2061,12 @@
                 if (fwdBtn) disposers.addEventListener(fwdBtn, 'click', () => stepBy(1 / 48));
                 showScrub();
             }
+            if (speedInput) {
+                disposers.addEventListener(speedInput, 'input', () => {
+                    playbackRate = Math.max(0.1, Math.min(1.5, Number(speedInput.value) || 1));
+                    if (speedOut) speedOut.textContent = `${playbackRate.toFixed(1)}×`;
+                });
+            }
 
             const resetBtn = host.querySelector('[data-role="reset"]');
             if (resetBtn) {
@@ -2010,6 +2078,9 @@
                     });
                     if (lab.onReset) lab.onReset(params);
                     simTime = 0;
+                    playbackRate = 1;
+                    if (speedInput) speedInput.value = '1';
+                    if (speedOut) speedOut.textContent = '1.0×';
                     showScrub();
                     syncOutputs(); paint();
                 });
@@ -2023,7 +2094,7 @@
             let scrubTick = 0;
             disposers.runLoop((dt) => {
                 if (running) {
-                    simTime += dt;
+                    simTime += dt * playbackRate;
                     if (scrubInput && (scrubTick = (scrubTick + 1) % 6) === 0) showScrub();
                 }
                 paint();
@@ -5711,9 +5782,9 @@
         LABS.reflection = {
             name: '繩波的反射與透射',
             tag: 'N03',
-            cycle: 7.0,
-            hint: '繩子的線寬直接代表線密度：細繩＝線密度小、粗繩＝線密度大。入射波（藍虛線）與反射波（紫虛線）在整個過程中同時存在，實線是兩者「位移相加」後的實際繩形——所以在端點附近可以完整看到疊加的過程。右上角的小圖是端點（或交界）的位移隨時間變化：固定端恆為零、自由端可達 2A。用時間軸慢慢拖最清楚。',
-            note: '反射波其實就是「鏡像波」：把入射波以端點為鏡面左右翻轉，固定端再上下顛倒（反射係數 −1）、自由端不顛倒（+1）。兩者隨時相加，就自然得到固定端位移恆為零、自由端最大高度 2A 的結果。',
+            cycle: (p) => p.source === 'periodic' ? 2.4 : 7.0,
+            hint: '先選擇<b>單一脈衝</b>或<b>連續週期波</b>。繩子的線寬直接代表線密度：細繩＝線密度小、粗繩＝線密度大。入射波（藍虛線）與反射波（紫虛線）同時存在，實線是兩者「位移相加」後的實際繩形。右上角的小圖是端點（或交界）的位移隨時間變化；用時間軸和慢速播放觀察最清楚。',
+            note: '反射波其實就是「鏡像波」：把入射波以端點為鏡面左右翻轉，固定端再上下顛倒（反射係數 −1）、自由端不顛倒（+1）。週期波穿越兩繩交界時頻率不變，波速較慢的一側波長也較短。',
             height: 340,
             modes: [
                 { key: 'fixed', label: '固定端（牆）' },
@@ -5722,6 +5793,16 @@
                 { key: 'h2l', label: '重繩 → 輕繩' }
             ],
             controls: [
+                {
+                    key: 'source',
+                    label: '波源類型',
+                    options: [
+                        { value: 'pulse', label: '單一脈衝波' },
+                        { value: 'periodic', label: '連續週期波' }
+                    ],
+                    value: 'pulse',
+                    fmt: (v) => v === 'periodic' ? '連續週期波' : '單一脈衝波'
+                },
                 { key: 'ratio', label: '兩段繩的線密度比 μ₂/μ₁', min: 2, max: 9, step: 1, value: 4, only: ['l2h', 'h2l'], fmt: (v) => `${v} : 1` }
             ],
             readouts: (p) => {
@@ -5737,15 +5818,19 @@
                     { label: '等效於', value: '接輕繩（μ₂ → 0）' }];
                 const ratio = p.mode === 'l2h' ? p.ratio : 1 / p.ratio;   // μ₂/μ₁
                 const r = (1 - Math.sqrt(ratio)) / (1 + Math.sqrt(ratio));
+                const speedRatio = Math.sqrt(1 / ratio);
                 return [
                     { label: '反射係數 r', value: `${r.toFixed(2)}（${r < 0 ? '上下顛倒' : '不顛倒'}）` },
                     { label: '透射係數 t = 1 + r', value: (1 + r).toFixed(2) },
-                    { label: '透射波波速', value: r < 0 ? `變慢（÷ ${Math.sqrt(ratio).toFixed(2)}）` : `變快（× ${Math.sqrt(1 / ratio).toFixed(2)}）` },
-                    { label: '頻率', value: '反射、透射皆不變' }
+                    { label: '透射波波速', value: speedRatio < 1 ? `變慢（× ${speedRatio.toFixed(2)}）` : `變快（× ${speedRatio.toFixed(2)}）` },
+                    p.source === 'periodic'
+                        ? { label: '頻率／波長', value: `f 不變；λ₂ = ${speedRatio.toFixed(2)} λ₁` }
+                        : { label: '脈衝空間寬度', value: `變為 ${speedRatio.toFixed(2)} 倍` }
                 ];
             },
             draw: (ctx, w, h, p, t) => {
-                const CYC = 7.0;
+                const isPeriodic = p.source === 'periodic';
+                const CYC = isPeriodic ? 2.4 : 7.0;
                 const mid = h * 0.60;
                 const twoRope = (p.mode === 'l2h' || p.mode === 'h2l');
                 const bx = Math.max(w * 0.62, 190);              // 端點／交界的位置
@@ -5775,9 +5860,19 @@
                 const cEnd = Math.max(cEndRefl, cEndTrans);
                 const c = cStart + u01 * (cEnd - cStart);
 
-                const yInc = (x) => (x <= bx ? A * shape(x - c) : 0);
-                const yRef = (x) => (x <= bx ? rCoef * A * shape((2 * bx - x) - c) : 0);   // 鏡像波
-                const yTr = (x) => (twoRope && x >= bx ? tCoef * A * shape((x - bx) / Math.max(speed2, 0.05) + bx - c) : 0);
+                /* 週期波使用穩態正弦波。透射側的空間座標除以 v₂/v₁，
+                 * 因此頻率不變，而波長會依波速同比例改變。 */
+                const LAMBDA = 82;
+                const kWave = 2 * Math.PI / LAMBDA;
+                const omega = 2 * Math.PI / CYC;
+                const harmonic = (coord, time = t) => Math.sin(kWave * coord - omega * time);
+                const profile = (coord) => isPeriodic ? harmonic(coord) : shape(coord - c);
+
+                const yInc = (x) => (x <= bx ? A * profile(x) : 0);
+                const yRef = (x) => (x <= bx ? rCoef * A * (isPeriodic ? harmonic(2 * bx - x) : shape((2 * bx - x) - c)) : 0);   // 鏡像波
+                const yTr = (x) => (twoRope && x >= bx
+                    ? tCoef * A * (isPeriodic ? harmonic((x - bx) / Math.max(speed2, 0.05) + bx) : shape((x - bx) / Math.max(speed2, 0.05) + bx - c))
+                    : 0);
                 const ySum = (x) => (x <= bx ? yInc(x) + yRef(x) : yTr(x));
 
                 /* 繩子：線寬直接代表線密度 */
@@ -5829,17 +5924,29 @@
                 /* 行進方向箭頭：入射在 c、反射在鏡像位置 2bx−c、透射在 bx+speed2·(c−bx) */
                 const cRef = 2 * bx - c;
                 const cTr = bx + speed2 * (c - bx);
-                if (c > 20 && c < bx - 6) {
-                    arrow(ctx, c + 16, mid - 50, c + 48, mid - 50, C.blue, 1.8);
-                    label(ctx, '入射波', c + 16, mid - 56, C.blue, 11);
-                }
-                if (cRef > 20 && cRef < bx - 6) {
-                    arrow(ctx, cRef - 16, mid + 44, cRef - 48, mid + 44, C.violet, 1.8);
-                    label(ctx, '反射波', cRef - 16, mid + 40, C.violet, 11, 'right');
-                }
-                if (twoRope && cTr > bx + 10 && cTr < w - 26) {
-                    arrow(ctx, cTr + 8, mid - 50, cTr + 40, mid - 50, C.green, 1.8);
-                    label(ctx, '透射波', cTr + 8, mid - 56, C.green, 11);
+                if (isPeriodic) {
+                    const incX = Math.max(52, bx * 0.34);
+                    arrow(ctx, incX, mid - 50, incX + 34, mid - 50, C.blue, 1.8);
+                    label(ctx, '入射週期波', incX, mid - 56, C.blue, 11);
+                    arrow(ctx, bx - 42, mid + 44, bx - 76, mid + 44, C.violet, 1.8);
+                    label(ctx, '反射週期波', bx - 42, mid + 40, C.violet, 11, 'right');
+                    if (twoRope) {
+                        arrow(ctx, bx + 18, mid - 50, bx + 52, mid - 50, C.green, 1.8);
+                        label(ctx, '透射週期波', bx + 18, mid - 56, C.green, 11);
+                    }
+                } else {
+                    if (c > 20 && c < bx - 6) {
+                        arrow(ctx, c + 16, mid - 50, c + 48, mid - 50, C.blue, 1.8);
+                        label(ctx, '入射波', c + 16, mid - 56, C.blue, 11);
+                    }
+                    if (cRef > 20 && cRef < bx - 6) {
+                        arrow(ctx, cRef - 16, mid + 44, cRef - 48, mid + 44, C.violet, 1.8);
+                        label(ctx, '反射波', cRef - 16, mid + 40, C.violet, 11, 'right');
+                    }
+                    if (twoRope && cTr > bx + 10 && cTr < w - 26) {
+                        arrow(ctx, cTr + 8, mid - 50, cTr + 40, mid - 50, C.green, 1.8);
+                        label(ctx, '透射波', cTr + 8, mid - 56, C.green, 11);
+                    }
                 }
 
                 /* 重疊區：在幾個位置畫出「入射位移 → 再加上反射位移」的堆疊刻度，
@@ -5872,7 +5979,7 @@
                 }
 
                 /* 端點的算式提示 */
-                const overlap = Math.min(Math.abs(shape(bx - c)), 1);
+                const overlap = isPeriodic ? 1 : Math.min(Math.abs(shape(bx - c)), 1);
                 if (overlap > 0.06) {
                     const va = yInc(bx) / A, vb = yRef(bx) / A;
                     dashed(ctx, bx - 2, mid - 82, bx - 2, mid + 66, 'rgba(224,138,18,0.55)');
@@ -5893,14 +6000,19 @@
                     ctx.beginPath();
                     for (let k = 0; k <= iw; k += 2) {
                         const uu = (k - iw * 0.5) * (9.0 * FRONT / iw);
-                        ctx.lineTo(ox + k, base - shape(flipX * uu) * amp * (ih * 0.38));
+                        const sample = isPeriodic
+                            ? Math.sin(flipX * (k / iw * 2.8 - 1.4) * Math.PI)
+                            : shape(flipX * uu);
+                        ctx.lineTo(ox + k, base - sample * amp * (ih * 0.38));
                     }
                     ctx.stroke();
                     label(ctx, cap, ox + iw / 2, iy + ih + 8, color, 10, 'center');
                 };
-                mini(ix, 1, 1, C.blue, '入射（前緣陡）');
+                mini(ix, 1, 1, C.blue, isPeriodic ? '入射週期波（向右）' : '入射（前緣陡）');
                 mini(ix + iw + gap, -1, rCoef, C.violet,
-                    rCoef < 0 ? `反射 r=${rCoef.toFixed(2)}：顛倒＋左右相反` : `反射 r=${rCoef.toFixed(2)}：左右相反`);
+                    isPeriodic
+                        ? (rCoef < 0 ? `反射 r=${rCoef.toFixed(2)}：相位反轉` : `反射 r=${rCoef.toFixed(2)}：不反轉`)
+                        : (rCoef < 0 ? `反射 r=${rCoef.toFixed(2)}：顛倒＋左右相反` : `反射 r=${rCoef.toFixed(2)}：左右相反`));
 
                 /* 右上：端點（交界）位移隨時間的變化 */
                 const gw = Math.max(96, Math.min(178, w * 0.24)), gh = 52;
@@ -5911,6 +6023,7 @@
                 const gMid = gy + gh * 0.62;
                 axis(ctx, gx, gMid, gx + gw, gMid);
                 const endAt = (uu) => {
+                    if (isPeriodic) return tCoef * harmonic(bx, uu * CYC);
                     const cc = cStart + uu * (cEnd - cStart);
                     return tCoef * shape(bx - cc);            // (1+r)·A·shape → 以 A 為單位
                 };

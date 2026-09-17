@@ -234,7 +234,57 @@
     text-align: right;
 }
 
+.lab-speed {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-left: 0.35rem;
+    padding-left: 0.75rem;
+    border-left: 1px solid rgba(107, 70, 193, 0.2);
+}
+
+.lab-speed label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-violet);
+    white-space: nowrap;
+}
+
+.lab-speed .speed-limit {
+    font-family: 'Outfit', sans-serif;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+.lab-speed .speed-current {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: var(--accent-violet);
+    white-space: nowrap;
+}
+
+.lab-speed input[type="range"] {
+    width: 110px;
+    min-width: 80px;
+}
+
+.lab-speed b {
+    display: inline;
+    min-width: 0;
+}
+
 @media (max-width: 640px) {
     .lab-scrub { flex-wrap: wrap; }
-    .lab-scrub input[type="range"] { order: 3; flex-basis: 100%; }
+    .lab-scrub > input[type="range"] { order: 3; flex-basis: 100%; }
+    .lab-speed {
+        order: 4;
+        width: 100%;
+        margin-left: 0;
+        padding: 0.45rem 0 0;
+        border-left: 0;
+        border-top: 1px solid rgba(107, 70, 193, 0.16);
+    }
+    .lab-speed input[type="range"] { flex: 1; width: auto; }
 }
