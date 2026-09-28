@@ -4011,11 +4011,93 @@
             }
         };
         /* 5b. 水波干涉探究模擬器 ------------------------------------------- */
+        /* 水波干涉「間距標示」選項：0 不標示（出題）／1 倍數／2 實際值／3 兩者。
+         * 讀數、滑桿文字、畫布標註都依這兩支判斷要不要露出答案。 */
+        const wiShowRatio = (p) => Number(p.dlabel) === 1 || Number(p.dlabel) === 3;
+        const wiShowCm = (p) => Number(p.dlabel) === 2 || Number(p.dlabel) === 3;
+        const wiLamCm = (p) => (2.0 / (Number(p.freq) || 0.08)) * 0.088;
+        /* 依「長度顯示單位」把一段長度寫成 λ、cm 或兩者；出題模式下測量點仍用 cm，
+         * 讓學生量得到長度，但要自己換算成幾倍波長。 */
+        const wiFmtLen = (p, cm) => {
+            const lam = wiLamCm(p);
+            if (wiShowRatio(p) && wiShowCm(p)) return `${cm.toFixed(2)} cm = ${(cm / lam).toFixed(2)} λ`;
+            if (wiShowRatio(p)) return `${(cm / lam).toFixed(2)} λ`;
+            return `${cm.toFixed(2)} cm`;
+        };
+        /* 在畫布上畫「d 的尺寸線」與「λ 比例尺」，內容依 dlabel 決定 */
+        function wiSpacingMarks(ctx, p, o) {
+            const showR = wiShowRatio(p), showC = wiShowCm(p);
+            if (!showR && !showC) return;
+            const ratio = o.dCm / o.lamCm;
+            /* 投影到教室後排也要看得清楚：粗線、大字、深色描邊 */
+            const big = (o.x1 - o.x0) >= 600;
+            const fs = big ? 20 : 15;
+            const tk = big ? 10 : 7;
+            const font = (px) => `700 ${px}px Outfit, "Noto Sans TC", sans-serif`;
+            const strokeBoth = (path) => {
+                ctx.strokeStyle = o.halo; ctx.lineWidth = big ? 7 : 5.5; path(); ctx.stroke();
+                ctx.strokeStyle = o.hi; ctx.lineWidth = big ? 3.2 : 2.6; path(); ctx.stroke();
+            };
+            const bar = (xa, xb, y) => strokeBoth(() => {
+                ctx.beginPath();
+                ctx.moveTo(xa, y); ctx.lineTo(xb, y);
+                ctx.moveTo(xa, y - tk); ctx.lineTo(xa, y + tk);
+                ctx.moveTo(xb, y - tk); ctx.lineTo(xb, y + tk);
+            });
+            /* 有底板、有外框的粗體標籤；回傳底板範圍 */
+            const tag = (txt, cxT, yTop, px) => {
+                ctx.font = font(px);
+                const tw = ctx.measureText(txt).width;
+                const pw = tw + 20, ph = px + 14;
+                let lx = cxT - pw / 2;
+                lx = Math.max(o.x0 + 2, Math.min(lx, o.x1 - pw - 2));
+                ctx.fillStyle = o.plate;
+                ctx.fillRect(lx, yTop, pw, ph);
+                ctx.strokeStyle = o.hi; ctx.lineWidth = 2;
+                ctx.strokeRect(lx, yTop, pw, ph);
+                ctx.fillStyle = o.ink; ctx.textAlign = 'left';
+                ctx.fillText(txt, lx + 10, yTop + px + 5);
+                return { x: lx, w: pw, h: ph };
+            };
+            ctx.save();
+            /* 由波源拉到尺寸線的延伸線 */
+            ctx.setLineDash([4, 4]);
+            strokeBoth(() => {
+                ctx.beginPath();
+                ctx.moveTo(o.s1x, o.srcY + 8); ctx.lineTo(o.s1x, o.lineY);
+                ctx.moveTo(o.s2x, o.srcY + 8); ctx.lineTo(o.s2x, o.lineY);
+            });
+            ctx.setLineDash([]);
+            bar(o.s1x, o.s2x, o.lineY);
+            const dTxt = showR && showC ? `d = ${o.dCm.toFixed(2)} cm = ${ratio.toFixed(2)} λ`
+                : showR ? `d = ${ratio.toFixed(2)} λ` : `d = ${o.dCm.toFixed(2)} cm`;
+            tag(dTxt, (o.s1x + o.s2x) / 2, o.lineY + tk + 6, fs);
+
+            /* λ 比例尺：右下角，一個波長長，字放在尺的上方 */
+            const lTxt = showC ? `λ = ${o.lamCm.toFixed(2)} cm` : 'λ';
+            const lfs = fs - 2;
+            ctx.font = font(lfs);
+            const boxW = Math.max(o.lamPx, ctx.measureText(lTxt).width) + 24;
+            const boxH = lfs + tk + 26;
+            const bxR = o.x1 - 6, byB = o.barY + tk + 4;
+            ctx.fillStyle = o.plate;
+            ctx.fillRect(bxR - boxW, byB - boxH, boxW, boxH);
+            ctx.strokeStyle = o.hi; ctx.lineWidth = 2;
+            ctx.strokeRect(bxR - boxW, byB - boxH, boxW, boxH);
+            const mid = bxR - boxW / 2;
+            bar(mid - o.lamPx / 2, mid + o.lamPx / 2, o.barY);
+            ctx.font = font(lfs);
+            ctx.fillStyle = o.ink; ctx.textAlign = 'center';
+            ctx.fillText(lTxt, mid, o.barY - tk - 6);
+            ctx.textAlign = 'left';
+            ctx.restore();
+            return boxW;
+        }
         LABS.water_interference = {
             name: '水波干涉探究模擬器（成德高中 陳家騏老師提供）',
             cycle: 2.0,
             tag: 'N07',
-            hint: '💡 <b>空間幾何與干涉對應教學引導</b>（本模擬由成德高中 陳家騏老師提供）：<br>1. <b>凍結波形：</b>建議先點擊「⏸ 暫停」或拖曳時間軸，讓動態水波圖化為如教科書般靜止的幾何空間圖。<br>2. <b>測量對應：</b>在靜止畫面上點擊任意位置（亮紋或暗紋），即時測量波程差 $\\Delta \\ell$，驗證是否符合整數倍或半整數倍波長，將代數公式錨定在幾何點位上。<br>3. <b>疊加驗證：</b>開啟「顯示雙曲線」，驗證理論雙曲線是否穿過測量確認過的腹點與節點；切換「一維連線」，透視兩波源連線上各點的合成波形與節點靜止不動的現象。',
+            hint: '💡 <b>空間幾何與干涉對應教學引導</b>（本模擬由成德高中 陳家騏老師提供）：<br>1. <b>凍結波形：</b>建議先點擊「⏸ 暫停」或拖曳時間軸，讓動態水波圖化為如教科書般靜止的幾何空間圖。<br>2. <b>測量對應：</b>在靜止畫面上點擊任意位置（亮紋或暗紋），即時測量波程差 $\\Delta \\ell$，驗證是否符合整數倍或半整數倍波長，將代數公式錨定在幾何點位上。<br>3. <b>疊加驗證：</b>開啟「顯示雙曲線」，驗證理論雙曲線是否穿過測量確認過的腹點與節點；切換「一維連線」，透視兩波源連線上各點的合成波形與節點靜止不動的現象。<br>4. <b>自我出題：</b>按「🎲 隨機出題」會隨機換波長與波源間距並收起輔助線；再把「水波亮暗紋」設為隱藏，「長度顯示單位」選「以公分 cm 為單位」（自己算 d 是幾倍 λ）或「都不顯示」，先推算腹線、節線各幾條，再打開亮暗紋或輔助線對答案。',
             note: '本模擬由成德高中 陳家騏老師提供原始探究設計。干涉判讀關鍵：① 同相兩波源：波程差 $\\Delta \\ell = n\\lambda$ 為腹線（亮暗交替振幅 $2A$）；$\\Delta \\ell = (m - \\frac{1}{2})\\lambda$ 為節線（完全抵消靜止不動）。② 反相兩波源：中央線轉為節線，腹線與節線角色互換！③ 兩波源連線上相鄰節點（或相鄰腹點）間距恆為 $\\lambda/2$。',
             height: 560,
             wide: true,            /* 這一格允許撐出正文欄寬，見 #main-content.lab-wide */
@@ -4038,19 +4120,22 @@
                         const ratio = Number(v) / lam;
                         const nNear = Math.round(ratio);
                         const nHalf = Math.round(ratio - 0.5);
+                        if (!wiShowRatio(p)) return wiShowCm(p) ? `${Number(v).toFixed(2)} cm` : '（出題中，已隱藏）';
                         let degen = '';
                         if (Math.abs(ratio - nNear) < 0.04) degen = ' [✨腹線退化]';
                         else if (Math.abs(ratio - (nHalf + 0.5)) < 0.04) degen = ' [✨節線退化]';
-                        return `${Number(v).toFixed(2)} cm (${ratio.toFixed(2)} λ)${degen}`;
+                        return wiShowCm(p)
+                            ? `${Number(v).toFixed(2)} cm (${ratio.toFixed(2)} λ)${degen}`
+                            : `${ratio.toFixed(2)} λ${degen}`;
                     }
                 },
                 {
                     key: 'freq',
                     label: '水波頻率',
                     options: [
-                        { value: 0.04, label: '低頻 (波長較長 λ ≈ 3.8 cm)' },
-                        { value: 0.08, label: '中頻 (標準波長 λ ≈ 2.2 cm)' },
-                        { value: 0.16, label: '高頻 (波長較短 λ ≈ 1.2 cm)' }
+                        { value: 0.04, label: '低頻 (波長較長 λ = 4.4 cm)' },
+                        { value: 0.08, label: '中頻 (標準波長 λ = 2.2 cm)' },
+                        { value: 0.16, label: '高頻 (波長較短 λ = 1.1 cm)' }
                     ],
                     value: 0.08,
                     fmt: (v) => Number(v) <= 0.05 ? '低頻 (波長長)' : (Number(v) <= 0.10 ? '中頻 (標準)' : '高頻 (波長短)')
@@ -4082,6 +4167,30 @@
                     value: 1,
                     only: ['2D', '3D'],
                     fmt: (v) => Number(v) === 1 ? '顯示' : '隱藏'
+                },
+                {
+                    key: 'shade',
+                    label: '水波亮暗紋',
+                    options: [
+                        { value: 1, label: '顯示亮暗紋' },
+                        { value: 0, label: '隱藏亮暗紋（只看波源，自己推理）' }
+                    ],
+                    value: 1,
+                    only: ['2D'],
+                    fmt: (v) => Number(v) === 1 ? '顯示' : '隱藏'
+                },
+                {
+                    key: 'dlabel',
+                    label: '長度顯示單位',
+                    /* 影響畫布上的 d、λ 標註，以及測量點 P 的 PS₁、PS₂、Δℓ 與下方讀數 */
+                    options: [
+                        { value: 1, label: '以波長 λ 為單位（d = 幾 λ）' },
+                        { value: 2, label: '以公分 cm 為單位（實際長度）' },
+                        { value: 3, label: '波長 λ 與公分 cm 都顯示' },
+                        { value: 0, label: '都不顯示（出題模式）' }
+                    ],
+                    value: 1,
+                    fmt: (v) => ['不顯示', '波長 λ', '公分 cm', 'λ + cm'][Number(v)] || ''
                 },
                 {
                     key: 'decay',
@@ -4121,6 +4230,31 @@
                         p.d = Number(((mTarget + 0.5) * lam).toFixed(2));
                         const input = host.querySelector('[id$="-d"]');
                         if (input) input.value = p.d;
+                        syncOutputs();
+                        paint();
+                    }
+                },
+                {
+                    action: 'random_quiz',
+                    label: '🎲 隨機出題',
+                    /* 隨機挑頻率與 d/λ（0.1 λ 為單位），並收起雙曲線輔助線，
+                     * 讓學生先自己算腹線／節線條數，再打開輔助線或亮暗紋對答案。 */
+                    onClick: (p, { syncOutputs, paint, host }) => {
+                        const freqs = [0.04, 0.08, 0.16];
+                        p.freq = freqs[Math.floor(Math.random() * freqs.length)];
+                        const lam = wiLamCm(p);
+                        const maxR = Math.min(5, Math.floor((20 / lam) * 10) / 10);
+                        let r;
+                        do { r = Math.round((1 + Math.random() * (maxR - 1)) * 10) / 10; }
+                        while (Math.abs(r - (Number(p.d) || 0) / lam) < 0.05);
+                        p.d = Number((r * lam).toFixed(2));
+                        p.lines = 0;
+                        p.clickP = null;
+                        const setIn = (key, v) => {
+                            const el = host.querySelector(`[id$="-${key}"]`);
+                            if (el) el.value = v;
+                        };
+                        setIn('d', p.d); setIn('freq', p.freq); setIn('lines', 0);
                         syncOutputs();
                         paint();
                     }
@@ -4206,10 +4340,13 @@
                         : `✨ 雙曲線退化：d = ${(nHalf + 0.5).toFixed(1)}λ，最外側節線退化為直線射線（外側完全靜止）`;
                 }
 
+                const showR = wiShowRatio(p), showC = wiShowCm(p);
+                const hidden = '🔒 出題中（切換「長度顯示單位」可顯示）';
                 const base = [
-                    { label: '波長 λ', value: `${lamCm.toFixed(2)} cm` },
-                    { label: '波源間距 d', value: `${dCm.toFixed(2)} cm (${dOverLam.toFixed(2)} λ)` },
-                    { label: '雙曲線退化狀態', value: degenStatus },
+                    { label: '波長 λ', value: showC ? `${lamCm.toFixed(2)} cm` : hidden },
+                    { label: '波源間距 d', value: showR && showC ? `${dCm.toFixed(2)} cm (${dOverLam.toFixed(2)} λ)`
+                        : showR ? `${dOverLam.toFixed(2)} λ` : showC ? `${dCm.toFixed(2)} cm` : hidden },
+                    { label: '雙曲線退化狀態', value: showR ? degenStatus : hidden },
                     { label: '初始相位狀態', value: isOutPhase ? '反相 (Δφ = π，中央線為節線)' : '同相 (Δφ = 0，中央線為腹線)' }
                 ];
 
@@ -4228,7 +4365,6 @@
                     const r1Cm = r1Px / scale;
                     const r2Cm = r2Px / scale;
                     const diffCm = Math.abs(r1Cm - r2Cm);
-                    const diffLam = diffCm / lamCm;
 
                     const lamPx = lamCm * scale;
                     const k = (2 * Math.PI) / lamPx;
@@ -4246,8 +4382,8 @@
 
                     return [
                         ...base,
-                        { label: '測量點 P', value: `PS₁ = ${r1Cm.toFixed(2)} cm, PS₂ = ${r2Cm.toFixed(2)} cm` },
-                        { label: '波程差 Δℓ = |PS₁ − PS₂|', value: `${diffCm.toFixed(2)} cm ≈ ${diffLam.toFixed(2)} λ` },
+                        { label: '測量點 P', value: `PS₁ = ${wiFmtLen(p, r1Cm)}，PS₂ = ${wiFmtLen(p, r2Cm)}` },
+                        { label: '波程差 Δℓ = |PS₁ − PS₂|', value: wiFmtLen(p, diffCm) },
                         { label: '干涉判定', value: verdict }
                     ];
                 }
@@ -4285,8 +4421,14 @@
                      * 這是連續變化的場，step 5~6 在視覺上看不出差別。 */
                     const step = Math.max(4, Math.min(8, Math.round(Math.sqrt(TW * TH / 16000))));
                     const iw = Math.ceil(TW / step) * step, ih = Math.ceil(TH / step) * step;
-                    const img = ctx.createImageData(iw, ih);
-                    for (let yy = 0; yy < ih; yy += step) {
+                    const shadeOn = Number(p.shade) !== 0;
+                    if (!shadeOn) {
+                        /* 隱藏亮暗紋：只留平靜水面與波源，讓學生自己推算腹線／節線 */
+                        ctx.fillStyle = 'rgb(73,156,193)';
+                        ctx.fillRect(x0, y0, TW, TH);
+                    }
+                    const img = shadeOn ? ctx.createImageData(iw, ih) : null;
+                    if (shadeOn) for (let yy = 0; yy < ih; yy += step) {
                         for (let xx = 0; xx < iw; xx += step) {
                             const gx = x0 + xx, gy = y0 + yy;
                             const r1 = Math.hypot(gx - s1.x, gy - s1.y);
@@ -4312,9 +4454,11 @@
                             }
                         }
                     }
-                    const off = getOffscreen(iw, ih);
-                    off.ctx.putImageData(img, 0, 0);
-                    ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, TW, TH);
+                    if (shadeOn) {
+                        const off = getOffscreen(iw, ih);
+                        off.ctx.putImageData(img, 0, 0);
+                        ctx.drawImage(off.canvas, 0, 0, iw, ih, x0, y0, TW, TH);
+                    }
 
                     ctx.strokeStyle = 'rgba(18,49,58,0.22)'; ctx.lineWidth = 1.2;
                     ctx.strokeRect(x0, y0, TW, TH);
@@ -4415,10 +4559,14 @@
                     // 波源標註
                     [s1, s2].forEach((s, idx) => {
                         ctx.fillStyle = '#f1c40f';
-                        ctx.beginPath(); ctx.arc(s.x, s.y, 5.5, 0, Math.PI * 2); ctx.fill();
-                        ctx.strokeStyle = '#081e26'; ctx.lineWidth = 1.5; ctx.stroke();
-                        label(ctx, `S${idx + 1}`, s.x, s.y - 9, '#ffffff', 11, 'center');
+                        ctx.beginPath(); ctx.arc(s.x, s.y, 7.5, 0, Math.PI * 2); ctx.fill();
+                        ctx.strokeStyle = '#081e26'; ctx.lineWidth = 2; ctx.stroke();
+                        labelFit(ctx, `S${idx + 1}`, s.x, s.y - 13, '#ffffff', TW >= 600 ? 16 : 13, 'center',
+                                 { plate: 'rgba(6,26,34,0.75)' });
                     });
+                    wiSpacingMarks(ctx, p, { s1x: s1.x, s2x: s2.x, srcY: cy, lineY: cy + 34,
+                        lamPx, dCm, lamCm, x0, x1, barY: y1 - 16, ink: '#fff3c4', hi: '#ffd166',
+                        halo: 'rgba(6,26,34,0.85)', plate: 'rgba(6,26,34,0.9)' });
 
                     // 測量點 P 標註與即時連線
                     if (p.clickP) {
@@ -4429,7 +4577,6 @@
                         const r1Cm = r1 / scale;
                         const r2Cm = r2 / scale;
                         const dlCm = Math.abs(r1Cm - r2Cm);
-                        const dlLam = dlCm / lamCm;
 
                         ctx.strokeStyle = '#f59e0b';
                         ctx.lineWidth = 2;
@@ -4458,15 +4605,19 @@
                             verdictCol = '#ffb3c6';
                         }
 
-                        const hudW = Math.min(290, TW * 0.65);
-                        const hudH = 58;
+                        /* 與右上角圖例並排時只用剩下的寬度，避免兩塊疊在一起 */
+                        const hudReserve = (Number(p.lines) === 1 && TW >= 470)
+                            ? Math.min(200, TW * 0.45) + 14 : 0;
+                        const hudW = Math.min(380, TW - 16 - hudReserve);
+                        const hfs = TW >= 600 ? 14 : 11, hlh = hfs + 6;
+                        const hudH = hlh * 3 + 8;
                         ctx.fillStyle = 'rgba(8, 30, 38, 0.88)';
                         ctx.fillRect(x0 + 6, y0 + 6, hudW, hudH);
                         ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)'; ctx.lineWidth = 1;
                         ctx.strokeRect(x0 + 6, y0 + 6, hudW, hudH);
-                        labelFit(ctx, `PS₁ = ${r1Cm.toFixed(2)} cm, PS₂ = ${r2Cm.toFixed(2)} cm`, x0 + 12, y0 + 22, '#e6f4f7', 11, 'left', { maxW: hudW - 16 });
-                        labelFit(ctx, `波程差 Δℓ = ${dlCm.toFixed(2)} cm ≈ ${dlLam.toFixed(2)} λ`, x0 + 12, y0 + 38, '#f59e0b', 11, 'left', { maxW: hudW - 16 });
-                        labelFit(ctx, `⇒ ${verdict}`, x0 + 12, y0 + 54, verdictCol, 11, 'left', { maxW: hudW - 16 });
+                        labelFit(ctx, `PS₁ = ${wiFmtLen(p, r1Cm)}，PS₂ = ${wiFmtLen(p, r2Cm)}`, x0 + 12, y0 + 6 + hlh, '#e6f4f7', hfs, 'left', { maxW: hudW - 16 });
+                        labelFit(ctx, `波程差 Δℓ = ${wiFmtLen(p, dlCm)}`, x0 + 12, y0 + 6 + hlh * 2, '#f59e0b', hfs, 'left', { maxW: hudW - 16 });
+                        labelFit(ctx, `⇒ ${verdict}`, x0 + 12, y0 + 6 + hlh * 3, verdictCol, hfs, 'left', { maxW: hudW - 16 });
                     } else {
                         /* 右上角有腹線／節線圖例時，提示框只能用剩下的寬度，
                          * 否則兩塊會疊在一起（窄畫布尤其明顯）。 */
@@ -4484,7 +4635,7 @@
                         const legW = Math.min(200, TW * 0.45);
                         const wide = TW >= 470;
                         const lx = wide ? x1 - 6 : x0 + 6 + legW;
-                        const ly = wide ? y0 + 6 : y0 + 40;
+                        const ly = wide ? y0 + 6 : y0 + (p.clickP ? 74 : 40);
                         ctx.fillStyle = 'rgba(8, 30, 38, 0.78)';
                         ctx.fillRect(lx - legW, ly, legW, 40);
                         labelFit(ctx, '- - - 腹線 (建設性/雙曲線)', lx - 6, ly + 16, '#7bf0c2', 10, 'right', { maxW: legW - 12 });
@@ -4494,15 +4645,20 @@
                     const dOverLamNow = dCm / lamCm;
                     const nNear = Math.round(dOverLamNow);
                     const nHalfNear = Math.round(dOverLamNow - 0.5);
-                    if (Math.abs(dOverLamNow - nNear) < 0.04) {
+                    const degenW = TW - 12 - (Number(p.dlabel) !== 0 ? Math.max(lamPx, TW >= 600 ? 150 : 115) + 40 : 0);
+                    if (!wiShowRatio(p)) {
+                        /* 出題時不透露退化狀態 */
+                    } else if (Math.abs(dOverLamNow - nNear) < 0.04) {
                         const degenMsg = isOutPhase ? `✨ 雙曲線退化：d = ${nNear}λ，最外側節線退化為波源外側直線` : `✨ 雙曲線退化：d = ${nNear}λ，第 ${nNear} 腹線退化為波源外側直線`;
-                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#7bf0c2', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: TW - 12 });
+                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#7bf0c2', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: degenW });
                     } else if (Math.abs(dOverLamNow - (nHalfNear + 0.5)) < 0.04) {
                         const degenMsg = isOutPhase ? `✨ 雙曲線退化：d = ${(nHalfNear + 0.5).toFixed(1)}λ，腹線退化為波源外側直線` : `✨ 雙曲線退化：d = ${(nHalfNear + 0.5).toFixed(1)}λ，節線退化為波源外側直線`;
-                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#ffb3c6', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: TW - 12 });
+                        labelFit(ctx, degenMsg, x0 + 6, y1 - 8, '#ffb3c6', 11, 'left', { plate: 'rgba(8,30,38,0.85)', maxW: degenW });
                     }
 
-                    labelFit(ctx, '水波槽俯視（成德高中 陳家騏老師提供）：亮紋＝波峰重疊　暗紋＝波谷重疊　平靜處＝節線', x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW });
+                    labelFit(ctx, shadeOn
+                        ? '水波槽俯視（成德高中 陳家騏老師提供）：亮紋＝波峰重疊　暗紋＝波谷重疊　平靜處＝節線'
+                        : '亮暗紋已隱藏：先由 d 與 λ 推算腹線、節線各幾條，再打開亮暗紋或輔助線對答案', x0 + 6, y1 + 18, C.muted, 11, 'left', { maxW: TW });
                     return;
                 }
 
@@ -4707,8 +4863,11 @@
                     ctx.fillStyle = '#f1c40f';
                     ctx.beginPath(); ctx.arc(s.x, cy, 6, 0, Math.PI * 2); ctx.fill();
                     ctx.strokeStyle = '#081e26'; ctx.lineWidth = 1.5; ctx.stroke();
-                    label(ctx, `S${idx + 1}`, s.x, cy + 22, C.ink, 11, 'center');
+                    label(ctx, `S${idx + 1}`, s.x, cy + 24, C.ink, 14, 'center');
                 });
+                wiSpacingMarks(ctx, p, { s1x: s1.x, s2x: s2.x, srcY: cy + 30, lineY: y1 - 100,
+                    lamPx, dCm, lamCm, x0, x1, barY: y1 - 16, ink: '#7c2d12', hi: '#ea580c',
+                    halo: 'rgba(255,255,255,0.9)', plate: 'rgba(255,247,237,0.96)' });
 
                 // 若有測量點 P，標示其連線上的 x 位置與瞬時振盪
                 if (p.clickP) {
