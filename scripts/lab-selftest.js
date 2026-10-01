@@ -15,10 +15,23 @@
 
     /* 攔截 fillText，記錄每段文字實際佔用的方塊 */
     const boxes = [];
+    const frames = [];
+    let bounds = null;
     const proto = CanvasRenderingContext2D.prototype;
     const origFillText = proto.fillText;
+    const origClearRect = proto.clearRect;
+    // 動畫不同幀的同一行文字不會同時出現，必須逐幀檢查。
+    proto.clearRect = function (x, y, w, h) {
+        if (this.canvas.id && x === 0 && y === 0) {
+            if (boxes.length && bounds) frames.push({ boxes: boxes.slice(), bounds });
+            boxes.length = 0;
+            bounds = { w, h, canvas: this.canvas };
+        }
+        return origClearRect.apply(this, arguments);
+    };
     proto.fillText = function (text, x, y) {
         try {
+            if (!bounds || bounds.canvas !== this.canvas) return origFillText.apply(this, arguments);
             const m = this.measureText(text);
             const wid = m.width;
             const asc = m.actualBoundingBoxAscent || parseFloat(this.font) * 0.8;
@@ -63,7 +76,7 @@
 
     async function scanAt(widthPx, routes) {
         const host = document.getElementById('main-content');
-        host.style.maxWidth = widthPx + 'px';
+        host.style.maxWidth = 'none';
         window.dispatchEvent(new Event('resize'));
         await new Promise((r) => setTimeout(r, 120));
 
@@ -72,30 +85,46 @@
             const errs = [];
             const onErr = (e) => errs.push(e.message || String(e.reason || e));
             window.addEventListener('error', onErr);
+            window.addEventListener('unhandledrejection', onErr);
+            boxes.length = 0;
+            frames.length = 0;
+            bounds = null;
             try {
                 renderRoute('lab-' + route);
+                const stage = host.querySelector('.lab-stage');
+                if (stage) { stage.style.boxSizing = 'content-box'; stage.style.width = widthPx + 'px'; }
             } catch (e) {
                 errs.push(e.message);
             }
             window.dispatchEvent(new Event('resize'));
+            const actualWidth = host.querySelector('canvas')?.clientWidth;
+            if (Math.abs(actualWidth - widthPx) > 1) errs.push(`畫布實際寬度 ${actualWidth}px，與要求 ${widthPx}px 不符。`);
             await nextFrame();
-            boxes.length = 0;
             await nextFrame();
             /* 多等一拍，讓只有在動畫迴圈裡才會炸的錯浮出來 */
             await new Promise((r) => setTimeout(r, 160));
             window.removeEventListener('error', onErr);
+            window.removeEventListener('unhandledrejection', onErr);
 
-            const snap = boxes.slice();
+            const samples = frames.concat(boxes.length && bounds ? [{ boxes: boxes.slice(), bounds }] : []);
             const hits = new Set();
-            for (let i = 0; i < snap.length; i++) {
-                for (let j = i + 1; j < snap.length; j++) {
-                    if (snap[i].t === snap[j].t) continue;
-                    if (overlapRatio(snap[i], snap[j]) > 0.20) hits.add(snap[i].t + '  ✕  ' + snap[j].t);
+            const oob = new Set();
+            for (const frame of samples) {
+                const snap = frame.boxes;
+                for (let i = 0; i < snap.length; i++) {
+                    for (let j = i + 1; j < snap.length; j++) {
+                        if (snap[i].t === snap[j].t) continue;
+                        if (overlapRatio(snap[i], snap[j]) > 0.20) hits.add(snap[i].t + '  ✕  ' + snap[j].t);
+                    }
+                    const b = snap[i];
+                    if (b.x < -2 || b.y < -2 || b.x + b.w > frame.bounds.w + 2 || b.y + b.h > frame.bounds.h + 2) {
+                        oob.add(b.t + ' (x=' + Math.round(b.x) + ', y=' + Math.round(b.y) + ')');
+                    }
                 }
             }
-            const oob = [...new Set(snap.filter((b) => b.x < -2).map((b) => b.t + ' (x=' + Math.round(b.x) + ')'))];
-            if (errs.length || hits.size || oob.length) {
-                problems.push({ route, errors: [...new Set(errs)], overlaps: [...hits], offCanvas: oob });
+            if (!samples.length) errs.push('沒有觀察到畫布繪製，無法確認此模式。');
+            if (errs.length || hits.size || oob.size) {
+                problems.push({ route, errors: [...new Set(errs)], overlaps: [...hits], offCanvas: [...oob] });
             }
         }
         host.style.maxWidth = '';
@@ -121,6 +150,7 @@
             return `<h3 style="margin:1.2rem 0 .4rem">畫布寬度 ${px}px　（${list.length} 個問題）</h3><ul style="line-height:1.9">${body}</ul>`;
         }).join('');
 
+        if (typeof cleanupCurrentView === 'function') cleanupCurrentView();
         document.getElementById('main-content').innerHTML = `
             <div class="view-header">
                 <span class="view-eyebrow">自動化視覺健檢</span>

@@ -3,928 +3,404 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>水波干涉探究模擬器 | 波動與光學 SUPER 複習系統</title>
-    <meta name="description" content="水波干涉探究模擬器：空間幾何與波程差對應教學、雙曲線腹節線驗證、同相與反相切換、1D/2D 雙視角。">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;800&family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
-    <script>
-        window.MathJax = {
-            tex: {
-                inlineMath: [['$', '$'], ['\\(', '\\)']],
-                displayMath: [['$$', '$$'], ['\\[', '\\]']]
-            }
-        };
-    </script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <title>水波干涉實驗 | 波動與光學・學習筆記</title>
+    <meta name="description" content="給高三初學者的水波干涉實驗：先觀察中央與節線，再用波程差解釋。區分瞬間位移與振幅，附同相等振幅模型與進階探索。">
     <style>
-        :root {
-            --bg-body: hsl(200, 30%, 98%);
-            --bg-card: rgba(255, 255, 255, 0.92);
-            --text-main: hsl(200, 26%, 14%);
-            --text-muted: hsl(200, 12%, 43%);
-            --border-color: rgba(10, 45, 55, 0.10);
-            --primary-blue: hsl(196, 88%, 32%);
-            --primary-blue-hover: hsl(196, 92%, 27%);
-            --accent-cyan: hsl(184, 78%, 31%);
-            --accent-orange: hsl(32, 88%, 42%);
-            --accent-rose: hsl(348, 72%, 45%);
-            --accent-green: hsl(150, 65%, 30%);
-            --shadow-card: 0 8px 30px rgba(10, 45, 55, 0.08);
-            --transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-
-        body {
-            font-family: 'Outfit', 'Noto Sans TC', sans-serif;
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            min-height: 100vh;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .top-nav {
-            width: 100%;
-            max-width: 960px;
-            margin-bottom: 16px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 10px 16px;
-            background: #fff;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
-        }
-
-        .top-nav .nav-title {
-            font-weight: 800;
-            font-size: 0.95rem;
-            color: var(--primary-blue);
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .top-nav .nav-links {
-            display: flex;
-            gap: 12px;
-            flex-wrap: wrap;
-        }
-
-        .top-nav a {
-            text-decoration: none;
-            color: var(--accent-cyan);
-            font-size: 0.85rem;
-            font-weight: 600;
-            transition: var(--transition);
-        }
-
-        .top-nav a:hover {
-            color: var(--accent-orange);
-            text-decoration: underline;
-        }
-
-        .main-wrapper {
-            width: 100%;
-            max-width: 960px;
-            background: var(--bg-card);
-            padding: 24px;
-            border-radius: 16px;
-            box-shadow: var(--shadow-card);
-            border: 1px solid var(--border-color);
-        }
-
-        header h1 {
-            color: var(--text-main);
-            font-size: 1.6rem;
-            font-weight: 900;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .tag-badge {
-            font-size: 0.72rem;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            padding: 0.2rem 0.6rem;
-            border-radius: 999px;
-            color: var(--accent-cyan);
-            background: rgba(6, 148, 162, 0.09);
-            border: 1px solid rgba(6, 148, 162, 0.25);
-            vertical-align: middle;
-        }
-
-        .author-credit {
-            font-size: 0.88rem;
-            color: var(--primary-blue);
-            margin-top: 6px;
-            font-weight: 600;
-        }
-
-        .instructions {
-            text-align: left;
-            font-size: 0.9rem;
-            line-height: 1.7;
-            color: var(--text-main);
-            background: rgba(11, 111, 146, 0.05);
-            padding: 16px;
-            border-left: 4px solid var(--accent-cyan);
-            border-radius: 8px;
-            margin: 16px 0 20px;
-        }
-
-        .instructions strong {
-            color: var(--primary-blue);
-        }
-
-        .stage-container {
-            position: relative;
-            width: 100%;
-            background: #021218;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-            border: 1px solid rgba(18,49,58,0.25);
-        }
-
-        canvas {
-            display: block;
-            width: 100%;
-            height: auto;
-            cursor: crosshair;
-        }
-
-        .data-panel {
-            background: #0d2832;
-            color: #ecf0f1;
-            padding: 14px 18px;
-            border-radius: 10px;
-            margin-top: 16px;
-            font-family: 'Outfit', monospace;
-            font-size: 0.92rem;
-            line-height: 1.6;
-            text-align: left;
-            border: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .data-panel .highlight {
-            color: #f1c40f;
-            font-weight: 800;
-        }
-
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-            margin-top: 20px;
-        }
-
-        .control-group {
-            background: #f8fafb;
-            padding: 18px;
-            border-radius: 12px;
-            border: 1px solid var(--border-color);
-            text-align: left;
-        }
-
-        .control-group h3 {
-            margin-top: 0;
-            color: var(--primary-blue);
-            font-size: 0.95rem;
-            font-weight: 800;
-            margin-bottom: 12px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 6px;
-        }
-
-        .form-row {
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        label {
-            font-size: 0.82rem;
-            font-weight: 700;
-            color: var(--text-muted);
-        }
-
-        label b {
-            color: var(--primary-blue);
-            font-family: 'Outfit', sans-serif;
-            font-size: 0.92rem;
-        }
-
-        select, input[type=range] {
-            font: inherit;
-        }
-
-        select {
-            padding: 4px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(15, 60, 80, 0.2);
-            background: #fff;
-            color: var(--text-main);
-            font-size: 0.82rem;
-            font-weight: 600;
-        }
-
-        input[type=range] {
-            accent-color: hsl(190, 95%, 34%);
-            cursor: pointer;
-        }
-
-        .btn-action {
-            background-color: var(--accent-cyan);
-            color: white;
-            border: none;
-            padding: 8px 14px;
-            font-size: 0.85rem;
-            font-weight: 700;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: var(--transition);
-            width: 100%;
-            margin-top: 8px;
-        }
-
-        .btn-action:hover {
-            background-color: var(--primary-blue-hover);
-        }
-
-        .btn-action.active {
-            background-color: var(--accent-rose);
-        }
-
-        .btn-action.active:hover {
-            background-color: #a81c3b;
-        }
-
-        .btn-secondary {
-            background-color: #64748b;
-        }
-
-        .btn-secondary:hover {
-            background-color: #475569;
-        }
-
-        .btn-snap {
-            font-size: 0.76rem;
-            font-weight: 700;
-            padding: 3px 8px;
-            border-radius: 6px;
-            border: 1px solid rgba(6, 148, 162, 0.28);
-            background: #ffffff;
-            color: var(--primary-blue);
-            cursor: pointer;
-            transition: var(--transition);
-        }
-
-        .btn-snap:hover {
-            background: var(--accent-cyan);
-            color: #ffffff;
-        }
-
-        .btn-snap.is-half {
-            border-color: rgba(220, 130, 20, 0.35);
-            color: var(--accent-orange);
-        }
-
-        .btn-snap.is-half:hover {
-            background: var(--accent-orange);
-            color: #ffffff;
-        }
-
-        footer {
-            margin-top: 24px;
-            font-size: 0.82rem;
-            color: var(--text-muted);
-        }
+        :root{--bg:#f4f7f8;--ink:#16323d;--muted:#526b76;--line:#dce6e9;--accent:#087d8b;--soft:#eaf5f5;--rose:#b63e64;--radius:14px}
+        *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;line-height:1.65;padding:24px 20px}button,input,select{font:inherit}button,select,input[type=range]{touch-action:manipulation}button,summary,select{cursor:pointer}button,select{min-height:44px}a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}:focus-visible{outline:3px solid #eaaa27;outline-offset:3px}main,nav,footer{max-width:960px;margin:auto}nav{display:flex;justify-content:space-between;gap:16px;margin-bottom:24px;font-size:.88rem}nav span{color:var(--muted)}header{margin-bottom:22px}.eyebrow{color:var(--accent);font-size:.82rem;font-weight:700;letter-spacing:.08em;margin:0 0 6px}h1{font-size:clamp(1.65rem,4vw,2.15rem);line-height:1.35;margin:0 0 10px}header p{margin:0;color:var(--muted);max-width:720px}.lesson-route{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;list-style:none;padding:0;margin:20px 0}.lesson-route li{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}.lesson-route b{display:block;margin-bottom:4px;font-size:.95rem}.lesson-route span{font-size:.83rem;color:var(--muted)}.step-number{color:var(--accent);margin-right:6px}.experiment{background:#fff;border:1px solid var(--line);border-radius:18px;overflow:hidden}.stage-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:14px 18px}.stage-toolbar .buttons{display:flex;gap:8px;flex-wrap:wrap}button{border:1px solid var(--line);border-radius:9px;background:#fff;color:var(--ink);padding:8px 13px;font-weight:650;font-size:.87rem}button:hover{background:#f0f6f7}.primary{background:var(--accent);color:#fff;border-color:var(--accent)}.primary:hover{background:#066974}.secondary{color:var(--accent)}.small-label{font-size:.84rem;color:var(--muted);font-weight:600}select{padding:7px 10px;border:1px solid #bdcdd3;background:#fff;color:var(--ink);border-radius:8px;max-width:100%;font-size:.86rem}.stage-container{background:#08232d;position:relative}canvas{display:block;width:100%;height:auto;cursor:crosshair;touch-action:none}.stage-note{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;padding:11px 18px;font-size:.8rem;color:var(--muted);background:#f8fafb;border-bottom:1px solid var(--line)}.legend{display:flex;gap:16px;flex-wrap:wrap}.legend i{display:inline-block;width:13px;height:3px;vertical-align:middle;margin-right:5px;background:#087b5c}.legend .node i{background:#b63e64}.measure-area{padding:18px}.measure-actions{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:13px}.measure-actions button{font-size:.8rem}.data-panel{background:var(--soft);padding:16px;border-radius:11px;line-height:1.65;min-height:88px}.data-panel h2{font-size:.93rem;margin:0 0 8px}.measurement-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 14px}.metric{font-size:.8rem;color:var(--muted)}.metric strong{display:block;color:var(--ink);font-size:1.13rem}.measurement-explain{font-size:.87rem;margin:10px 0 0}.fine-print{font-size:.77rem;color:var(--muted);margin:8px 0 0}.controls{display:grid;grid-template-columns:1.2fr 1fr;gap:16px;padding:0 18px 18px}.control-group{background:#f8fafb;border:1px solid var(--line);padding:16px;border-radius:12px}h2{font-size:1.06rem;margin:0 0 12px}h3{font-size:.91rem;margin:0 0 11px}.form-row{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:0 0 11px}.form-row label{font-size:.84rem;color:var(--muted)}input[type=range]{width:100%;accent-color:var(--accent);min-height:30px}output{font-weight:750;color:var(--accent);white-space:nowrap}.hint{font-size:.79rem;color:var(--muted);margin:7px 0 0}.advanced,.explanation{border:1px solid var(--line);background:#fff;border-radius:var(--radius);margin-top:16px}summary{padding:15px 18px;font-weight:700;font-size:.92rem}summary::marker{color:var(--accent)}.details-content{padding:0 18px 18px}.advanced-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}.advanced .form-row{align-items:flex-start;flex-direction:column}.snap-buttons{display:flex;gap:6px;flex-wrap:wrap}.snap-buttons button{font-size:.78rem;padding:5px 9px}.snap-buttons button:disabled{opacity:.4;cursor:not-allowed}.model-status{font-size:.79rem;color:var(--muted);margin:14px 0 0}.concept-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.concept{padding:15px;background:#f8fafb;border-radius:10px}.concept h3{margin-bottom:7px}.concept p{font-size:.86rem;margin:0}.formula{font-size:1.13rem!important;font-weight:750;color:var(--accent);margin:8px 0!important}.assumption{font-size:.82rem;margin:15px 0 0;color:var(--muted)}footer{padding:24px 0 8px;font-size:.78rem;color:var(--muted)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+        @media(max-width:640px){body{padding:18px 12px}nav{margin-bottom:19px}nav span{display:none}.lesson-route{grid-template-columns:1fr;gap:7px}.lesson-route li{padding:10px 13px}.lesson-route b{display:inline}.lesson-route span{display:block;margin-top:2px}.stage-toolbar{padding:12px}.stage-toolbar>label{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px}.stage-toolbar select{flex:1;max-width:210px}.stage-note{padding:10px 12px}.measure-area{padding:12px}.measure-actions{gap:6px}.measure-actions button{flex:1;padding:8px 6px;font-size:.77rem;white-space:nowrap}.measurement-grid{grid-template-columns:1fr 1fr}.metric:last-child{grid-column:1/-1}.metric strong{font-size:1rem}.controls{grid-template-columns:1fr;padding:0 12px 12px;gap:10px}.advanced-grid,.concept-grid{grid-template-columns:1fr}.form-row{flex-wrap:wrap}.form-row select{max-width:100%}.data-panel{padding:13px}.details-content{padding:0 14px 14px}summary{padding:14px}.measure-actions #clearClickBtn{flex-basis:100%}header p{font-size:.9rem}}
+        .controls{padding-top:18px;border-bottom:1px solid var(--line)}.control-group select{width:100%}.control-group .form-row{align-items:flex-start;flex-direction:column;gap:5px}.control-group .distance-row{flex-direction:row;align-items:center}.control-group output{white-space:normal;text-align:right}.snap-buttons{margin-top:12px}.explore-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.lesson-route{margin:0}.guide{margin-top:16px}.model-status{padding:0 18px 16px;margin:0}.unit-hint{font-size:.75rem;margin-top:8px}.stage-toolbar .display-controls{display:flex;gap:12px;flex-wrap:wrap}.display-controls label{display:flex;align-items:center;gap:7px}.guide .details-content{padding-top:3px}
+        @media(max-width:640px){.stage-toolbar .display-controls{width:100%}.display-controls label{width:100%;justify-content:space-between}.controls{padding-top:12px}.control-group .distance-row{flex-wrap:nowrap}.control-group select{max-width:100%}.model-status{padding:0 12px 12px}}
+        [hidden]{display:none!important}button:disabled{opacity:.5;cursor:not-allowed}
+        @media(max-width:640px){.lesson-route .step-number{display:inline;margin-right:6px}.lesson-route li>span{margin-top:2px}}
+        @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto}}
     </style>
 </head>
 <body>
-
-    <nav class="top-nav">
-        <div class="nav-title">
-            <span>🌊 波動與光學 SUPER 複習系統</span>
-        </div>
-        <div class="nav-links">
-            <a href="wave_optics_review.html">← 回到主系統總覽</a>
-            <a href="wave_optics_review.html#node-N07">前往 N07 水波干涉與繞射 節點頁</a>
-            <a href="wave_optics_review.html#lab-water_interference">在主系統中開啟本實驗</a>
-        </div>
-    </nav>
-
-    <div class="main-wrapper">
-        <header>
-            <h1>
-                水波干涉探究模擬器
-                <span class="tag-badge">Ch1 §1-6 · N07</span>
-            </h1>
-            <div class="author-credit">💡 本模擬由 <strong>成德高中 陳家騏老師</strong> 提供原始探究設計</div>
-        </header>
-
-        <div class="instructions">
-            <strong>💡 空間幾何與干涉對應教學引導：</strong><br>
-            1. <strong>凍結波形：</strong>建議先點擊「暫停水波」，讓動態水波圖化為如教科書般靜止的空間幾何場。<br>
-            2. <strong>測量對應：</strong>在靜止的畫面中，點擊明顯的亮紋（波峰與波峰相遇）或暗紋。觀察下方計算出的波程差 $\Delta \ell$ 是否精確符合整數倍波長或半整數倍波長，將代數計算緊密錨定在空間位置上。<br>
-            3. <strong>疊加驗證：</strong>開啟「顯示腹線與節線」，驗證理論雙曲線是否完美穿過您剛剛測量確認過的空間點位；切換「一維視角」透視兩波源連線上的波形合成與節點不動振盪。
-        </div>
-
-        <div class="stage-container">
-            <canvas id="simCanvas" width="800" height="420"></canvas>
-        </div>
-
-        <div class="data-panel" id="dataPanel">
-            當前狀態：請在畫面上點擊或拖曳任意位置測量波程差。
-        </div>
-
-        <div class="controls">
-            <!-- 播放控制 -->
-            <div class="control-group" style="background-color: rgba(6, 148, 162, 0.05); border-color: rgba(6, 148, 162, 0.2);">
-                <h3 style="color: var(--accent-cyan);">▶️ 播放與測量控制</h3>
-                <button id="togglePlayBtn" class="btn-action active">暫停水波 (凍結空間圖形)</button>
-                <button id="resetSimBtn" class="btn-action btn-secondary">重置波源 (時間歸零)</button>
-                <button id="clearClickBtn" class="btn-action btn-secondary" style="margin-top: 10px;">清除測量點 P</button>
+    <nav aria-label="頁面導覽"><a href="wave_optics_review.html#node-N07">← 回到水波干涉與繞射</a><a href="wave_optics_review.html#lab-water_interference:2D:N07">完整實驗（含 3D）→</a></nav>
+    <main>
+        <header><p class="eyebrow">水波干涉 / 動手觀察</p><h1>水波干涉探究模擬器</h1><p>自由改變波源間距、頻率與相位，點水面測量波程差。也可以隱藏亮暗紋與長度提示，先推理再核對。</p></header>
+        <section class="experiment" aria-label="水波干涉互動實驗">
+            <div class="stage-toolbar">
+                <div class="buttons"><button type="button" id="togglePlayBtn" class="primary" aria-pressed="false">播放水波</button><button type="button" id="resetSimBtn" class="secondary">回到初始設定</button></div>
+                <div class="display-controls"><label class="small-label" for="viewSelect">觀察視角 <select id="viewSelect"><option value="2D" selected>水面俯視</option><option value="1D">兩波源連線剖面</option></select></label><label class="small-label" for="fieldSelect">畫面表示 <select id="fieldSelect"><option value="displacement">水面瞬間高低</option><option value="amplitude">各點振幅分布</option></select></label></div>
             </div>
-
-            <!-- 波源距離與頻率 -->
-            <div class="control-group">
-                <h3>⚙️ 波源參數設定</h3>
-                <div class="form-row">
-                    <label>波源間距 (d): <b id="distValue">200</b> px (<span id="distLamValue" style="color:var(--accent-orange); font-weight:800;">8.00 λ</span>)<span id="degenBadge"></span></label>
-                </div>
-                <input type="range" id="distSlider" min="20" max="420" step="1" value="200" style="width: 100%;">
-                <div style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 5px; align-items: center;">
-                    <span style="font-size: 0.72rem; color: var(--text-muted); font-weight: 700;">快速鎖定退化間距：</span>
-                    <button type="button" class="btn-snap" data-mult="1.0">d = 1λ</button>
-                    <button type="button" class="btn-snap" data-mult="2.0">d = 2λ</button>
-                    <button type="button" class="btn-snap" data-mult="3.0">d = 3λ</button>
-                    <button type="button" class="btn-snap" data-mult="4.0">d = 4λ</button>
-                    <button type="button" class="btn-snap is-half" data-mult="1.5">d = 1.5λ</button>
-                    <button type="button" class="btn-snap is-half" data-mult="2.5">d = 2.5λ</button>
-                    <button type="button" class="btn-snap is-half" data-mult="3.5">d = 3.5λ</button>
-                </div>
-
-                <div class="form-row" style="margin-top: 14px;">
-                    <label>水波頻率：</label>
-                    <select id="freqSelect">
-                        <option value="0.04">低頻 (波長長 λ ≈ 50 px)</option>
-                        <option value="0.08" selected>中頻 (標準 λ ≈ 25 px)</option>
-                        <option value="0.16">高頻 (波長短 λ ≈ 12.5 px)</option>
-                    </select>
-                </div>
+            <div class="stage-container"><canvas id="simCanvas" width="800" height="420" tabindex="0" role="img" aria-label="兩個水波源的干涉圖。按方向鍵移動測量點，按空白鍵播放或暫停。" aria-describedby="canvasHelp">水波干涉圖：請使用下方中央點與半波長差按鈕量測。</canvas></div>
+            <div class="stage-note"><span id="fieldLegend">亮：水面較高 · 暗：水面較低；單張亮暗圖不能判定腹節線。</span><span class="legend" id="lineLegend" hidden><span><i></i>腹線</span><span class="node"><i></i>節線</span></span></div>
+            <div class="controls">
+                <div class="control-group"><h3>波源間距與長度顯示</h3><div class="form-row distance-row"><label for="distSlider">兩個波源相距 d</label><output id="distLamValue" for="distSlider">4.00 λ</output></div><input type="range" id="distSlider" min="1" max="20" step="0.01" value="8.8" aria-describedby="distanceHelp"><p id="distanceHelp" class="hint"></p><span id="distValue" class="sr-only" aria-hidden="true"></span><div class="form-row" style="margin-top:14px"><label for="lengthUnitSelect">長度顯示單位</label><select id="lengthUnitSelect"><option value="lambda" selected>以波長 λ 為單位（d = 幾 λ）</option><option value="cm">以公分 cm 為單位</option><option value="both">波長 λ 與公分 cm 都顯示</option><option value="hidden">都不顯示（出題模式）</option></select></div><div class="snap-buttons" aria-label="精確設定波源間距"><button type="button" class="btn-snap" data-mult="1">1λ</button><button type="button" class="btn-snap" data-mult="1.5">1.5λ</button><button type="button" class="btn-snap" data-mult="2">2λ</button><button type="button" class="btn-snap" data-mult="2.5">2.5λ</button><button type="button" class="btn-snap" data-mult="3">3λ</button><button type="button" class="btn-snap" data-mult="3.5">3.5λ</button><button type="button" class="btn-snap" data-mult="4">4λ</button></div><div class="explore-actions"><button type="button" id="snapIntegerBtn">鎖定 d = nλ</button><button type="button" id="snapHalfBtn">鎖定 d = (n + ½)λ</button></div><p class="hint" id="degenBadge"></p></div>
+                <div class="control-group"><h3>水波與圖示</h3><div class="form-row"><label for="freqSelect">水波頻率</label><select id="freqSelect"><option value="0.04">低頻・λ = 4.4 cm</option><option value="0.08" selected>中頻・λ = 2.2 cm</option><option value="0.16">高頻・λ = 1.1 cm</option></select></div><div class="form-row"><label for="phaseSelect">兩個波源的初始相位</label><select id="phaseSelect"><option value="inPhase" selected>同相・相位差 0</option><option value="outPhase">反相・相位差 π</option><option value="random">任意固定相位差</option></select></div><div class="form-row"><label for="decaySelect">傳播時的振幅</label><select id="decaySelect"><option value="ideal" selected>課本模型・到達 P 時等振幅</option><option value="realistic">衰減示意・隨距離變小</option></select></div><div class="form-row"><label for="shadeSelect">水波亮暗紋</label><select id="shadeSelect"><option value="show" selected>顯示亮暗紋</option><option value="hide">隱藏亮暗紋（先自己推理）</option></select></div><div class="explore-actions"><button type="button" id="toggleLinesBtn" class="secondary" aria-pressed="false">顯示腹線與節線</button><button type="button" id="randomQuizBtn">隨機出題</button></div></div>
             </div>
-
-            <!-- 視角與相位 -->
-            <div class="control-group">
-                <h3>👁️ 視角與相位控制</h3>
-                <div class="form-row">
-                    <label>觀察視角：</label>
-                    <select id="viewSelect">
-                        <option value="2D" selected>二維水面俯視 (2D)</option>
-                        <option value="1D">一維連線剖面 (1D)</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <label>初始相位：</label>
-                    <select id="phaseSelect">
-                        <option value="inPhase" selected>同相 (相差 0，中央線為腹線)</option>
-                        <option value="outPhase">反相 (相差 π，中央線為節線)</option>
-                        <option value="random">隨機相位差</option>
-                    </select>
-                </div>
-                <div class="form-row">
-                    <label>波動模型：</label>
-                    <select id="decaySelect">
-                        <option value="ideal" selected>課本理想模型 (等振幅，節線完全靜止)</option>
-                        <option value="realistic">真實點波源 (隨距離衰減，節線微幅殘留)</option>
-                    </select>
-                </div>
-                <button id="toggleLinesBtn" class="btn-action" style="margin-top: 8px;">顯示腹線與節線 (雙曲線)</button>
+            <p class="model-status" id="modelStatus"></p>
+            <div class="measure-area">
+                <div class="measure-actions" aria-label="測量點範例"><button type="button" id="measureCenterBtn">中央點：Δℓ = 0</button><button type="button" id="measureNodeBtn">半波長差：Δℓ = λ/2</button><button type="button" id="clearClickBtn">清除測量點</button></div>
+                <div class="data-panel" id="dataPanel" aria-label="測量結果"></div><p class="fine-print">A 為未衰減時的單波振幅；2A 表示它的兩倍。</p><p class="fine-print" id="canvasHelp">在水面點一下或拖曳放置 P；鍵盤聚焦畫布後，用方向鍵移動 P、空白鍵播放或暫停。</p><span id="measurementAnnouncement" class="sr-only" role="status" aria-live="polite"></span>
             </div>
-        </div>
-    </div>
-
-    <footer>
-        波動與光學 SUPER 複習系統 · 水波干涉探究模擬器（感謝成德高中 陳家騏老師提供）
-    </footer>
-
+        </section>
+        <details class="explanation guide"><summary>第一次操作：三步觀察</summary><div class="details-content"><ol class="lesson-route" aria-label="實驗順序"><li><b><span class="step-number">01</span>先看中央</b><span>選「中央點」，兩段路徑一樣長。</span></li><li><b><span class="step-number">02</span>再看旁邊</b><span>在預設同相模型下選「半波長差」，播放比較是否振動。</span></li><li><b><span class="step-number">03</span>用波程差解釋</b><span>顯示腹節線，對照 Δℓ 與 λ 的關係。</span></li></ol></div></details>
+        <details class="explanation"><summary>觀察後再讀：腹線、節線怎麼判斷？</summary><div class="details-content"><div class="concept-grid"><div class="concept"><h3>腹線：每次都加強</h3><p class="formula">Δℓ = mλ</p><p>兩波抵達時同相，合成振幅為 2A。但腹線上的水面也會經過平衡位置，瞬間位移可能是 0。</p></div><div class="concept"><h3>節線：每次都抵消</h3><p class="formula">Δℓ = (m + ½)λ</p><p>兩波抵達時反相，合成振幅為 0，水面一直不動。m = 0、1、2⋯。</p></div></div><p class="assumption"><strong>使用條件：</strong>以上公式用於同相、同頻率，且到達 P 的兩波振幅相等的情況。Δℓ = |PS₁ − PS₂|；A 是單一水波的振幅。選「各點振幅分布」可看固定位置的最大振動幅度，與某一時刻的水面高低不同。</p><p class="assumption"><strong>模型範圍：</strong>預設為均勻介質、固定波速與等振幅的理想模型，不模擬反射或波源剛啟動的波前。公分是模型的長度尺度，重點是 d/λ 與 Δℓ/λ 的比例。</p></div></details>
+        <details class="advanced" id="advancedSettings"><summary>反相、衰減與特殊間距的判讀提醒</summary><div class="details-content"><p class="hint">反相時，腹線與節線的波程差條件互換；任意固定相位差下，不能直接套用同相公式。</p><p class="hint">衰減示意採簡化模型。兩波到達 P 時振幅不同，反相處仍可能有殘留振動；此時粉色線只表示相位相反的位置。</p><p class="hint">當 |PS₁ − PS₂| = d，軌跡在兩波源外側的連線上；其餘非零波程差形成雙曲線。Δℓ = 0 則為中垂線。</p><p class="hint">公分是模型設定的長度尺度（水面寬 24 cm），不代表螢幕上的實體公分。「都不顯示」會隱藏間距、波長尺與判定提示；P 的路徑仍用 cm，供你自行換算。</p></div></details>
+    </main>
+    <footer>波動與光學・學習筆記 · 原始探究設計：成德高中 陳家騏老師 · <a href="https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves" target="_blank" rel="noopener">疊加與干涉原理參考</a></footer>
     <script>
         const canvas = document.getElementById('simCanvas');
         const ctx = canvas.getContext('2d');
         const viewSelect = document.getElementById('viewSelect');
+        const fieldSelect = document.getElementById('fieldSelect');
+        const lengthUnitSelect = document.getElementById('lengthUnitSelect');
+        const shadeSelect = document.getElementById('shadeSelect');
         const distSlider = document.getElementById('distSlider');
         const distValue = document.getElementById('distValue');
+        const distLamValue = document.getElementById('distLamValue');
         const freqSelect = document.getElementById('freqSelect');
         const phaseSelect = document.getElementById('phaseSelect');
         const decaySelect = document.getElementById('decaySelect');
         const toggleLinesBtn = document.getElementById('toggleLinesBtn');
-        const clearClickBtn = document.getElementById('clearClickBtn');
         const togglePlayBtn = document.getElementById('togglePlayBtn');
-        const resetSimBtn = document.getElementById('resetSimBtn');
         const dataPanel = document.getElementById('dataPanel');
-
-        let width = canvas.width;
-        let height = canvas.height;
-        let d = parseFloat(distSlider.value);
-        let f = parseFloat(freqSelect.value);
-        let v = 2.0;
-        let lambda = v / f;
-        let k = 2 * Math.PI / lambda;
-        let omega = 2 * Math.PI * f;
-        let t = 0;
-
-        let phase1 = 0;
-        let phase2 = 0;
-        let randomPhaseOffset = Math.random() * 2 * Math.PI;
-
-        let is1D = false;
-        let showLines = false;
-        let isRunning = true;
-
-        let clickP = null;
-
+        const width = 800, height = 420, scale = width / 24, v = 2 * 0.088 * scale;
+        let d = 8.8 * scale, f = 0.08, lambda = v / f, k = 2 * Math.PI / lambda, omega = 2 * Math.PI * f;
+        let t = 0, phase1 = 0, phase2 = 0, randomPhaseOffset = 0;
+        let is1D = false, showLines = false, isRunning = false, previousField = 'displacement';
+        let clickP = null, degenerationLabel = '';
+        let lastTimestamp = null;
         const res = 2;
-        let offCanvas = document.createElement('canvas');
-        offCanvas.width = width;
-        offCanvas.height = height;
-        let offCtx = offCanvas.getContext('2d');
-        let imgData = offCtx.createImageData(width, height);
-
-        const distLamValue = document.getElementById('distLamValue');
-        const degenBadge = document.getElementById('degenBadge');
-
-        function updateParams() {
-            d = parseFloat(distSlider.value);
-            distValue.textContent = d;
-            f = parseFloat(freqSelect.value);
-            lambda = v / f;
-            k = 2 * Math.PI / lambda;
-            omega = 2 * Math.PI * f;
-
-            const ratio = d / lambda;
-            const nInt = Math.round(ratio);
-            const nHalf = Math.round(ratio - 0.5);
-            if (distLamValue) distLamValue.textContent = `${ratio.toFixed(2)} λ`;
-
-            let isDegen = false;
-            let degenText = '';
-            const phaseMode = phaseSelect.value;
-            if (Math.abs(ratio - nInt) < 0.04) {
-                isDegen = true;
-                degenText = phaseMode === 'outPhase' ? `第 ${nInt} 節線退化` : `第 ${nInt} 腹線退化`;
-            } else if (Math.abs(ratio - (nHalf + 0.5)) < 0.04) {
-                isDegen = true;
-                degenText = phaseMode === 'outPhase' ? `腹線退化` : `節線退化`;
-            }
-
-            if (degenBadge) {
-                degenBadge.innerHTML = isDegen
-                    ? `<span style="background:rgba(16,145,105,0.14); color:#0e8b93; padding:2px 6px; border-radius:4px; font-size:0.75rem; margin-left:6px; font-weight:800;">✨ ${degenText}</span>`
-                    : '';
-            }
-
-            if (phaseMode === 'inPhase') {
-                phase1 = 0; phase2 = 0;
-            } else if (phaseMode === 'outPhase') {
-                phase1 = 0; phase2 = Math.PI;
-            } else {
-                phase1 = 0; phase2 = randomPhaseOffset;
-            }
-
-            updateDataPanel();
-            if (!isRunning) forceRedraw();
+        const offCanvas = document.createElement('canvas');
+        offCanvas.width = width; offCanvas.height = height;
+        const offCtx = offCanvas.getContext('2d');
+        const imgData = offCtx.createImageData(width, height);
+        // Render at the display's DPR while keeping physical coordinates in 800 × 420 units.
+        function resizeCanvas() {
+            const ratio = window.devicePixelRatio || 1;
+            canvas.width = Math.round(width * ratio);
+            canvas.height = Math.round(height * ratio);
+            ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+            forceRedraw();
         }
-
+        function amplitudes(r1, r2) {
+            return decaySelect.value === 'ideal' ? [1, 1] : [1 / (1 + r1 * 0.002), 1 / (1 + r2 * 0.002)];
+        }
+        function resultantAmplitude(r1, r2) {
+            const [a1, a2] = amplitudes(r1, r2);
+            const delta = k * (r1 - r2) + phase1 - phase2;
+            return Math.sqrt(Math.max(0, a1 * a1 + a2 * a2 + 2 * a1 * a2 * Math.cos(delta)));
+        }
+        function displacement(r1, r2) {
+            const [a1, a2] = amplitudes(r1, r2);
+            return a1 * Math.cos(k * r1 - omega * t + phase1) + a2 * Math.cos(k * r2 - omega * t + phase2);
+        }
+        function formatLength(distance, mode = lengthUnitSelect.value) {
+            const cm = `${(distance / scale).toFixed(2)} cm`;
+            const ratio = `${(distance / lambda).toFixed(2)} λ`;
+            return mode === 'lambda' ? ratio : mode === 'both' ? `${cm} = ${ratio}` : cm;
+        }
+        function updateParams() {
+            d = Number(distSlider.value) * scale; f = Number(freqSelect.value);
+            lambda = v / f; k = 2 * Math.PI / lambda; omega = 2 * Math.PI * f;
+            phase1 = 0;
+            phase2 = phaseSelect.value === 'outPhase' ? Math.PI : phaseSelect.value === 'random' ? randomPhaseOffset : 0;
+            const hideLengths = lengthUnitSelect.value === 'hidden';
+            distValue.textContent = hideLengths ? '' : formatLength(d);
+            distLamValue.textContent = hideLengths ? '已隱藏' : formatLength(d);
+            distSlider.setAttribute('aria-valuetext', hideLengths ? '長度已隱藏，出題模式' : formatLength(d));
+            const halfWaveExists = d >= lambda / 2;
+            const nodeExample = document.getElementById('measureNodeBtn');
+            nodeExample.disabled = !halfWaveExists;
+            nodeExample.textContent = halfWaveExists ? '半波長差：Δℓ = λ/2' : 'd < λ/2：此範例不存在';
+            document.getElementById('distanceHelp').textContent = hideLengths ? '間距與比例提示已收起；可點水面量測路徑，再自行換算。' : halfWaveExists ? 'λ 是一個波長。改變間距，觀察腹節線數量如何改變。' : '波程差最大只能是 d。目前 d < λ/2，所以沒有半波長差的位置；請增加間距再比較。';
+            document.querySelectorAll('.btn-snap').forEach(btn => {
+                const target = Number(btn.dataset.mult) * lambda / scale;
+                btn.disabled = target < Number(distSlider.min) || target > Number(distSlider.max);
+            });
+            const ratio = d / lambda;
+            const integer = Math.abs(ratio - Math.round(ratio)) < 1e-6;
+            const halfInteger = Math.abs(ratio - Math.round(ratio - 0.5) - 0.5) < 1e-6;
+            const constructive = integer === (phaseSelect.value === 'inPhase');
+            const lineName = constructive ? '腹' : decaySelect.value === 'ideal' ? '節' : '反相';
+            degenerationLabel = phaseSelect.value !== 'random' && (integer || halfInteger) ? `最外側${lineName}線退化` : '';
+            document.getElementById('degenBadge').textContent = !hideLengths && degenerationLabel ? `d = ${ratio.toFixed(2)}λ：${degenerationLabel}，在波源外側呈射線。` : '';
+            const phaseText = phaseSelect.value === 'random' ? `固定相位差 ${(phase2 / Math.PI).toFixed(2)}π` : phaseSelect.value === 'outPhase' ? '反相' : '同相';
+            document.getElementById('modelStatus').textContent = `目前：${phaseText}、同頻率、${decaySelect.value === 'ideal' ? '等振幅' : '距離衰減示意'}；波速固定${hideLengths ? '。長度判定提示已隱藏。' : `，λ = ${(lambda / scale).toFixed(2)} cm（模型尺度）。`}`;
+            updateDataPanel(); updateViewLabels(); forceRedraw();
+        }
+        function updateViewLabels() {
+            const amplitudeView = fieldSelect.value === 'amplitude';
+            const hiddenShade = shadeSelect.value === 'hide';
+            document.getElementById('fieldLegend').textContent = is1D ? '實線：瞬間位移 z · 虛線：振幅包絡；兩波源之間可觀察駐波。' : hiddenShade ? '亮暗紋已隱藏；先推算，再開啟亮暗紋或腹節線核對。' : amplitudeView ? '亮：振幅較大 · 暗：振幅較小；此圖不隨時間改變。' : '亮：水面較高 · 暗：水面較低；單張亮暗圖不能判定腹節線。';
+            shadeSelect.disabled = is1D;
+            fieldSelect.disabled = is1D;
+            fieldSelect.options[0].textContent = is1D ? '位移與振幅包絡' : '水面瞬間高低';
+            document.getElementById('lineLegend').hidden = !showLines || is1D;
+            document.querySelector('#lineLegend .node').lastChild.textContent = decaySelect.value === 'ideal' ? '節線' : '反相位置';
+            toggleLinesBtn.textContent = is1D ? '腹節線僅在水面俯視顯示' : showLines ? '隱藏腹線與節線' : '顯示腹線與節線';
+            toggleLinesBtn.disabled = is1D;
+            toggleLinesBtn.setAttribute('aria-pressed', String(showLines));
+        }
+        function announceMeasurement() {
+            const text = dataPanel.innerText.replace(/\s+/g, ' ');
+            document.getElementById('measurementAnnouncement').textContent = text;
+        }
+        function updateDataPanel() {
+            if (!clickP) {
+                dataPanel.innerHTML = '<h2>放一個測量點 P</h2><p class="measurement-explain">先選「中央點」或「半波長差」，再播放水波。也可以直接點水面量測。</p>';
+                return;
+            }
+            const s1x = width / 2 - d / 2, s2x = width / 2 + d / 2;
+            const py = is1D ? height / 2 : clickP.y;
+            const r1 = Math.hypot(clickP.x - s1x, py - height / 2);
+            const r2 = Math.hypot(clickP.x - s2x, py - height / 2);
+            const diff = Math.abs(r1 - r2);
+            const amplitude = resultantAmplitude(r1, r2);
+            let phase = Math.abs(k * (r1 - r2) + phase1 - phase2) % (2 * Math.PI);
+            phase = Math.min(phase, 2 * Math.PI - phase);
+            const ideal = decaySelect.value === 'ideal';
+            let status = '介於腹線與節線之間；播放後，觀察 P 的振動幅度。';
+            // A nearby point is not an exact node: avoid claiming permanent cancellation from a tolerance.
+            if (phase < 1e-5) status = '腹線位置：兩波同相到達，振幅相加。瞬間位移為 0 時，P 仍不是節點。';
+            else if (Math.PI - phase < 1e-5) status = ideal ? '節線位置：兩波反相、等振幅，P 一直不動。' : '反相位置：到達 P 的振幅可能不等；是否完全抵消，請看合成振幅。';
+            else if (phase < 0.25) status = '接近腹線；尚未精確同相，合成振幅接近最大值。';
+            else if (Math.PI - phase < 0.25) status = '接近節線；合成振幅仍可能大於 0，不能說 P 完全不動。';
+            const hiddenAnswer = lengthUnitSelect.value === 'hidden';
+            dataPanel.innerHTML = `<h2>測量點 P</h2><div class="measurement-grid"><div class="metric">波程差 Δℓ<strong>${formatLength(diff)}</strong></div>${hiddenAnswer ? '' : `<div class="metric">合成振幅<strong>${amplitude.toFixed(2)} A</strong></div>`}<div class="metric">兩段路徑長度<strong>PS₁ = ${formatLength(r1)}<br>PS₂ = ${formatLength(r2)}</strong></div></div><p class="measurement-explain">${hiddenAnswer ? '先將路徑差換算成幾倍波長，自己判斷此點的振動；切換長度顯示即可核對。' : status}</p>`;
+        }
+        function setPlay(running) {
+            isRunning = running; lastTimestamp = null;
+            togglePlayBtn.textContent = running ? '暫停水波' : '播放水波';
+            togglePlayBtn.setAttribute('aria-pressed', String(running));
+        }
+        function setMeasurement(point, announce = true) {
+            clickP = point; updateDataPanel(); forceRedraw();
+            if (announce) announceMeasurement();
+        }
         distSlider.addEventListener('input', updateParams);
+        distSlider.addEventListener('change', announceMeasurement);
         freqSelect.addEventListener('change', updateParams);
         phaseSelect.addEventListener('change', () => {
             if (phaseSelect.value === 'random') randomPhaseOffset = Math.random() * 2 * Math.PI;
             updateParams();
         });
-        if (decaySelect) {
-            decaySelect.addEventListener('change', () => {
-                updateDataPanel();
-                if (!isRunning) forceRedraw();
-            });
+        decaySelect.addEventListener('change', updateParams);
+        lengthUnitSelect.addEventListener('change', updateParams);
+        shadeSelect.addEventListener('change', () => {updateViewLabels(); forceRedraw();});
+        fieldSelect.addEventListener('change', () => {updateViewLabels(); forceRedraw();});
+        viewSelect.addEventListener('change', () => {
+            is1D = viewSelect.value === '1D';
+            if (is1D) {previousField = fieldSelect.value; fieldSelect.value = 'displacement';}
+            else fieldSelect.value = previousField;
+            if (clickP && is1D) clickP.y = height / 2;
+            updateDataPanel(); updateViewLabels(); forceRedraw();
+        });
+        document.querySelectorAll('.btn-snap').forEach(btn => btn.addEventListener('click', () => {
+            distSlider.value = Number(btn.dataset.mult) * lambda / scale; updateParams();
+        }));
+        function snapSpacing(half) {
+            const offset = half ? 0.5 : 0;
+            const minRatio = Number(distSlider.min) * scale / lambda;
+            const maxRatio = Number(distSlider.max) * scale / lambda;
+            const n = Math.max(Math.ceil(minRatio - offset), Math.min(Math.floor(maxRatio - offset), Math.round(d / lambda - offset)));
+            distSlider.value = (n + offset) * lambda / scale; updateParams();
         }
-
-        document.querySelectorAll('.btn-snap').forEach((btn) => {
-            btn.addEventListener('click', () => {
-                const mult = parseFloat(btn.dataset.mult);
-                const targetD = Math.round(mult * lambda);
-                distSlider.value = targetD;
-                updateParams();
-            });
+        document.getElementById('snapIntegerBtn').addEventListener('click', () => snapSpacing(false));
+        document.getElementById('snapHalfBtn').addEventListener('click', () => snapSpacing(true));
+        document.getElementById('randomQuizBtn').addEventListener('click', () => {
+            const frequencies = ['0.04','0.08','0.16'];
+            const candidates = frequencies.flatMap(freq => Array.from({length:41}, (_, i) => ({freq, cm:(1 + i / 10) * v / Number(freq) / scale}))).filter(item => item.cm <= Number(distSlider.max) && !(item.freq === freqSelect.value && Math.abs(item.cm - Number(distSlider.value)) < 0.01));
+            const next = candidates[Math.floor(Math.random() * candidates.length)];
+            freqSelect.value = next.freq; distSlider.value = next.cm;
+            showLines = false; clickP = null; t = 0; setPlay(false); updateParams(); announceMeasurement();
         });
-
-        viewSelect.addEventListener('change', (e) => {
-            is1D = e.target.value === '1D';
-            if (!isRunning) forceRedraw();
+        toggleLinesBtn.addEventListener('click', () => {showLines = !showLines; updateViewLabels(); forceRedraw();});
+        togglePlayBtn.addEventListener('click', () => setPlay(!isRunning));
+        document.getElementById('clearClickBtn').addEventListener('click', () => setMeasurement(null));
+        document.getElementById('measureCenterBtn').addEventListener('click', () => setMeasurement({x:width / 2, y:is1D ? height / 2 : height / 2 - 70}));
+        document.getElementById('measureNodeBtn').addEventListener('click', () => {
+            setMeasurement({x:width / 2 + lambda / 4, y:height / 2});
         });
-
-        toggleLinesBtn.addEventListener('click', () => {
-            showLines = !showLines;
-            toggleLinesBtn.classList.toggle('active');
-            toggleLinesBtn.textContent = showLines ? "隱藏腹線與節線" : "顯示腹線與節線 (雙曲線)";
-            if (!isRunning) forceRedraw();
+        document.getElementById('resetSimBtn').addEventListener('click', () => {
+            t = 0; setPlay(false); showLines = false; is1D = false;
+            distSlider.value = 8.8; freqSelect.value = '0.08'; phaseSelect.value = 'inPhase'; decaySelect.value = 'ideal';
+            viewSelect.value = '2D'; fieldSelect.value = 'displacement'; previousField = 'displacement'; randomPhaseOffset = 0;
+            lengthUnitSelect.value = 'lambda'; shadeSelect.value = 'show';
+            document.getElementById('advancedSettings').open = false;
+            document.querySelectorAll('.explanation').forEach(details => details.open = false);
+            clickP = null; updateParams(); announceMeasurement();
         });
-
-        clearClickBtn.addEventListener('click', () => {
-            clickP = null;
-            updateDataPanel();
-            if (!isRunning) forceRedraw();
-        });
-
-        togglePlayBtn.addEventListener('click', () => {
-            isRunning = !isRunning;
-            if (isRunning) {
-                togglePlayBtn.textContent = "暫停水波 (凍結空間圖形)";
-                togglePlayBtn.classList.add('active');
-            } else {
-                togglePlayBtn.textContent = "啟動水波 (繼續演進)";
-                togglePlayBtn.classList.remove('active');
-            }
-        });
-
-        resetSimBtn.addEventListener('click', () => {
-            t = 0;
-            clickP = null;
-            isRunning = false;
-            togglePlayBtn.textContent = "啟動水波 (繼續演進)";
-            togglePlayBtn.classList.remove('active');
-            updateDataPanel();
-            forceRedraw();
-        });
-
-        let isDragging = false;
-        function getCanvasCoords(e) {
+        let draggingPointer = null;
+        function canvasCoords(event) {
             const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top) * scaleY
-            };
+            return {x:Math.max(0, Math.min(width, (event.clientX - rect.left) * width / rect.width)), y:is1D ? height / 2 : Math.max(0, Math.min(height, (event.clientY - rect.top) * height / rect.height))};
         }
-
-        canvas.addEventListener('pointerdown', (e) => {
-            isDragging = true;
-            clickP = getCanvasCoords(e);
-            updateDataPanel();
-            if (!isRunning) forceRedraw();
+        canvas.addEventListener('pointerdown', event => {
+            if (event.button !== 0) return;
+            draggingPointer = event.pointerId; canvas.setPointerCapture(event.pointerId); setMeasurement(canvasCoords(event), false);
         });
-
-        window.addEventListener('pointermove', (e) => {
-            if (isDragging) {
-                clickP = getCanvasCoords(e);
-                updateDataPanel();
-                if (!isRunning) forceRedraw();
-            }
+        canvas.addEventListener('pointermove', event => {if (event.pointerId === draggingPointer) setMeasurement(canvasCoords(event), false);});
+        canvas.addEventListener('pointerup', event => {if (event.pointerId === draggingPointer) {draggingPointer = null; announceMeasurement();}});
+        canvas.addEventListener('pointercancel', () => {draggingPointer = null;});
+        canvas.addEventListener('keydown', event => {
+            if (event.key === ' ') {event.preventDefault(); setPlay(!isRunning); return;}
+            const delta = {ArrowLeft:[-1,0],ArrowRight:[1,0],ArrowUp:[0,-1],ArrowDown:[0,1]}[event.key];
+            if (!delta) return;
+            event.preventDefault();
+            const step = event.shiftKey ? lambda / 4 : lambda / 20;
+            const point = clickP || {x:width / 2,y:height / 2};
+            setMeasurement({x:Math.max(0, Math.min(width, point.x + delta[0] * step)), y:is1D ? height / 2 : Math.max(0, Math.min(height, point.y + delta[1] * step))});
         });
-
-        window.addEventListener('pointerup', () => { isDragging = false; });
-
-        function updateDataPanel() {
-            let s1x = width / 2 - d / 2;
-            let s2x = width / 2 + d / 2;
-            const ratio = d / lambda;
-            const nInt = Math.round(ratio);
-            const nHalf = Math.round(ratio - 0.5);
-
-            let degenNote = '';
-            if (Math.abs(ratio - nInt) < 0.04) {
-                const phaseMode = phaseSelect.value;
-                const kind = phaseMode === 'outPhase' ? '節線' : '腹線';
-                degenNote = ` | <span style="color:#7bf0c2; font-weight:800;">✨ 雙曲線退化：d = ${nInt}λ，第 ${nInt} ${kind}退化為兩波源外側之直線射線</span>`;
-            } else if (Math.abs(ratio - (nHalf + 0.5)) < 0.04) {
-                const phaseMode = phaseSelect.value;
-                const kind = phaseMode === 'outPhase' ? '腹線' : '節線';
-                degenNote = ` | <span style="color:#ffb3c6; font-weight:800;">✨ 雙曲線退化：d = ${(nHalf + 0.5).toFixed(1)}λ，最外側${kind}退化為兩波源外側直線射線</span>`;
-            }
-
-            let html = `波長 <span class="highlight">λ = ${lambda.toFixed(1)} px</span> | 波源間距 <span class="highlight">d = ${d} px</span> (${ratio.toFixed(2)} λ)${degenNote}<br>`;
-
-            if (clickP) {
-                let r1 = Math.hypot(clickP.x - s1x, clickP.y - height / 2);
-                let r2 = Math.hypot(clickP.x - s2x, clickP.y - height / 2);
-                let diff = Math.abs(r1 - r2);
-                let diffLambda = diff / lambda;
-
-                html += `📍 測量點: PS₁ = ${r1.toFixed(1)} px, PS₂ = ${r2.toFixed(1)} px <br>`;
-                html += `👉 波程差 Δℓ = |PS₁ − PS₂| = <span class="highlight">${diff.toFixed(1)} px</span> ≈ <span class="highlight">${diffLambda.toFixed(2)} λ</span>`;
-
-                let phaseDiffTotal = Math.abs((k * r1 + phase1) - (k * r2 + phase2)) % (2 * Math.PI);
-                if (phaseDiffTotal > Math.PI) phaseDiffTotal = 2 * Math.PI - phaseDiffTotal;
-
-                if (phaseDiffTotal < 0.35) {
-                    html += ` (接近 <span style="color:#7bf0c2; font-weight:800;">腹線／完全建設性干涉</span>)`;
-                } else if (Math.abs(phaseDiffTotal - Math.PI) < 0.35) {
-                    const isIdeal = decaySelect ? decaySelect.value === 'ideal' : true;
-                    const note = isIdeal
-                        ? ' · 課本等振幅模型：兩波完全抵消，水面完全平靜'
-                        : ' · 真實水波模型：因到兩波源距離不等 r₁≠r₂ 振幅有差，殘留微小波動';
-                    html += ` (接近 <span style="color:#ffb3c6; font-weight:800;">節線／破壞性干涉</span><span style="font-size:0.8rem; color:#fecdd3;">${note}</span>)`;
-                } else {
-                    html += ` (介於腹線與節線之間)`;
-                }
-            } else {
-                html += `當前狀態：請在水面畫布上點擊或拖曳任意位置放置測量點 P。`;
-            }
-            dataPanel.innerHTML = html;
-        }
-
         function draw2D() {
-            let s1x = width / 2 - d / 2;
-            let s1y = height / 2;
-            let s2x = width / 2 + d / 2;
-            let s2y = height / 2;
-
+            if (shadeSelect.value === 'hide') {ctx.fillStyle = '#529aa5'; ctx.fillRect(0,0,width,height); return;}
+            const s1x = width / 2 - d / 2, s2x = width / 2 + d / 2;
+            const amplitudeView = fieldSelect.value === 'amplitude';
             for (let y = 0; y < height; y += res) {
                 for (let x = 0; x < width; x += res) {
-                    let r1 = Math.hypot(x - s1x, y - s1y);
-                    let r2 = Math.hypot(x - s2x, y - s2y);
-
-                    const isIdeal = decaySelect ? decaySelect.value === 'ideal' : true;
-                    let amp1 = isIdeal ? 0.85 : (1 / (1 + r1 * 0.002));
-                    let amp2 = isIdeal ? 0.85 : (1 / (1 + r2 * 0.002));
-
-                    let z1 = amp1 * Math.cos(k * r1 - omega * t + phase1);
-                    let z2 = amp2 * Math.cos(k * r2 - omega * t + phase2);
-                    let z = z1 + z2;
-
-                    let base = 120;
-                    let intensity = z * 60;
-
-                    let r = Math.max(0, Math.min(255, base - 50 + intensity * 0.5));
-                    let g = Math.max(0, Math.min(255, base + 50 + intensity));
-                    let b = Math.max(0, Math.min(255, base + 80 + intensity));
-
-                    for (let dy = 0; dy < res; dy++) {
-                        for (let dx = 0; dx < res; dx++) {
-                            let px = (y + dy) * width * 4 + (x + dx) * 4;
-                            imgData.data[px] = r;
-                            imgData.data[px + 1] = g;
-                            imgData.data[px + 2] = b;
-                            imgData.data[px + 3] = 255;
-                        }
+                    const r1 = Math.hypot(x - s1x, y - height / 2), r2 = Math.hypot(x - s2x, y - height / 2);
+                    const value = amplitudeView ? resultantAmplitude(r1, r2) / 2 : (displacement(r1, r2) + 2) / 4;
+                    const red = 12 + value * 70, green = 42 + value * 155, blue = 55 + value * 170;
+                    for (let dy = 0; dy < res; dy++) for (let dx = 0; dx < res; dx++) {
+                        const index = ((y + dy) * width + x + dx) * 4;
+                        imgData.data[index] = red; imgData.data[index+1] = green; imgData.data[index+2] = blue; imgData.data[index+3] = 255;
                     }
                 }
             }
             offCtx.putImageData(imgData, 0, 0);
-            ctx.drawImage(offCanvas, 0, 0);
+            ctx.drawImage(offCanvas, 0, 0, width, height);
         }
-
         function draw1D() {
-            ctx.fillStyle = '#061d24';
-            ctx.fillRect(0, 0, width, height);
-
-            ctx.strokeStyle = 'rgba(255,255,255,0.2)';
-            ctx.lineWidth = 1;
-            ctx.beginPath();
-            ctx.moveTo(0, height / 2);
-            ctx.lineTo(width, height / 2);
-            ctx.stroke();
-
-            let s1x = width / 2 - d / 2;
-            let s2x = width / 2 + d / 2;
-
-            // 駐波包絡線
-            ctx.save();
-            ctx.strokeStyle = 'rgba(107, 70, 193, 0.4)';
-            ctx.lineWidth = 1.5;
-            ctx.setLineDash([4, 4]);
-            ctx.beginPath();
-            let phaseDiff_L = (phase2 - phase1) / k;
-            for (let x = s1x; x <= s2x; x += 2) {
-                let xRel = x - width / 2;
-                let env = Math.abs(2 * Math.cos(k * xRel - phaseDiff_L * k / 2)) * 40;
-                if (x === s1x) ctx.moveTo(x, height / 2 - env); else ctx.lineTo(x, height / 2 - env);
+            ctx.fillStyle = '#08232d'; ctx.fillRect(0, 0, width, height);
+            ctx.strokeStyle = 'rgba(255,255,255,.22)'; ctx.lineWidth = 1;
+            ctx.beginPath(); ctx.moveTo(0, height / 2); ctx.lineTo(width, height / 2); ctx.stroke();
+            const s1x = width / 2 - d / 2, s2x = width / 2 + d / 2;
+            // Use the same amplitudes and signed phase difference for the envelope and moving wave.
+            ctx.strokeStyle = '#bca5ee'; ctx.lineWidth = 1.5; ctx.setLineDash([5,5]);
+            for (const sign of [-1,1]) {
+                ctx.beginPath();
+                for (let x = 0; x <= width; x += 2) {
+                    const amp = resultantAmplitude(Math.abs(x - s1x), Math.abs(x - s2x));
+                    const y = height / 2 + sign * amp * 40;
+                    if (x === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+                }
+                ctx.stroke();
             }
-            for (let x = s2x; x >= s1x; x -= 2) {
-                let xRel = x - width / 2;
-                let env = Math.abs(2 * Math.cos(k * xRel - phaseDiff_L * k / 2)) * 40;
-                ctx.lineTo(x, height / 2 + env);
+            ctx.setLineDash([]); ctx.beginPath();
+            for (let x = 0; x <= width; x++) {
+                const y = height / 2 - displacement(Math.abs(x - s1x), Math.abs(x - s2x)) * 40;
+                if (x === 0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
             }
-            ctx.closePath();
-            ctx.stroke();
-            ctx.restore();
-
-            // 合成波
-            ctx.beginPath();
-            for (let x = 0; x < width; x++) {
-                let r1 = Math.abs(x - s1x);
-                let r2 = Math.abs(x - s2x);
-
-                let z1 = Math.cos(k * r1 - omega * t + phase1);
-                let z2 = Math.cos(k * r2 - omega * t + phase2);
-                let z = z1 + z2;
-
-                let drawY = height / 2 - z * 40;
-                if (x === 0) ctx.moveTo(x, drawY);
-                else ctx.lineTo(x, drawY);
-            }
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 2.4;
-            ctx.stroke();
+            ctx.strokeStyle = '#67daf0'; ctx.lineWidth = 2.4; ctx.stroke();
         }
-
         function drawHyperbolas() {
-            let cx = width / 2;
-            let cy = height / 2;
-            let c_dist = d / 2;
-
-            let phaseDiff_L = (phase2 - phase1) / k;
-            let maxN = Math.floor((d + Math.abs(phaseDiff_L)) / lambda) + 1;
-
-            ctx.lineWidth = 1.6;
-
+            const phaseLength = (phase2 - phase1) / k;
+            const maxN = Math.ceil((d + Math.abs(phaseLength)) / lambda);
             for (let n = -maxN; n <= maxN; n++) {
-                let deltaL_anti = n * lambda - phaseDiff_L;
-                if (Math.abs(deltaL_anti) <= d + 1.2) {
-                    drawSingleHyperbola(cx, cy, deltaL_anti, c_dist, '#7bf0c2', [6, 4]);
-                }
-
-                let deltaL_node = (n + 0.5) * lambda - phaseDiff_L;
-                if (Math.abs(deltaL_node) <= d + 1.2) {
-                    drawSingleHyperbola(cx, cy, deltaL_node, c_dist, '#ffb3c6', [3, 4]);
-                }
+                drawSingleHyperbola(n * lambda + phaseLength, '#7bf0c2', [7,4]);
+                drawSingleHyperbola((n + 0.5) * lambda + phaseLength, '#ffb3c6', [3,4]);
             }
             ctx.setLineDash([]);
         }
-
-        function drawSingleHyperbola(cx, cy, deltaL, c, color, dash) {
-            let a = Math.abs(deltaL) / 2;
-            let sign = deltaL >= 0 ? 1 : -1;
-
-            // 1. 中垂線退化 (a == 0)
-            if (a < 0.3) {
-                ctx.save();
-                ctx.beginPath();
-                ctx.moveTo(cx, 0);
-                ctx.lineTo(cx, height);
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 2.0;
-                if (dash) ctx.setLineDash(dash);
-                ctx.stroke();
-                ctx.restore();
-                return;
-            }
-
-            // 2. 雙曲線退化為兩波源外側射線 (|Δℓ| ≈ d，即 a ≈ c)
-            if (Math.abs(a - c) < 1.5 || a >= c) {
-                if (Math.abs(a - c) < 2.2) {
-                    let s1x = cx - c;
-                    let s2x = cx + c;
-                    ctx.save();
-                    ctx.strokeStyle = color;
-                    ctx.lineWidth = 2.8;
-                    if (dash) ctx.setLineDash(dash);
-                    ctx.beginPath();
-                    if (sign > 0) {
-                        ctx.moveTo(s2x, cy);
-                        ctx.lineTo(width, cy);
-                    } else {
-                        ctx.moveTo(s1x, cy);
-                        ctx.lineTo(0, cy);
-                    }
-                    ctx.stroke();
-                    ctx.restore();
-                }
-                return;
-            }
-
-            // 3. 一般雙曲線
-            let b2 = c * c - a * a;
-            if (b2 <= 0) return;
-            let b = Math.sqrt(b2);
-
-            ctx.beginPath();
-            ctx.strokeStyle = color;
-            ctx.setLineDash(dash);
-
-            let step = 4;
-            let started = false;
-            for (let y = -height/2; y <= height/2; y += step) {
-                let x_offset = sign * a * Math.sqrt(1 + (y * y) / (b * b));
-                let plotX = cx + x_offset;
-                let plotY = cy + y;
-
-                if (plotX < -20 || plotX > width + 20) { started = false; continue; }
-                if (!started) {
-                    ctx.moveTo(plotX, plotY);
-                    started = true;
-                } else {
-                    ctx.lineTo(plotX, plotY);
+        function drawSingleHyperbola(delta, color, dash) {
+            if (Math.abs(delta) > d + 1e-6) return;
+            const a = Math.abs(delta) / 2, c = d / 2, cx = width / 2, cy = height / 2;
+            const sign = delta >= 0 ? 1 : -1;
+            ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 1.7; ctx.setLineDash(dash); ctx.beginPath();
+            if (a < 1e-6) {ctx.moveTo(cx,0); ctx.lineTo(cx,height);}
+            else if (Math.abs(a - c) < 1e-6) {ctx.moveTo(cx + sign * c,cy); ctx.lineTo(sign > 0 ? width : 0,cy);}
+            else {
+                const b2 = c*c - a*a;
+                let started = false;
+                for (let y = -cy; y <= cy; y += 2) {
+                    const x = cx + sign * a * Math.sqrt(1 + y*y / b2);
+                    if (x < 0 || x > width) {started = false; continue;}
+                    if (!started) {ctx.moveTo(x,cy+y); started = true;} else ctx.lineTo(x,cy+y);
                 }
             }
-            ctx.stroke();
+            ctx.stroke(); ctx.restore();
         }
-
+        // Shared label placement: keep every canvas label inside the edge and use a contrast plate.
+        const labelBounds = [];
+        function labelSize() {return Math.max(16, 12 * width / Math.max(1, canvas.getBoundingClientRect().width));}
+        function labelFit(text, x, y, color = '#fff', options = {}) {
+            const fontSize = labelSize(), lineH = fontSize * 1.4, margin = 12;
+            ctx.save(); ctx.font = `700 ${fontSize}px "Microsoft JhengHei", sans-serif`;
+            const textWidth = ctx.measureText(text).width;
+            const desiredLeft = options.center ? x - textWidth / 2 : x;
+            const left = Math.max(margin, Math.min(width - textWidth - margin, desiredLeft));
+            let baseline = Math.max(lineH, Math.min(height - margin, y));
+            let box = {left:left-4, top:baseline-fontSize-3, right:left+textWidth+4, bottom:baseline+lineH-fontSize-3};
+            const overlaps = b => labelBounds.some(other => b.left < other.right+4 && b.right > other.left-4 && b.top < other.bottom+4 && b.bottom > other.top-4);
+            if (overlaps(box)) {
+                for (let row = 1; row < 12; row++) {
+                    const candidate = Math.max(lineH, Math.min(height-margin, y + (row % 2 ? -1 : 1) * Math.ceil(row / 2) * (lineH + 8)));
+                    const next = {left:left-4, top:candidate-fontSize-3, right:left+textWidth+4, bottom:candidate+lineH-fontSize-3};
+                    if (!overlaps(next)) {baseline = candidate; box = next; break;}
+                }
+            }
+            labelBounds.push(box);
+            ctx.fillStyle = 'rgba(8,35,45,.82)'; ctx.fillRect(box.left,box.top,textWidth+8,lineH);
+            if (options.border) {ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.strokeRect(box.left,box.top,textWidth+8,lineH);}
+            ctx.fillStyle = color; ctx.fillText(text,left,baseline); ctx.restore();
+            return box;
+        }
+        function dimensionBar(x1, x2, y, tick) {
+            const path = () => {ctx.beginPath(); ctx.moveTo(x1,y); ctx.lineTo(x2,y); ctx.moveTo(x1,y-tick); ctx.lineTo(x1,y+tick); ctx.moveTo(x2,y-tick); ctx.lineTo(x2,y+tick);};
+            ctx.strokeStyle = '#08232d'; ctx.lineWidth = 6; path(); ctx.stroke();
+            ctx.strokeStyle = '#fbd55c'; ctx.lineWidth = 2.8; path(); ctx.stroke();
+        }
+        function drawSpacingMarks(s1x, s2x, cy) {
+            if (lengthUnitSelect.value === 'hidden') return;
+            const fontSize = labelSize(), lineH = fontSize * 1.4, margin = 12, tick = fontSize * 0.4;
+            const dimensionY = cy + Math.max(20,fontSize * 0.5);
+            ctx.save(); ctx.setLineDash([5,4]); ctx.lineWidth = 2; ctx.strokeStyle = '#fbd55c'; ctx.beginPath();
+            for (const x of [s1x,s2x]) {ctx.moveTo(x,cy+8); ctx.lineTo(x,dimensionY);}
+            ctx.stroke(); ctx.setLineDash([]);
+            dimensionBar(s1x,s2x,dimensionY,tick);
+            labelFit(`d = ${formatLength(d)}`,width/2,dimensionY+tick+fontSize+8,'#fbd55c',{center:true,border:true});
+            // The ruler is exactly one wavelength in the same coordinates as the source spacing.
+            const rulerText = lengthUnitSelect.value === 'lambda' ? 'λ' : `λ = ${(lambda / scale).toFixed(2)} cm`;
+            ctx.font = `700 ${fontSize}px "Microsoft JhengHei", sans-serif`;
+            const rulerWidth = Math.max(lambda,ctx.measureText(rulerText).width)+margin*2;
+            const rulerTick = fontSize * 0.22;
+            const rulerHeight = fontSize + rulerTick*2 + margin*2 + 8;
+            const rulerX = width-margin-rulerWidth, rulerY = height-margin-rulerHeight;
+            ctx.fillStyle = 'rgba(8,35,45,.9)'; ctx.fillRect(rulerX,rulerY,rulerWidth,rulerHeight);
+            ctx.strokeStyle = '#fbd55c'; ctx.lineWidth = 1.8; ctx.strokeRect(rulerX,rulerY,rulerWidth,rulerHeight);
+            labelBounds.push({left:rulerX,top:rulerY,right:rulerX+rulerWidth,bottom:height-margin});
+            ctx.fillStyle = '#fbd55c'; ctx.textAlign = 'center'; ctx.fillText(rulerText,rulerX+rulerWidth/2,rulerY+margin+fontSize);
+            dimensionBar(rulerX+(rulerWidth-lambda)/2,rulerX+(rulerWidth+lambda)/2,height-margin*2-rulerTick,rulerTick);
+            ctx.restore();
+            if (degenerationLabel) labelFit(degenerationLabel,margin,height-margin-lineH*0.25,'#7bf0c2');
+        }
         function drawOverlay() {
-            let s1x = width / 2 - d / 2;
-            let s1y = height / 2;
-            let s2x = width / 2 + d / 2;
-            let s2y = height / 2;
-
-            if (showLines && !is1D) {
-                drawHyperbolas();
-            }
-
-            ctx.fillStyle = '#f1c40f';
-            ctx.beginPath(); ctx.arc(s1x, s1y, 6, 0, Math.PI * 2); ctx.fill();
-            ctx.beginPath(); ctx.arc(s2x, s2y, 6, 0, Math.PI * 2); ctx.fill();
-
-            ctx.fillStyle = 'white';
-            ctx.font = 'bold 14px Outfit, sans-serif';
-            ctx.fillText('S₁', s1x - 22, s1y + 20);
-            ctx.fillText('S₂', s2x + 10, s2y + 20);
-
-            if (clickP && !is1D) {
-                ctx.strokeStyle = '#f1c40f';
-                ctx.lineWidth = 2;
-                ctx.setLineDash([4, 4]);
-
-                ctx.beginPath();
-                ctx.moveTo(s1x, s1y);
-                ctx.lineTo(clickP.x, clickP.y);
-                ctx.stroke();
-
-                ctx.beginPath();
-                ctx.moveTo(s2x, s2y);
-                ctx.lineTo(clickP.x, clickP.y);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = '#ef4444';
-                ctx.beginPath();
-                ctx.arc(clickP.x, clickP.y, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                ctx.fillStyle = 'white';
-                ctx.font = 'bold 16px Outfit, sans-serif';
-                ctx.fillText('P', clickP.x + 10, clickP.y - 10);
-            } else if (clickP && is1D) {
-                let r1 = Math.abs(clickP.x - s1x);
-                let r2 = Math.abs(clickP.x - s2x);
-                let z1 = Math.cos(k * r1 - omega * t + phase1);
-                let z2 = Math.cos(k * r2 - omega * t + phase2);
-                let z = z1 + z2;
-                let py = height / 2 - z * 40;
-
-                ctx.strokeStyle = 'rgba(239, 68, 68, 0.45)';
-                ctx.lineWidth = 1;
-                ctx.setLineDash([3, 3]);
-                ctx.beginPath();
-                ctx.moveTo(clickP.x, 0);
-                ctx.lineTo(clickP.x, height);
-                ctx.stroke();
-                ctx.setLineDash([]);
-
-                ctx.fillStyle = '#ef4444';
-                ctx.beginPath();
-                ctx.arc(clickP.x, py, 6, 0, Math.PI * 2);
-                ctx.fill();
-                ctx.strokeStyle = '#ffffff';
-                ctx.lineWidth = 2;
-                ctx.stroke();
-
-                ctx.fillStyle = '#ef4444';
-                ctx.font = 'bold 13px Outfit, sans-serif';
-                ctx.fillText(`P (z = ${z.toFixed(2)} A)`, clickP.x + 8, py - 10);
-            }
+            labelBounds.length = 0;
+            const s1x = width / 2 - d / 2, s2x = width / 2 + d / 2, cy = height / 2;
+            if (showLines && !is1D) drawHyperbolas();
+            drawSpacingMarks(s1x,s2x,cy);
+            ctx.fillStyle = '#fbd55c';
+            const pointRadius = Math.max(5,labelSize()*0.28);
+            for (const x of [s1x,s2x]) {ctx.beginPath(); ctx.arc(x,cy,pointRadius,0,2*Math.PI); ctx.fill(); ctx.strokeStyle = '#08232d'; ctx.lineWidth = 2; ctx.stroke();}
+            // Labels face outward so even the smallest source spacing stays readable.
+            const sourceLabelSize = labelSize(), sourceLabelY = cy - sourceLabelSize * 0.8;
+            labelFit('S₁',s1x-sourceLabelSize*1.5,sourceLabelY,'#fbd55c'); labelFit('S₂',s2x+sourceLabelSize*0.5,sourceLabelY,'#fbd55c');
+            if (!clickP) {labelFit(is1D ? '點剖面放置測量點 P' : '點水面放置 P；拖曳可移動',12,sourceLabelSize*1.5); return;}
+            const py = is1D ? cy - displacement(Math.abs(clickP.x-s1x),Math.abs(clickP.x-s2x))*40 : clickP.y;
+            ctx.strokeStyle = 'rgba(251,213,92,.82)'; ctx.lineWidth = 1.5; ctx.setLineDash([4,4]); ctx.beginPath();
+            if (is1D) {ctx.moveTo(clickP.x,0); ctx.lineTo(clickP.x,height);}
+            else {ctx.moveTo(s1x,cy); ctx.lineTo(clickP.x,py); ctx.lineTo(s2x,cy);}
+            ctx.stroke(); ctx.setLineDash([]);
+            ctx.beginPath(); ctx.arc(clickP.x,py,pointRadius,0,2*Math.PI); ctx.fillStyle = '#f97578'; ctx.fill(); ctx.lineWidth = 2; ctx.strokeStyle = '#fff'; ctx.stroke();
+            // Put P above the source-label row to avoid overlap near either wave source.
+            labelFit('P',clickP.x+10,py-12,'#fff');
         }
-
-        function forceRedraw() {
-            if (is1D) draw1D(); else draw2D();
-            drawOverlay();
-        }
-
-        function loop() {
+        function forceRedraw() {if (is1D) draw1D(); else draw2D(); drawOverlay();}
+        function loop(timestamp) {
             if (isRunning) {
-                if (is1D) draw1D(); else draw2D();
-                drawOverlay();
-                t += 1;
+                const elapsed = lastTimestamp === null ? 0 : Math.min((timestamp-lastTimestamp)/1000,0.05);
+                t += elapsed * 30;
+                if (is1D || fieldSelect.value !== 'amplitude') forceRedraw();
             }
+            lastTimestamp = timestamp;
             requestAnimationFrame(loop);
         }
-
-        updateParams();
-        loop();
+        window.addEventListener('resize', resizeCanvas);
+        updateParams(); resizeCanvas(); requestAnimationFrame(loop);
     </script>
 </body>
 </html>
