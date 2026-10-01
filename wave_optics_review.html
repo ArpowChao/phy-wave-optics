@@ -6,6 +6,41 @@
     <title>波動與光學・學習筆記</title>
     <meta name="description" content="波動、聲波、幾何光學、物理光學四章的知識節點複習、互動實驗與分級題庫。">
 
+    <script>
+        /* 獨立於應用程式：必要腳本失敗時仍提供可見的復原入口。 */
+        window.WavePageStatus = (() => {
+            let ready = false;
+            let failed = false;
+            function showFailure() {
+                failed = true;
+                ready = false;
+                const main = document.getElementById('main-content');
+                if (!main) return;
+                main.classList.remove('lab-wide');
+                main.innerHTML = `<section class="page-status" role="alert">
+                    <h2>學習內容未能載入</h2>
+                    <p>請重新載入這一頁，再繼續閱讀或操作實驗。</p>
+                    <button type="button" onclick="location.reload()">重新載入</button>
+                    <a href="water_interference.html">開啟獨立水波模擬器</a>
+                </section>`;
+            }
+            window.addEventListener('error', (event) => {
+                if (event.target instanceof HTMLScriptElement && event.target.hasAttribute('data-page-required')) {
+                    console.error('必要頁面腳本載入失敗', event.target.src);
+                    showFailure();
+                }
+            }, true);
+            document.addEventListener('DOMContentLoaded', () => {
+                setTimeout(() => { if (!ready) showFailure(); }, 0);
+            });
+            return {
+                fail: showFailure,
+                get failed() { return failed; },
+                ready() { ready = true; }
+            };
+        })();
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+TC:wght@300;400;500;700;900&display=swap" rel="stylesheet">
@@ -25,13 +60,13 @@
     </script>
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
-    <script src="assets/js/wave-runtime.js"></script>
+    <script data-page-required src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
-    <script src="data/modulesData.js?v=learner_20261001"></script>
-    <script src="data/learningGuide.js?v=learner_20261001"></script>
-    <script src="data/questionBank.js?v=learner_20261001"></script>
-    <script src="data/mediaData.js?v=learner_20261001"></script>
+    <script data-page-required src="data/modulesData.js?v=learner_20261001"></script>
+    <script data-page-required src="data/learningGuide.js?v=learner_20261001"></script>
+    <script data-page-required src="data/questionBank.js?v=learner_20261001"></script>
+    <script data-page-required src="data/mediaData.js?v=learner_20261001"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -663,7 +698,7 @@
             .anim-fig figcaption { font-size: 0.76rem; }
         }
     </style>
-    <link rel="stylesheet" href="assets/css/learner.css">
+    <link rel="stylesheet" href="assets/css/learner.css?v=water_cards_20261001">
 </head>
 <body>
     <a class="skip-link" href="#main-content" onclick="event.preventDefault();document.getElementById('main-content').focus();document.getElementById('main-content').scrollIntoView()">跳到學習內容</a>
@@ -702,7 +737,13 @@
             <button type="button" onclick="navigateTo('home')" aria-label="回到學習首頁">⌂ <span class="toolbar-long">首頁</span></button>
             <div class="view-breadcrumb" id="view-breadcrumb">學習首頁</div>
         </div>
-        <main id="main-content" tabindex="-1"></main>
+        <main id="main-content" tabindex="-1">
+            <section class="page-status" role="status">
+                <h2>正在載入學習內容…</h2>
+                <p>載入完成後即可閱讀與操作實驗。</p>
+                <noscript><p>請開啟瀏覽器的 JavaScript，才能使用互動實驗。</p></noscript>
+            </section>
+        </main>
         <footer class="app-footer print-hide">
             <div class="footer-inner">
                 <div class="footer-col">
@@ -808,31 +849,41 @@
         /* activateNavForRoute is in assets/js/learner-ui.js. */
 
         function renderRoute(route) {
-            cleanupCurrentView();
-            const main = document.getElementById('main-content');
-            if (main) main.scrollTop = 0;
-            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-            document.documentElement.scrollTop = 0;
-            document.body.scrollTop = 0;
+            try {
+                cleanupCurrentView();
+                const main = document.getElementById('main-content');
+                if (main) main.scrollTop = 0;
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+                document.documentElement.scrollTop = 0;
+                document.body.scrollTop = 0;
 
-            if (route === 'home') renderHomeView();
-            else if (route.startsWith('module-')) renderModuleView(route.slice(7));
-            else if (route.startsWith('node-')) renderNodeView(route.slice(5));
-            else if (route.startsWith('lab-')) renderSingleLabView(route.slice(4));
-            else if (route === 'tool-formula') renderFormulaSheet();
-            else if (route === 'tool-lab') renderLabIndex();
-            else if (route === 'tool-anim') renderAnimIndex();
-            else if (route === 'tool-quiz') renderQuizView();
-            else if (route === 'tool-compare') renderCompareView();
-            else if (route === 'tool-exam') renderExamIndexView();
-            else if (route === 'tool-wrong') renderWrongBookView();
-            else renderHomeView();
+                if (route === 'home') renderHomeView();
+                else if (route.startsWith('module-')) renderModuleView(route.slice(7));
+                else if (route.startsWith('node-')) renderNodeView(route.slice(5));
+                else if (route.startsWith('lab-')) renderSingleLabView(route.slice(4));
+                else if (route === 'tool-formula') renderFormulaSheet();
+                else if (route === 'tool-lab') renderLabIndex();
+                else if (route === 'tool-anim') renderAnimIndex();
+                else if (route === 'tool-quiz') renderQuizView();
+                else if (route === 'tool-compare') renderCompareView();
+                else if (route === 'tool-exam') renderExamIndexView();
+                else if (route === 'tool-wrong') renderWrongBookView();
+                else renderHomeView();
 
-            activateNavForRoute(route);
-            document.getElementById('view-breadcrumb').textContent = routeLabel(route);
-            lastRenderedRoute = route;
-            updateWrongBadge();
-            scheduleMathJax();
+                activateNavForRoute(route);
+                document.getElementById('view-breadcrumb').textContent = routeLabel(route);
+                lastRenderedRoute = route;
+                updateWrongBadge();
+                scheduleMathJax();
+                window.WavePageStatus.ready();
+            } catch (error) {
+                lastRenderedRoute = null;
+                console.error('學習頁面顯示失敗', route, error);
+                try { cleanupCurrentView(); }
+                catch (cleanupError) { console.warn('頁面資源清理失敗', cleanupError); }
+                window.WavePageStatus.fail();
+                window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            }
         }
 
         function navigateTo(route) {
@@ -1609,7 +1660,7 @@
         function labShellHtml(id, prefix = '') {
             const lab = LABS[id];
             if (!lab) return '';
-            const controls = (lab.controls || []).map((c) => {
+            const controlHtml = (c) => {
                 if (c.options) {
                     const opts = c.options.map((o) => `<option value="${o.value}" ${String(o.value) === String(c.value) ? 'selected' : ''}>${o.label}</option>`).join('');
                     return `
@@ -1623,7 +1674,8 @@
                         <label for="${prefix}${id}-${c.key}">${c.label}<b id="${prefix}${id}-${c.key}-out"></b></label>
                         <input type="range" id="${prefix}${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
                     </div>`;
-            }).join('');
+            };
+            const controls = (lab.controls || []).map(controlHtml).join('');
             const modes = (lab.modes || []).map((m, i) =>
                 `<button type="button" class="lab-btn ${i === 0 ? 'is-active' : ''}" data-mode="${m.key}">${m.label}</button>`
             ).join('');
@@ -1645,6 +1697,46 @@
             const extraBtns = (lab.extraButtons || []).map((b) =>
                 `<button type="button" class="lab-btn ${b.className || ''}" data-action="${b.action}">${b.label}</button>`
             ).join('');
+            if (id === 'water_interference') {
+                const waterControls = keys => keys.map(key => controlHtml(lab.controls.find(c => c.key === key))).join('');
+                const waterButtons = actions => (lab.extraButtons || []).filter(b => actions.includes(b.action)).map(b =>
+                    `<button type="button" class="lab-btn ${b.className || ''}" data-action="${b.action}">${b.label}</button>`
+                ).join('');
+                const presetActions = [1,1.5,2,2.5,3,3.5,4].map(mult => `snap_${String(mult).replace('.','_')}_lambda`);
+                return `
+                    <div class="lab-shell lab-water" id="${prefix}lab-${id}">
+                        <div class="water-stage-toolbar">
+                            <div class="lab-buttons" data-role="modes">${modes}</div>
+                            <div class="lab-buttons water-playback">
+                                <button type="button" class="lab-btn" data-role="toggle">⏸ 暫停</button>
+                                <button type="button" class="lab-btn" data-role="reset">↺ 回到預設值</button>
+                            </div>
+                        </div>
+                        <div class="lab-stage"><canvas id="${prefix}${id}-canvas"></canvas></div>
+                        <p class="water-stage-caption">點水面放置或拖曳測量點 P；三維模式可拖曳畫面旋轉視角。</p>
+                        ${scrub}
+                        <div class="water-control-cards">
+                            <section class="water-control-card" aria-labelledby="${prefix}${id}-distance-title">
+                                <h5 id="${prefix}${id}-distance-title">波源間距與長度顯示</h5>
+                                ${waterControls(['d'])}
+                                <p class="water-control-hint">λ 是一個波長。改變間距，觀察腹線與節線如何改變。</p>
+                                ${waterControls(['dlabel'])}
+                                <div class="lab-buttons water-presets" aria-label="精確設定波源間距">${waterButtons(presetActions)}</div>
+                                <div class="lab-buttons">${waterButtons(['snap_degen_int','snap_degen_half'])}</div>
+                            </section>
+                            <section class="water-control-card" aria-labelledby="${prefix}${id}-display-title">
+                                <h5 id="${prefix}${id}-display-title">水波與圖示</h5>
+                                ${waterControls(['freq','phase','decay','shade','lines','yaw'])}
+                                <div class="lab-buttons">${waterButtons(['random_quiz'])}</div>
+                            </section>
+                        </div>
+                        <div class="water-measure-toolbar"><h5>測量與判讀</h5><div class="lab-buttons">${waterButtons(['clear_p'])}</div></div>
+                        <div class="lab-readout" id="${prefix}${id}-readout"></div>
+                        <p class="water-credit">原始探究設計：成德高中 陳家騏老師。</p>
+                        <details class="water-guide"><summary>第一次操作：凍結、測量、核對</summary><div class="lab-hint">${lab.hint}</div></details>
+                        ${lab.note ? `<div class="lab-note"><details><summary>觀察後的補充說明</summary>${lab.note}</details></div>` : ''}
+                    </div>`;
+            }
             return `
                 <div class="lab-shell" id="${prefix}lab-${id}">
                     <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
@@ -4726,7 +4818,7 @@
                     label: '長度顯示單位',
                     options: [
                         { value: 1, label: '以波長 λ 為單位（d = 幾 λ）' },
-                        { value: 2, label: '以公分 cm 為單位（實際長度）' },
+                        { value: 2, label: '以公分 cm 為單位（模型尺度）' },
                         { value: 3, label: '波長 λ 與公分 cm 都顯示' },
                         { value: 0, label: '都不顯示（出題模式）' }
                     ],
@@ -4735,16 +4827,26 @@
                 },
                 {
                     key: 'decay',
-                    label: '波動衰減模型',
+                    label: '傳播時的振幅',
                     options: [
-                        { value: 0, label: '課本理想模型 (等振幅，節線完全靜止)' },
-                        { value: 1, label: '衰減示意（距離越遠，振幅越小）' }
+                        { value: 0, label: '課本模型・到達 P 時等振幅' },
+                        { value: 1, label: '衰減示意・隨距離變小' }
                     ],
                     value: 0,
                     fmt: (v) => Number(v) === 0 ? '理想等振幅' : '簡化距離衰減'
                 }
             ],
             extraButtons: [
+                ...[1,1.5,2,2.5,3,3.5,4].map(mult => ({
+                    action: `snap_${String(mult).replace('.','_')}_lambda`,
+                    label: `${mult}λ`,
+                    onClick: (p, {syncOutputs,paint,host}) => {
+                        p.d = Number((mult * wiLamCm(p)).toFixed(2));
+                        const input = host.querySelector('[id$="-d"]');
+                        if (input) input.value = p.d;
+                        syncOutputs(); paint();
+                    }
+                })),
                 {
                     action: 'snap_degen_int',
                     label: '鎖定整數倍間距 d = nλ',
@@ -6765,12 +6867,21 @@
         window.addEventListener('hashchange', syncLocationRoute);
 
         document.addEventListener('DOMContentLoaded', () => {
-            buildNodeSidebar();
-            const initial = routeFromLocation();
-            history.replaceState({ waveRoute: initial }, '', `#${encodeURIComponent(initial)}`);
-            renderRoute(initial);
+            if (window.WavePageStatus.failed) {
+                window.WavePageStatus.fail();
+                return;
+            }
+            try {
+                buildNodeSidebar();
+                const initial = routeFromLocation();
+                history.replaceState({ waveRoute: initial }, '', `#${encodeURIComponent(initial)}`);
+                renderRoute(initial);
+            } catch (error) {
+                console.error('學習頁面啟動失敗', error);
+                window.WavePageStatus.fail();
+            }
         });
     </script>
-    <script src="assets/js/learner-ui.js?v=learner_20261001_water"></script>
+    <script data-page-required src="assets/js/learner-ui.js?v=page_recovery_20261001"></script>
 </body>
 </html>
