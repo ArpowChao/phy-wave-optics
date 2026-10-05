@@ -99,5 +99,5 @@ for (const file of ['wave_optics_review.html','water_interference.html']) {
     const scripts = [...html.matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi)];
     scripts.forEach((m,i) => new vm.Script(m[1],{filename:`${file}:script${i}`}));
 }
-for (const file of ['assets/js/learner-ui.js','scripts/lab-selftest.js']) new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
+for (const file of ['assets/js/learner-ui.js','assets/js/swing-work.js','scripts/lab-selftest.js']) new vm.Script(fs.readFileSync(file,'utf8'),{filename:file});
 console.log(`PASS: ${Object.keys(learningGuide).length} complete lesson guides, valid prerequisite graph, ${questionBank.length} answer keys, resonance media/check/source metadata, all frontend script syntax.`);

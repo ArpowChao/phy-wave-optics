@@ -30,6 +30,8 @@ python -m http.server 8000
 
 共振頁 N12 收錄玻璃杯、慢動作杯壁、建築震動、節拍器同步與塔可馬吊橋五段影片，以觀察問題和判讀區分受迫共振、耦合同步與自激顫振。保留共鳴空氣柱實驗與例題，另附三題檢核及來源。影片展開時才載入，收合後移除播放器；也可直接開啟 YouTube 原始連結。
 
+N12 的盪鞦韆動畫提供「正弦波做功對照」與「受迫鞦韆」兩種視角。可調推力頻率比、相位、推力與阻尼，暫停、逐步或拖曳時間；同步看推力 F、速度 v、功率 Fv 及累積做功。固定波形不把累積功當作振幅；受迫小角度模型以 RK4 同時計算運動、外力功與耗散，驗證 E − E₀ = W − D。
+
 ## 檔案
 
 | 檔案 | 用途 |
@@ -43,6 +45,8 @@ python -m http.server 8000
 | `data/mediaData.js` | 本機動畫與外部實拍影片 |
 | `water_interference.html` | 水波干涉自由操作與可選導讀 |
 | `assets/js/wave-runtime.js` | 時鐘、高 DPI 畫布與切換頁面的資源清理 |
+| `assets/js/swing-work.js` | 共振頁盪鞦韆的模型、做功動畫與操作 |
+| `assets/css/swing-work.css` | 鞦韆控制與數值的響應式排版 |
 
 ## 修改後驗證
 
@@ -50,6 +54,7 @@ python -m http.server 8000
 python scripts/audit_codebase.py
 node scripts/audit_learning_content.js
 node scripts/audit_page_recovery.js
+node scripts/audit_swing_work.js
 ```
 
 靜態健檢驗證題號、資源、DPR 繪圖原則；導讀健檢驗證每節資料、先備圖、答案鍵與前端語法。

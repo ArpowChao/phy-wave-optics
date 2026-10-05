@@ -61,7 +61,32 @@
             if (modes.length) modes.forEach((k) => out.push(id + ':' + k));
             else out.push(id);
         });
+        // 共振頁內的獨立動畫也要掃描；缺模組時保留路由，讓報告明確失敗。
+        out.push('swing:compare:0', 'swing:compare:90', 'swing:compare:180',
+            'swing:compare:detuned', 'swing:dynamic:0', 'swing:dynamic:180',
+            'swing:dynamic:detuned');
         return out;
+    }
+
+    function scanSwingFrames(host, route, widthPx) {
+        cleanupCurrentView();
+        if (!window.SwingWork) throw new Error('盪鞦韆動畫模組未載入。');
+        host.innerHTML = SwingWork.html();
+        const stage = host.querySelector('.swing-stage');
+        const canvas = stage?.querySelector('canvas');
+        if (!stage || !canvas) throw new Error('盪鞦韆動畫缺少畫布。');
+        stage.style.boxSizing = 'content-box';
+        stage.style.width = widthPx + 'px';
+        const [, mode, state] = route.split(':');
+        const config = { mode, phase: state === 'detuned' ? 0 : Number(state), ratio: state === 'detuned' ? 1.4 : 1 };
+        const series = SwingWork.build(config);
+        // 這裡直接檢查純繪圖 API，不啟動 mount 的動畫，以免同時寫入不同時刻。
+        // UI 操作、生命週期及實際 DPR 畫面另在瀏覽器核對。
+        const geom = WaveRuntime.fitCanvas(canvas, SwingWork.heightFor(widthPx));
+        for (const t of [0, 1, 3, 10, 30, 40]) {
+            geom.ctx.clearRect(0, 0, geom.width, geom.height);
+            SwingWork.render(geom.ctx, geom.width, geom.height, series, t);
+        }
     }
 
     /* 分頁在背景、或視窗沒有在重繪時，瀏覽器會把 requestAnimationFrame 節流到
@@ -90,9 +115,12 @@
             frames.length = 0;
             bounds = null;
             try {
-                renderRoute('lab-' + route);
-                const stage = host.querySelector('.lab-stage');
-                if (stage) { stage.style.boxSizing = 'content-box'; stage.style.width = widthPx + 'px'; }
+                if (route.startsWith('swing:')) scanSwingFrames(host, route, widthPx);
+                else {
+                    renderRoute('lab-' + route);
+                    const stage = host.querySelector('.lab-stage');
+                    if (stage) { stage.style.boxSizing = 'content-box'; stage.style.width = widthPx + 'px'; }
+                }
             } catch (e) {
                 errs.push(e.message);
             }
@@ -155,7 +183,7 @@
             <div class="view-header">
                 <span class="view-eyebrow">自動化視覺健檢</span>
                 <h2>互動實驗自我檢查</h2>
-                <p>掃描 ${routes.length} 個實驗模式 × ${widths.length} 種畫布寬度，
+                <p>掃描 ${routes.length} 個實驗與動畫狀態 × ${widths.length} 種畫布寬度（${routes.length * widths.length} 項），
                    檢查執行期錯誤、畫布文字重疊與超出邊界。</p>
             </div>
             <div class="callout ${total ? 'warn' : 'info'}">

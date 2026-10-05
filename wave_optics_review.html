@@ -64,7 +64,7 @@
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
     <script data-page-required src="data/modulesData.js?v=learner_20261001"></script>
-    <script data-page-required src="data/learningGuide.js?v=resonance_20261005"></script>
+    <script data-page-required src="data/learningGuide.js?v=swing_20261005"></script>
     <script data-page-required src="data/questionBank.js?v=learner_20261001"></script>
     <script data-page-required src="data/mediaData.js?v=resonance_20261005"></script>
     <style>
@@ -699,6 +699,7 @@
         }
     </style>
     <link rel="stylesheet" href="assets/css/learner.css?v=resonance_20261005">
+    <link rel="stylesheet" href="assets/css/swing-work.css?v=swing_20261005">
 </head>
 <body>
     <a class="skip-link" href="#main-content" onclick="event.preventDefault();document.getElementById('main-content').focus();document.getElementById('main-content').scrollIntoView()">跳到學習內容</a>
@@ -6854,7 +6855,7 @@
         /* 開發用：?selftest=1 會載入互動實驗的自動化視覺健檢（正常瀏覽不受影響） */
         if (/[?&]selftest=1/.test(location.search)) {
             const st = document.createElement('script');
-            st.src = 'scripts/lab-selftest.js?v=learner_20261001';
+            st.src = 'scripts/lab-selftest.js?v=swing_20261005';
             document.head.appendChild(st);
         }
 
@@ -6882,6 +6883,7 @@
             }
         });
     </script>
-    <script data-page-required src="assets/js/learner-ui.js?v=resonance_20261005"></script>
+    <script data-page-required src="assets/js/swing-work.js?v=swing_20261005"></script>
+    <script data-page-required src="assets/js/learner-ui.js?v=swing_20261005"></script>
 </body>
 </html>

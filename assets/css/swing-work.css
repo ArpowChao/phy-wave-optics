@@ -1,0 +1,95 @@
+/* 共振：盪鞦韆、正弦波與外力做功的可操作觀察。 */
+.swing-work {
+  --swing-teal:#176c70;
+  --swing-ink:#203e43;
+  --swing-muted:#5c6d6a;
+  --swing-border:#d5e3de;
+  min-width:0;
+  margin:1.8rem 0;
+  padding:1.2rem;
+  border:1px solid var(--swing-border);
+  border-radius:12px;
+  background:#fff;
+  color:var(--swing-ink);
+  scroll-margin-top:80px;
+}
+.swing-work *, .swing-work *::before, .swing-work *::after { box-sizing:border-box; }
+.swing-work .section-title { margin:0 0 .6rem; }
+.swing-work .swing-lead { margin:0 0 1rem; color:var(--swing-muted); font-size:.9rem; line-height:1.85; }
+.swing-work [hidden] { display:none !important; }
+.swing-work .swing-mode-note { margin:.55rem 0 .9rem; color:var(--swing-muted); font-size:.82rem; line-height:1.8; }
+.swing-work .swing-current { display:flex; flex-wrap:wrap; align-items:center; gap:.4rem; font-size:.83rem; line-height:1.8; margin:.7rem 0; font-variant-numeric:tabular-nums; }
+.swing-work [data-direction] { padding:.2rem .5rem; border-radius:6px; font-weight:600; background:#eaf0ee; }
+.swing-work [data-sign=positive] { color:#12654e; background:#e4f4ea; }
+.swing-work [data-sign=negative] { color:#a4304a; background:#f9e8ee; }
+.swing-work .swing-model a { display:inline-flex; min-height:44px; align-items:center; color:var(--swing-teal); }
+.swing-work button, .swing-work select {
+  min-width:0;
+  min-height:44px;
+  padding:.6rem .85rem;
+  border:1px solid #bfd3ce;
+  border-radius:8px;
+  background:#fff;
+  color:var(--swing-teal);
+  font:inherit;
+  font-size:.84rem;
+  font-weight:600;
+  line-height:1.5;
+}
+.swing-work button { cursor:pointer; }
+.swing-work button:hover { border-color:var(--swing-teal); background:#edf5f1; }
+.swing-work button[aria-pressed="true"] { border-color:var(--swing-teal); background:var(--swing-teal); color:#fff; }
+.swing-work button[aria-pressed="true"]:hover { background:#12585c; }
+.swing-work button:disabled { opacity:.5; cursor:default; }
+.swing-work :is(button, select, input, summary):focus-visible { outline:3px solid #c47c20; outline-offset:3px; }
+.swing-work .swing-modes, .swing-work .swing-presets { display:flex; flex-wrap:wrap; align-items:center; gap:.55rem; min-width:0; }
+.swing-work .swing-modes { margin-bottom:.75rem; }
+.swing-work .swing-presets { margin-bottom:1rem; }
+.swing-work .swing-presets button { font-size:.8rem; background:#f5f9f7; }
+.swing-work .swing-presets button[aria-pressed="true"] { background:var(--swing-teal); }
+.swing-work .swing-layout { display:grid; grid-template-columns:minmax(0,1fr); gap:1rem; min-width:0; }
+.swing-work .swing-stage { min-width:0; overflow:hidden; border:1px solid var(--swing-border); border-radius:10px; background:#f9fbfa; }
+.swing-work .swing-stage canvas { display:block; width:100%; max-width:100%; }
+.swing-work .swing-readouts { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:.6rem; min-width:0; }
+.swing-work .swing-readouts article { min-width:0; padding:.75rem .85rem; border:1px solid #dce7e2; border-radius:8px; background:#f2f7f4; }
+.swing-work .swing-readouts article span { display:block; margin-bottom:.25rem; color:var(--swing-muted); font-size:.75rem; line-height:1.6; }
+.swing-work .swing-readouts article b { display:block; font-size:.92rem; font-variant-numeric:tabular-nums; line-height:1.5; overflow-wrap:anywhere; }
+.swing-work .swing-controls { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.7rem 1rem; min-width:0; }
+.swing-work .swing-control { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; min-width:0; padding:.8rem .9rem .4rem; border:1px solid var(--swing-border); border-radius:8px; background:#fff; font-size:.83rem; line-height:1.65; }
+.swing-work .swing-control > span { display:flex; align-items:baseline; justify-content:space-between; flex-wrap:wrap; gap:.25rem .7rem; min-width:0; grid-column:1/-1; }
+.swing-work .swing-control > span:has(+ output) { grid-column:1; }
+.swing-work .swing-control output { color:var(--swing-teal); font-size:.86rem; font-weight:700; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+.swing-work input[type="range"] { display:block; min-width:0; min-height:44px; width:100%; margin:0; padding:0; accent-color:var(--swing-teal); cursor:pointer; }
+.swing-work .swing-control > input { grid-column:1/-1; }
+.swing-work .swing-transport { display:flex; align-items:center; flex-wrap:wrap; gap:.55rem; min-width:0; margin-top:.8rem; }
+.swing-work .swing-transport button[data-action="play"] { border-color:var(--swing-teal); background:var(--swing-teal); color:white; }
+.swing-work .swing-transport button[data-action="play"]:hover { background:#12585c; }
+.swing-work .swing-transport label { display:flex; align-items:center; gap:.45rem; flex-wrap:wrap; min-width:0; font-size:.8rem; color:var(--swing-muted); }
+.swing-work .swing-transport select { max-width:100%; background:#fff; color:var(--swing-ink); font-weight:400; }
+.swing-work .swing-timeline { display:block; min-width:0; margin-top:.65rem; font-size:.8rem; line-height:1.8; }
+.swing-work .swing-timeline label { display:block; min-width:0; font-size:.79rem; color:var(--swing-muted); line-height:1.8; }
+.swing-work .swing-timeline output { color:var(--swing-ink); font-variant-numeric:tabular-nums; }
+.swing-work .swing-equations { min-width:0; margin-top:1rem; padding:.85rem 1rem; border:1px solid var(--swing-border); border-radius:8px; background:#f6f9f7; }
+.swing-work .swing-equations p { margin:.25rem 0; font-size:.84rem; line-height:1.9; overflow-wrap:anywhere; }
+.swing-work .swing-equations code { white-space:normal; color:inherit; font-size:.9em; overflow-wrap:anywhere; }
+.swing-work .swing-explain { margin:.8rem 0 0; padding:.85rem 1rem; border-left:3px solid #3d9183; border-radius:0 8px 8px 0; background:#eaf3ef; font-size:.87rem; line-height:1.9; overflow-wrap:anywhere; }
+.swing-work .swing-explain p { margin:.2rem 0; }
+.swing-work .swing-model { min-width:0; margin-top:.75rem; border-top:1px solid var(--swing-border); }
+.swing-work .swing-model > summary { display:flex; align-items:center; min-height:44px; padding:.7rem 0; color:var(--swing-teal); font-size:.83rem; font-weight:600; cursor:pointer; }
+.swing-work .swing-model > summary::before { content:'＋'; margin-right:.55rem; }
+.swing-work .swing-model[open] > summary::before { content:'−'; }
+.swing-work .swing-model > div { min-width:0; padding:.15rem 0 .5rem; color:var(--swing-muted); font-size:.82rem; line-height:1.9; overflow-wrap:anywhere; }
+.swing-work .swing-model > div p { margin:.4rem 0; }
+.swing-work .swing-model > div ul { padding-left:1.2rem; margin:.4rem 0; }
+@media (max-width:650px) {
+  .swing-work { padding:1rem .8rem; }
+  .swing-work .swing-controls { grid-template-columns:minmax(0,1fr); }
+  .swing-work .swing-readouts { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .swing-work .swing-readouts article { padding:.65rem .7rem; }
+  .swing-work .swing-readouts article b { font-size:.85rem; }
+  .swing-work .swing-modes button { flex:1 1 130px; }
+  .swing-work .swing-equations, .swing-work .swing-explain { padding:.75rem .8rem; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .swing-work *, .swing-work *::before, .swing-work *::after { scroll-behavior:auto; }
+}

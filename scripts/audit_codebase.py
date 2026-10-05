@@ -10,12 +10,19 @@ def run_audit():
     with open('wave_optics_review.html', 'r', encoding='utf-8') as f:
         html = f.read()
 
-    # 檢查 putImageData 是否都是對 off.ctx 呼叫
-    lines = html.split('\n')
-    for idx, line in enumerate(lines):
-        if 'putImageData' in line:
-            if 'off.ctx.putImageData' not in line and 'offCtx.putImageData' not in line:
-                errors.append(f"[Canvas DPR 違規] 第 {idx+1} 行發現直接對主 ctx 調用 putImageData: {line.strip()}，應改用 off.ctx.putImageData + ctx.drawImage")
+    # Canvas 模組與主頁都必須遵守同一條 DPR 規則。
+    canvas_sources = [('wave_optics_review.html', html)]
+    swing_path = 'assets/js/swing-work.js'
+    if os.path.exists(swing_path):
+        with open(swing_path, 'r', encoding='utf-8') as f:
+            canvas_sources.append((swing_path, f.read()))
+    else:
+        errors.append(f"[缺失互動模組] 找不到 {swing_path}")
+    for source_path, source in canvas_sources:
+        for idx, line in enumerate(source.split('\n')):
+            if 'putImageData' in line:
+                if 'off.ctx.putImageData' not in line and 'offCtx.putImageData' not in line:
+                    errors.append(f"[Canvas DPR 違規] {source_path} 第 {idx+1} 行發現直接對主 ctx 調用 putImageData: {line.strip()}，應改用 off.ctx.putImageData + ctx.drawImage")
 
     # 2. 檢查大考圖片資源是否存在且尺寸大於 0
     with open('data/questionBank.js', 'r', encoding='utf-8') as f:

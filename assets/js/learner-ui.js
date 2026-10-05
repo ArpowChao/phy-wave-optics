@@ -175,6 +175,9 @@ function answerResonanceCheck(code, index, choice, button) {
 function openResonanceStudy() {
     document.getElementById('resonance-study-title')?.scrollIntoView({behavior:WaveRuntime.prefersReducedMotion() ? 'instant' : 'smooth', block:'start'});
 }
+function openSwingWork() {
+    document.getElementById('swing-work')?.scrollIntoView({behavior:WaveRuntime.prefersReducedMotion() ? 'instant' : 'smooth', block:'start'});
+}
 
 function renderNodeView(code) {
     const meta = nodeMeta[code];
@@ -193,7 +196,7 @@ function renderNodeView(code) {
     const activityLabel = code === 'N12' ? '觀察空氣柱的駐波 →' : '開啟實驗觀察 →';
     const activityButton = activity?.page ? `<a class="lesson-secondary" href="${activity.page}">${activityLabel}</a>` : primaryLab ? routeLink(`lab-${primaryLab}:${activity.mode || 'default'}:${code}`, activityLabel, 'lesson-secondary') : '';
     const observationActions = guide?.resonanceCases?.length
-        ? `<div class="lesson-actions"><button type="button" class="lesson-secondary" onclick="openResonanceStudy()">先看五段影片 ↓</button>${activityButton}</div>`
+        ? `<div class="lesson-actions"><button type="button" class="lesson-primary" onclick="openSwingWork()">操作盪鞦韆 ↓</button><button type="button" class="lesson-secondary" onclick="openResonanceStudy()">看五段影片 ↓</button>${activityButton}</div>`
         : activityButton || ((animByNode[code] || []).length ? '<button class="lesson-secondary" onclick="openLessonMedia()">看動畫觀察 →</button>' : '');
     const sequence = code === 'N21' ? ['N21'] : CORE_NODES;
     const i = sequence.indexOf(code), prev = sequence[i - 1], next = sequence[i + 1];
@@ -204,6 +207,7 @@ function renderNodeView(code) {
         <div class="view-header"><span class="view-eyebrow">${CHAPTER_INTROS[meta.module][0]}・${code === 'N21' ? '延伸選讀' : `第 ${nodesOfModule(meta.module).indexOf(code) + 1} 節`}</span><h2>${meta.title}</h2>${guide ? `<div class="lesson-goal"><span class="lesson-kicker">這節要學會</span><p>${guide.goal}</p></div>` : ''}
         ${guide?.prerequisites.length ? `<div class="prerequisites"><span>先備觀念</span>${guide.prerequisites.map(c => routeLink(`node-${c}`, nodeMeta[c].title)).join('')}</div>` : ''}</div>
         ${guide ? `<section class="observe-card"><span class="lesson-kicker">01　先觀察</span><p>${guide.observe}</p>${observationActions}</section>` : ''}
+        ${code === 'N12' ? SwingWork.html() : ''}
         <h3 class="section-title">02　抓住核心關係</h3>${guide ? `<p class="takeaway">${guide.takeaway}</p>` : ''}${formulaHtml}
         ${resonanceCasesHtml(guide)}
         ${guide?.example ? `<section class="worked-example"><span class="lesson-kicker">跟著做一題</span><h3>${guide.example.title}</h3><p>${guide.example.given}</p><ol>${guide.example.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="example-result">${guide.example.result}</p></section>` : ''}
@@ -214,6 +218,7 @@ function renderNodeView(code) {
         ${labs.length > 1 ? `<details class="lesson-disclosure"><summary>其他相關實驗${labs.includes('optical_bench') ? '・含延伸工作臺' : ''}</summary><div class="disclosure-content tool-shortcuts">${labs.filter(l => l !== primaryLab).map(l => routeLink(`lab-${l}`,labMeta[l].name)).join('')}</div></details>` : ''}
         <section class="lesson-finish"><p>試著不用看公式，說明本節的重點。能說清楚再自行確認理解。</p><div class="lesson-actions"><button id="lesson-done" class="lesson-primary" aria-pressed="${state.done.includes(code)}" onclick="toggleLessonDone('${code}')">${state.done.includes(code) ? '✓ 已確認理解・點此取消' : '我能說明本節重點'}</button><button class="lesson-secondary" onclick="openBankForNode('${code}')">練本節觀念題</button></div><p id="learning-save-feedback" class="progress-note" role="status"></p><div class="lesson-neighbors">${prev ? routeLink(`node-${prev}`, `← ${nodeMeta[prev].title}`) : routeLink(`module-${meta.module}`, '← 本章學習順序')}${next ? routeLink(`node-${next}`, `${nodeMeta[next].title} →`) : routeLink('home', '回到學習首頁 →')}</div></section>`;
     bindAnimsIn(remainingMedia);
+    if (code === 'N12') SwingWork.mount(document.getElementById('swing-work'), activeDisposers);
 }
 
 function openLessonMedia() {
