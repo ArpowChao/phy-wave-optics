@@ -80,6 +80,40 @@ body { background:#f7f9f8; }
 .check-options button:hover { border-color:#4d8b80; background:#f4f8f6; }
 .check-options button[aria-pressed=true] { border-color:#176c70; background:#edf6f0; }
 .check-feedback { margin-top:.8rem; font-size:.87rem; line-height:1.85; }
+/* 共振影片探究：問題與原始連結持續可見，點開才載入播放器。 */
+.resonance-study { margin:1.8rem 0; }
+#resonance-study-title { scroll-margin-top:80px; }
+.resonance-intro { color:var(--text-muted); font-size:.88rem; line-height:1.85; margin:.7rem 0 1rem; }
+.resonance-steps { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:.8rem; list-style:none; counter-reset:resonance-step; margin:1rem 0 1.3rem; }
+.resonance-steps li { counter-increment:resonance-step; padding:.9rem 1rem; background:#edf4f1; border-radius:10px; }
+.resonance-steps li b { font-size:.87rem; }
+.resonance-steps li b::before { content:counter(resonance-step,decimal-leading-zero) '　'; color:#176c70; }
+.resonance-steps li p { margin-top:.35rem; font-size:.82rem; line-height:1.8; color:var(--text-muted); }
+.resonance-case-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; }
+.resonance-case-grid > .resonance-case:last-child:nth-child(odd) { grid-column:1/-1; }
+.resonance-case { min-width:0; padding:1.2rem; border:1px solid var(--border-color); border-radius:12px; background:#fff; }
+.resonance-category { font-size:.73rem; font-weight:700; color:#176c70; }
+.resonance-case h4 { font-size:1rem; line-height:1.65; margin:.35rem 0 .7rem; }
+.resonance-question { font-size:.86rem; line-height:1.9; margin:0 0 .7rem; }
+.resonance-question b { display:block; font-size:.76rem; color:#176c70; }
+.resonance-player summary,.resonance-verdict summary { min-height:44px; padding:.7rem .8rem; cursor:pointer; font-size:.83rem; font-weight:600; line-height:1.7; }
+.resonance-player { border:1px solid #c9ddd5; background:#f3f8f5; border-radius:8px; overflow:hidden; }
+.resonance-video { width:100%; aspect-ratio:16/9; background:#173b3b; }
+.resonance-video-vertical { aspect-ratio:9/16; max-width:280px; margin:auto; }
+.resonance-video iframe { display:block; width:100%; height:100%; border:0; }
+.resonance-original { display:inline-flex; align-items:center; min-height:44px; color:#176c70; font-size:.79rem; line-height:1.7; padding:.6rem 0; overflow-wrap:anywhere; }
+.resonance-credit { color:var(--text-muted); font-size:.72rem; margin:.1rem 0 .7rem; }
+.resonance-verdict { border-top:1px solid #e2ebe6; }
+.resonance-verdict summary { padding-left:0; }
+.resonance-verdict p { font-size:.85rem; line-height:1.9; padding:.25rem 0 .5rem; }
+.resonance-extension-heading { margin:1.5rem 0 .8rem; }
+.resonance-extension-heading h4 { font-size:1rem; }
+.resonance-extension-heading p { margin-top:.35rem; font-size:.85rem; color:var(--text-muted); line-height:1.8; }
+.resonance-review .lesson-check { margin:.8rem 0; }
+.resonance-review .lesson-check h4 { font-size:.94rem; line-height:1.8; margin-bottom:.7rem; }
+.resonance-sources { padding:.5rem 1.2rem 1rem 2.2rem; font-size:.82rem; line-height:2; }
+.resonance-sources a { color:#176c70; overflow-wrap:anywhere; }
+@media(max-width:650px) { .resonance-case-grid,.resonance-steps { grid-template-columns:1fr; } .resonance-case { padding:1rem; } }
 .lesson-disclosure { border:1px solid var(--border-color); border-radius:10px; background:white; margin:.75rem 0; }
 .lesson-disclosure > summary { cursor:pointer; padding:.95rem 1.2rem; font-size:.9rem; font-weight:700; }
 .lesson-disclosure[open] > summary { border-bottom:1px solid #e4ebe7; }

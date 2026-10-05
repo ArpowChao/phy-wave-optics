@@ -112,6 +112,70 @@ function renderModuleView(moduleNum) {
         <details class="lesson-disclosure"><summary>跨章與生活應用・延伸選讀</summary><div class="disclosure-content">${mod.extensions}</div></details>`;
 }
 
+function lessonTextHtml(value) {
+    return String(value).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function resonanceCaseHtml(item, index) {
+    const media = animData[item.mediaKey];
+    if (!media?.youtubeId) return '';
+    const title = lessonTextHtml(item.title);
+    return `<article class="resonance-case">
+        <span class="resonance-category">${lessonTextHtml(item.category)} · ${String(index + 1).padStart(2,'0')}</span>
+        <h4>${title}</h4>
+        <p class="resonance-question"><b>帶著問題看</b>${lessonTextHtml(item.question)}</p>
+        <details class="resonance-player" ontoggle="toggleResonanceVideo(this)">
+            <summary>觀看影片：${title}</summary>
+            <div class="resonance-video ${media.isVertical ? 'resonance-video-vertical' : ''}" data-youtube-id="${media.youtubeId}" data-video-title="${title}"></div>
+        </details>
+        <a class="resonance-original" href="${media.youtubeUrl}" target="_blank" rel="noopener">在 YouTube 開啟：${title} ↗</a>
+        <p class="resonance-credit">影片來源：${lessonTextHtml(media.credit || '')}</p>
+        <details class="resonance-verdict"><summary>觀察後核對物理機制</summary><p>${lessonTextHtml(item.explanation)}</p></details>
+    </article>`;
+}
+function resonanceCasesHtml(guide) {
+    if (!guide?.resonanceCases?.length) return '';
+    const cases = guide.resonanceCases;
+    const group = extension => cases.map((item,index) => ({item,index})).filter(({item}) => item.category.includes('延伸') === extension).map(({item,index}) => resonanceCaseHtml(item,index)).join('');
+    return `<section class="resonance-study" aria-labelledby="resonance-study-title">
+        <h3 class="section-title" id="resonance-study-title">用五段影片，看懂振動為何增強</h3>
+        <p class="resonance-intro">先預測，再看片；最後展開判讀，說明誰在驅動、誰在振動，以及能量從哪裡來。</p>
+        <ol class="resonance-steps">${(guide.resonanceSteps || []).map(step => `<li><b>${lessonTextHtml(step.title)}</b><p>${lessonTextHtml(step.text)}</p></li>`).join('')}</ol>
+        <div class="resonance-case-grid">${group(false)}</div>
+        <div class="resonance-extension-heading"><h4>延伸辨析：同步與顫振</h4><p>觀察到整齊擺動或振幅變大，還需要辨認背後的機制。</p></div>
+        <div class="resonance-case-grid">${group(true)}</div>
+        <p class="resonance-intro">若內嵌影片無法播放，可使用各卡片的 YouTube 原始連結。</p>
+    </section>`;
+}
+function toggleResonanceVideo(details) {
+    const host = details.querySelector('[data-youtube-id]');
+    if (!host) return;
+    if (!details.open) { host.replaceChildren(); return; }
+    if (host.querySelector('iframe')) return;
+    const frame = document.createElement('iframe');
+    frame.src = `https://www.youtube.com/embed/${host.dataset.youtubeId}`;
+    frame.title = host.dataset.videoTitle;
+    frame.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share';
+    frame.referrerPolicy = 'strict-origin-when-cross-origin';
+    frame.allowFullscreen = true;
+    host.appendChild(frame);
+}
+function resonanceChecksHtml(code, guide) {
+    if (!guide?.resonanceChecks?.length) return '';
+    return `<section class="resonance-review" aria-labelledby="resonance-review-title">
+        <h3 class="section-title" id="resonance-review-title">看完影片，再判斷一次</h3>
+        ${guide.resonanceChecks.map((check,index) => `<article class="lesson-check"><h4>${index + 1}. ${lessonTextHtml(check.q)}</h4><div class="check-options">${check.opts.map((option,choice) => `<button type="button" aria-pressed="false" onclick="answerResonanceCheck('${code}',${index},${choice},this)">${lessonTextHtml(option)}</button>`).join('')}</div><div class="check-feedback" id="resonance-feedback-${index}" role="status" aria-live="polite"></div></article>`).join('')}
+        ${guide.resonanceSources?.length ? `<details class="lesson-disclosure"><summary>概念查核與延伸閱讀</summary><ul class="resonance-sources">${guide.resonanceSources.map(source => `<li><a href="${source.url}" target="_blank" rel="noopener">${lessonTextHtml(source.title)} ↗</a></li>`).join('')}</ul></details>` : ''}
+    </section>`;
+}
+function answerResonanceCheck(code, index, choice, button) {
+    const check = lessonGuide(code).resonanceChecks[index];
+    button.closest('.check-options').querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b === button)));
+    document.getElementById(`resonance-feedback-${index}`).innerHTML = `<b>${choice === check.answer ? '答對了。' : '再想一想。'}</b> ${lessonTextHtml(check.explanation)}`;
+}
+function openResonanceStudy() {
+    document.getElementById('resonance-study-title')?.scrollIntoView({behavior:WaveRuntime.prefersReducedMotion() ? 'instant' : 'smooth', block:'start'});
+}
+
 function renderNodeView(code) {
     const meta = nodeMeta[code];
     if (!meta) { renderHomeView(); return; }
@@ -124,7 +188,13 @@ function renderNodeView(code) {
     const labs = labsOfNode(code).filter(l => labMeta[l]);
     const activity = LESSON_LABS[code];
     const primaryLab = activity?.id;
-    const activityButton = activity?.page ? `<a class="lesson-secondary" href="${activity.page}">開啟實驗觀察 →</a>` : primaryLab ? routeLink(`lab-${primaryLab}:${activity.mode || 'default'}:${code}`, '開啟實驗觀察 →', 'lesson-secondary') : '';
+    const featuredMedia = (guide?.resonanceCases || []).map(item => item.mediaKey);
+    const remainingMedia = (animByNode[code] || []).filter(key => !featuredMedia.includes(key));
+    const activityLabel = code === 'N12' ? '觀察空氣柱的駐波 →' : '開啟實驗觀察 →';
+    const activityButton = activity?.page ? `<a class="lesson-secondary" href="${activity.page}">${activityLabel}</a>` : primaryLab ? routeLink(`lab-${primaryLab}:${activity.mode || 'default'}:${code}`, activityLabel, 'lesson-secondary') : '';
+    const observationActions = guide?.resonanceCases?.length
+        ? `<div class="lesson-actions"><button type="button" class="lesson-secondary" onclick="openResonanceStudy()">先看五段影片 ↓</button>${activityButton}</div>`
+        : activityButton || ((animByNode[code] || []).length ? '<button class="lesson-secondary" onclick="openLessonMedia()">看動畫觀察 →</button>' : '');
     const sequence = code === 'N21' ? ['N21'] : CORE_NODES;
     const i = sequence.indexOf(code), prev = sequence[i - 1], next = sequence[i + 1];
     const formulaHtml = formulas.map(f => `<article class="card formula-card"><h4>${f.name}${[].concat(f.node).includes("N21") ? "・延伸選讀" : ""}</h4><div class="formula-box">$$${f.formula}$$</div><p class="formula-anchor">${f.anchor}</p><details class="formula-detail"><summary>公式怎麼用・條件與說明</summary><div class="formula-desc">${f.desc}</div></details></article>`).join('');
@@ -133,15 +203,17 @@ function renderNodeView(code) {
     document.getElementById('main-content').innerHTML = `
         <div class="view-header"><span class="view-eyebrow">${CHAPTER_INTROS[meta.module][0]}・${code === 'N21' ? '延伸選讀' : `第 ${nodesOfModule(meta.module).indexOf(code) + 1} 節`}</span><h2>${meta.title}</h2>${guide ? `<div class="lesson-goal"><span class="lesson-kicker">這節要學會</span><p>${guide.goal}</p></div>` : ''}
         ${guide?.prerequisites.length ? `<div class="prerequisites"><span>先備觀念</span>${guide.prerequisites.map(c => routeLink(`node-${c}`, nodeMeta[c].title)).join('')}</div>` : ''}</div>
-        ${guide ? `<section class="observe-card"><span class="lesson-kicker">01　先觀察</span><p>${guide.observe}</p>${activityButton || ((animByNode[code] || []).length ? '<button class="lesson-secondary" onclick="openLessonMedia()">看動畫觀察 →</button>' : '')}</section>` : ''}
+        ${guide ? `<section class="observe-card"><span class="lesson-kicker">01　先觀察</span><p>${guide.observe}</p>${observationActions}</section>` : ''}
         <h3 class="section-title">02　抓住核心關係</h3>${guide ? `<p class="takeaway">${guide.takeaway}</p>` : ''}${formulaHtml}
+        ${resonanceCasesHtml(guide)}
         ${guide?.example ? `<section class="worked-example"><span class="lesson-kicker">跟著做一題</span><h3>${guide.example.title}</h3><p>${guide.example.given}</p><ol>${guide.example.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="example-result">${guide.example.result}</p></section>` : ''}
         ${guide?.check ? `<section class="lesson-check"><span class="lesson-kicker">03　檢查自己是否理解</span><h3>${guide.check.q}</h3><div class="check-options">${guide.check.opts.map((o, n) => `<button type="button" aria-pressed="false" onclick="answerLessonCheck('${code}',${n},this)">${o}</button>`).join('')}</div><div class="check-feedback" id="lesson-feedback" role="status" aria-live="polite"></div></section>` : ''}
-        ${(animByNode[code] || []).length ? `<details id="lesson-media" class="lesson-disclosure"><summary>用動畫再看一次</summary><div class="disclosure-content">${animSectionForNode(code)}</div></details>` : ''}
+        ${resonanceChecksHtml(code, guide)}
+        ${remainingMedia.length ? `<details id="lesson-media" class="lesson-disclosure"><summary>用動畫再看一次</summary><div class="disclosure-content">${animSectionForNode(code, featuredMedia)}</div></details>` : ''}
         ${extraFeatures}${examHtml}
         ${labs.length > 1 ? `<details class="lesson-disclosure"><summary>其他相關實驗${labs.includes('optical_bench') ? '・含延伸工作臺' : ''}</summary><div class="disclosure-content tool-shortcuts">${labs.filter(l => l !== primaryLab).map(l => routeLink(`lab-${l}`,labMeta[l].name)).join('')}</div></details>` : ''}
         <section class="lesson-finish"><p>試著不用看公式，說明本節的重點。能說清楚再自行確認理解。</p><div class="lesson-actions"><button id="lesson-done" class="lesson-primary" aria-pressed="${state.done.includes(code)}" onclick="toggleLessonDone('${code}')">${state.done.includes(code) ? '✓ 已確認理解・點此取消' : '我能說明本節重點'}</button><button class="lesson-secondary" onclick="openBankForNode('${code}')">練本節觀念題</button></div><p id="learning-save-feedback" class="progress-note" role="status"></p><div class="lesson-neighbors">${prev ? routeLink(`node-${prev}`, `← ${nodeMeta[prev].title}`) : routeLink(`module-${meta.module}`, '← 本章學習順序')}${next ? routeLink(`node-${next}`, `${nodeMeta[next].title} →`) : routeLink('home', '回到學習首頁 →')}</div></section>`;
-    bindAnimsIn(animByNode[code] || []);
+    bindAnimsIn(remainingMedia);
 }
 
 function openLessonMedia() {
@@ -212,7 +284,7 @@ function renderSingleLabView(rawId) {
     if (code && !nodes.includes(code)) nodes.unshift(code);
     const guide = lessonGuide(code);
     const preset = code === fromCode ? LESSON_LABS[code]?.params : null;
-    document.getElementById('main-content').innerHTML = `<div class="view-header"><span class="view-eyebrow">${id === 'optical_bench' ? '延伸探究' : '互動實驗'}</span><h2>${labMeta[id].name}</h2></div>${guide && id !== 'optical_bench' ? `<div class="lab-observation"><b>帶著一個問題看</b>${guide.observe}</div>` : ''}${labShellHtml(id)}<div class="lesson-actions">${nodes.map(c => routeLink(`node-${c}`, `回看：${nodeMeta[c].title}`, 'lesson-secondary')).join('')}${routeLink('tool-lab','其他實驗','lesson-secondary')}</div>`;
+    document.getElementById('main-content').innerHTML = `<div class="view-header"><span class="view-eyebrow">${id === 'optical_bench' ? '延伸探究' : '互動實驗'}</span><h2>${labMeta[id].name}</h2></div>${guide && id !== 'optical_bench' ? `<div class="lab-observation"><b>帶著一個問題看</b>${guide.labObserve || guide.observe}</div>` : ''}${labShellHtml(id)}<div class="lesson-actions">${nodes.map(c => routeLink(`node-${c}`, `回看：${nodeMeta[c].title}`, 'lesson-secondary')).join('')}${routeLink('tool-lab','其他實驗','lesson-secondary')}</div>`;
     mountLab(id,initialMode || null,'',null,preset);
 }
 

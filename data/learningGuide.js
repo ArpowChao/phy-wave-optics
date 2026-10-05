@@ -204,10 +204,68 @@ const learningGuide = {
     },
     N12: {
         level: '核心',
-        goal: '理解共鳴為何增強振動，並從相鄰共鳴長度求聲速。',
+        goal: '由頻率、振幅與阻尼解釋共振，再從相鄰共鳴長度求聲速。',
         prerequisites: ['N10', 'N11'],
-        observe: '同一閉管切換第 1、第 2 個可存在的諧音，管內各容得下幾個四分之一波長？',
-        takeaway: '驅動頻率接近固有頻率時振動較強；同一音叉的相鄰共鳴長度差約為 $\\lambda/2$。',
+        observe: '為什麼聲音很大仍不一定使杯子明顯振動？找出驅動頻率、杯壁振幅與能量來源，再把條件連到空氣柱共鳴。',
+        labObserve: '先選閉管，切換第 1、第 2 個可存在的諧音：各容納幾個四分之一波長？再改變管長，觀察固有頻率如何改變。',
+        takeaway: '驅動頻率接近固有頻率時，振幅可能增大；振幅還受驅動強度與阻尼影響。同一音叉的相鄰空氣柱共鳴長度差約為 $\\lambda/2$。',
+        resonanceSteps: [
+            { title: '先比較頻率', text: '外力的作用節奏是驅動頻率；固有頻率由系統自身條件決定。兩者接近時，振動反應可能增強。' },
+            { title: '再追蹤振幅', text: '追蹤同一位置離開平衡位置的最大幅度。聲音很響、節拍一致或物體破裂，都不能單獨判定共振。' },
+            { title: '找能量與阻尼', text: '驅動者提供能量，阻尼耗散能量。相同驅動條件下，阻尼通常抑制共振附近的振幅；共振不保證破壞。' },
+            { title: '用於空氣柱共鳴', text: '音叉頻率固定，改變管長可改變空氣柱的固有頻率。頻率接近時聲音增強；再用相鄰共鳴長度差求波長。' }
+        ],
+        resonanceCases: [
+            {
+                mediaKey: 'glassResonance', category: '核心應用', title: '聲波驅動玻璃杯',
+                question: '只把聲音調大就足夠嗎？還要比較哪兩個頻率？',
+                explanation: '比較聲音的驅動頻率與杯壁某個模態的固有頻率。接近時振幅可能增大；能否破裂還取決於驅動強度、阻尼、作用時間與材料強度。'
+            },
+            {
+                mediaKey: 'glassSlowMotion', category: '核心應用', title: '慢動作看振動模態',
+                question: '杯緣每一處的振幅相同嗎？能直接用慢動作畫面計算實際頻率嗎？',
+                explanation: '同一模態中，不同位置的振幅可能不同，可找振幅小的節點與大的腹點。慢動作改變播放速度；沒有拍攝速率與播放倍率，就不能從畫面的週期直接求實際頻率。'
+            },
+            {
+                mediaKey: 'earthquakeResonance', category: '核心應用', title: '建築與地面震動',
+                question: '同一地面震動，為什麼不同建築模型的反應不同？',
+                explanation: '不同質量、剛度與結構形式會改變固有頻率和模態。地面運動中接近某固有頻率的成分可能增強該模態；真實地震含多種頻率，還需考慮阻尼與地盤，不能只看樓高。'
+            },
+            {
+                mediaKey: 'metronomeSync', category: '延伸辨析', title: '節拍器：耦合同步',
+                question: '節拍器逐漸同步，就代表共振振幅越來越大嗎？',
+                explanation: '可動平台使節拍器彼此耦合，逐漸形成共同節奏與穩定相位關係。這是在觀察同步與鎖相；僅憑節拍一致，不能推論振幅增大，也不能直接套用單一週期外力驅動的簡單共振模型。'
+            },
+            {
+                mediaKey: 'tacomaBridge', category: '延伸辨析', title: '吊橋：氣動彈性顫振',
+                question: '橋面越扭越大，一定是風吹的固定頻率剛好等於固有頻率嗎？',
+                explanation: '塔可馬吊橋崩塌的重要機制是自激扭轉顫振：橋面運動改變氣流與氣動力，氣動力再把風的能量傳入結構、增強運動。這種回饋機制不能只用外力頻率等於固有頻率解釋。'
+            }
+        ],
+        resonanceChecks: [
+            {
+                q: '相同週期外力下，驅動頻率接近固有頻率；若增加阻尼，穩態振幅通常如何改變？',
+                opts: ['減小，因為阻尼會抑制共振反應', '一定無限增大，因為已經共振', '不變，振幅只由頻率決定'], answer: 0,
+                explanation: '相同振幅與速率下，阻尼較大時能量損耗較多。給定固定驅動，增加阻尼通常使共振附近的穩態振幅減小；不能因此說新的穩態每週期一定耗散更多能量。'
+            },
+            {
+                q: '許多節拍器透過可動平台形成共同節奏與穩定相位關係，最直接觀察到哪種現象？',
+                opts: ['每個節拍器的振幅一定持續增大', '耦合同步與鎖相', '能量由平台憑空產生'], answer: 1,
+                explanation: '共同平台讓各節拍器互相影響，相位關係可逐漸穩定。同步要看節奏與相位；它本身不保證振幅增大，能量仍來自節拍器各自的機構。'
+            },
+            {
+                q: '為什麼不能只用「風吹頻率等於橋的固有頻率」解釋塔可馬吊橋崩塌？',
+                opts: ['橋梁不具有固有頻率', '只要有風，任何橋梁都一定崩塌', '橋面與氣流互相影響，可造成自激顫振'], answer: 2,
+                explanation: '橋面運動改變氣流，氣動力又反過來影響橋面，形成從風取能的回饋。這是顫振的重要機制，與預先指定外力頻率的簡單受迫共振模型不同。'
+            }
+        ],
+        resonanceSources: [
+            { title: 'MIT OpenCourseWare：受迫振動與共振', url: 'https://ocw.mit.edu/courses/8-03sc-physics-iii-vibrations-and-waves-fall-2016/pages/part-i-mechanical-vibrations-and-waves/lecture-3/' },
+            { title: 'UCLA：以聲音使玻璃杯破裂', url: 'https://demoweb.physics.ucla.edu/content/50-breaking-glass-sound' },
+            { title: 'USGS：地震的影響', url: 'https://www.usgs.gov/programs/earthquake-hazards/what-are-effects-earthquakes' },
+            { title: 'Pantaleone：節拍器同步研究', url: 'https://doi.org/10.1119/1.1501118' },
+            { title: 'WSDOT：塔可馬吊橋失敗的原因', url: 'https://www.wsdot.wa.gov/TNBhistory/bridges-failure.htm' }
+        ],
         example: {
             title: '用差值避開管口修正',
             given: '音叉頻率 $f=400\\,\\mathrm{Hz}$，相鄰兩次共鳴長度為 $0.20\\,\\mathrm{m}$ 與 $0.62\\,\\mathrm{m}$。',

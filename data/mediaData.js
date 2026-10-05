@@ -241,44 +241,76 @@ const animData = {
     },
 
     earthquakeResonance: {
-        title: '模型大樓：頻率接近時振幅變大',
+        title: '建築模型：為何對同一地震反應不同？',
         nodes: ['N12'],
-        youtubeId: 'WwC0fEPp8w4',
-        youtubeUrl: 'https://youtube.com/shorts/WwC0fEPp8w4',
+        youtubeId: 'LlBtrN-G_Yk',
+        youtubeUrl: 'https://www.youtube.com/shorts/LlBtrN-G_Yk',
         isVertical: true,
-        seconds: 58,
+        credit: 'YouTube 頻道 Moment Capsule',
         misconception: '以為地震時所有建築物晃動程度都一樣，或以為越高的大樓一定晃得越厲害。',
-        lead: '觀察震動台改變頻率時，哪一棟模型的振幅最大，再連回自然頻率與共振。',
+        lead: '比較不同建築模型的擺動幅度，思考結構的固有頻率與地面運動中各頻率成分的關係。',
         points: [
-            '<b>自然頻率</b>：模型的質量與剛度不同，自然頻率也不同；相似結構中，較高的模型通常頻率較低。',
-            '<b>共振</b>：外加震動頻率接近某模型的自然頻率時，它的振幅較大。其他模型仍可能振動，並非一定靜止。',
-            '<b>模型的限制</b>：真實地震包含多種頻率，建築反應還與結構、阻尼和地盤有關，不能只看樓高判斷受損程度。'
+            '<b>固有頻率</b>：質量、剛度與結構形式會影響建築的固有頻率；相似結構中，較高的模型通常頻率較低，但樓高不是唯一因素。',
+            '<b>共振反應</b>：地面運動中的某些頻率成分接近結構的固有頻率時，可能使相應振動模態的反應增強；其他模型也可能振動。',
+            '<b>阻尼與實際地震</b>：阻尼可耗散振動能量。真實地震包含多種頻率，反應還與地盤、結構及震動持續時間有關，不能只憑樓高判斷哪棟最危險。'
         ]
     },
 
     glassResonance: {
         title: '玻璃杯：聲音頻率與共振',
         nodes: ['N12', 'N04'],
-        youtubeId: 'RYChFBrRuvg',
-        youtubeUrl: 'https://youtube.com/shorts/RYChFBrRuvg',
-        isVertical: true,
-        seconds: 42,
+        youtubeId: 'SRlxjF2AkbM',
+        youtubeUrl: 'https://www.youtube.com/watch?v=SRlxjF2AkbM',
+        isVertical: false,
+        credit: 'YouTube 頻道 新闻联播频道',
         misconception: '只看聲音夠不夠大，忽略聲波頻率與杯子自然頻率的關係。',
-        lead: '當聲波頻率接近杯子的自然頻率，杯壁振幅會增加。注意頻率、振幅與破裂條件是三件不同的事。',
+        lead: '聲波可以驅動杯壁振動。先找頻率是否接近杯壁某個模態的固有頻率，再判斷振幅與破裂條件。',
         points: [
-            '<b>自然頻率</b>由杯子的材質、形狀與厚度決定；輕彈杯壁的音高，可作為主要振動頻率的線索。',
+            '<b>固有頻率</b>由杯子的材質、形狀與厚度等條件決定；輕彈杯壁的音高，可作為主要振動頻率的線索。聲音大不代表頻率吻合。',
             '<b>振動模態</b>：杯緣不同位置的振幅不一樣，可用節點與腹點描述；節點的意思是振幅很小，不能說它劇烈晃動。',
-            '<b>是否破裂</b>：頻率接近可增強振動，但仍需足夠的輸入能量。外力強弱、阻尼、作用時間與材料強度都會影響結果。'
+            '<b>是否破裂</b>：共振可使振幅增大，卻不保證破裂；外力強弱、阻尼、作用時間與材料強度都會影響結果。聲波提供能量，杯子不會憑空產生能量。'
+        ]
+    },
+
+    glassSlowMotion: {
+        title: '慢動作看杯壁：振幅與振動模態',
+        nodes: ['N12', 'N04'],
+        youtubeId: 'BE827gwnnk4',
+        youtubeUrl: 'https://www.youtube.com/watch?v=BE827gwnnk4',
+        isVertical: false,
+        credit: 'YouTube 頻道 Marty33',
+        misconception: '把慢動作的播放頻率當成杯子的實際振動頻率，或以為整個杯緣振幅都相同。',
+        lead: '利用慢動作比較杯緣不同位置的變形，將振動模態與節點、腹點的概念連起來。',
+        points: [
+            '<b>追蹤同一位置</b>：比較杯緣各處偏離平衡位置的幅度；模態中可有振幅很小與振幅較大的位置。',
+            '<b>看得清楚與測得頻率不同</b>：慢動作降低播放速度。若不知道原始拍攝速率與播放倍率，就不能用播放畫面的週期直接求杯子的實際頻率。',
+            '<b>連回共振</b>：聲波驅動頻率接近某模態的固有頻率時，該模態可能明顯振動；位移振幅、聲音頻率與材料是否破裂要分開判斷。'
+        ]
+    },
+
+    metronomeSync: {
+        title: '延伸：100 個節拍器的耦合同步',
+        nodes: ['N12'],
+        youtubeId: 'mw9rPniHngI',
+        youtubeUrl: 'https://www.youtube.com/watch?v=mw9rPniHngI',
+        isVertical: false,
+        credit: 'YouTube 頻道 TheoLogosDotNet',
+        misconception: '看到節拍一致，就認定是單一外力頻率等於所有節拍器的固有頻率。',
+        lead: '先比較擺動節奏與相位，再思考共同平台如何讓節拍器彼此影響。這是耦合同步的延伸例子。',
+        points: [
+            '<b>共同平台是耦合途徑</b>：節拍器的擺動會帶動可動平台，平台的運動再影響其他節拍器，使它們能交換作用並調整相位。',
+            '<b>同步看相位</b>：同步可表現為共同節奏與穩定的相位關係，稱為鎖相；只看「越擺越整齊」不能推出振幅一定變大。',
+            '<b>與簡單受迫共振分開</b>：各節拍器由自己的機構補充能量，並透過平台互相耦合；這與單一振子受到固定週期外力驅動的基本共振模型不同。'
         ]
     },
 
     tacomaBridge: {
         title: '延伸：塔可馬吊橋的氣動彈性顫振',
         nodes: ['N12', 'N04'],
-        youtubeId: 'yoIAPy9QcxI',
-        youtubeUrl: 'https://youtu.be/yoIAPy9QcxI',
+        youtubeId: '_q7ojtFWDBU',
+        youtubeUrl: 'https://www.youtube.com/watch?v=_q7ojtFWDBU',
         isVertical: false,
-        seconds: 150,
+        credit: 'YouTube 頻道 pamelashekyuenyee',
         misconception: '把橋梁崩塌完全歸因於「風吹的頻率等於橋的自然頻率」，套用簡單受迫共振模型。',
         lead: '1940 年吊橋崩塌的重要機制是橋面運動與氣流互相影響，造成自激扭轉顫振。這是工程延伸，先學會音叉與空氣柱的共振即可。',
         points: [

@@ -64,9 +64,9 @@
     <link rel="stylesheet" href="assets/css/interaction-runtime.css">
 
     <script data-page-required src="data/modulesData.js?v=learner_20261001"></script>
-    <script data-page-required src="data/learningGuide.js?v=learner_20261001"></script>
+    <script data-page-required src="data/learningGuide.js?v=resonance_20261005"></script>
     <script data-page-required src="data/questionBank.js?v=learner_20261001"></script>
-    <script data-page-required src="data/mediaData.js?v=learner_20261001"></script>
+    <script data-page-required src="data/mediaData.js?v=resonance_20261005"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -698,7 +698,7 @@
             .anim-fig figcaption { font-size: 0.76rem; }
         }
     </style>
-    <link rel="stylesheet" href="assets/css/learner.css?v=water_cards_20261001">
+    <link rel="stylesheet" href="assets/css/learner.css?v=resonance_20261005">
 </head>
 <body>
     <a class="skip-link" href="#main-content" onclick="event.preventDefault();document.getElementById('main-content').focus();document.getElementById('main-content').scrollIntoView()">跳到學習內容</a>
@@ -1078,8 +1078,8 @@
         }
 
         /* 節點頁的動畫區塊；沒有對應動畫時回傳空字串 */
-        function animSectionForNode(code) {
-            const keys = animByNode[code] || [];
+        function animSectionForNode(code, excludedKeys = []) {
+            const keys = (animByNode[code] || []).filter(key => !excludedKeys.includes(key));
             if (!keys.length) return '';
             return `<div class="section-title">動畫講解<span class="title-hint">點時間戳可直接跳到該段</span></div>
                 ${keys.map((k) => `<details class="lesson-disclosure"><summary>${animData[k].title}</summary><div class="disclosure-content">${animBlockHtml(k, false)}</div></details>`).join('')}`;
@@ -6882,6 +6882,6 @@
             }
         });
     </script>
-    <script data-page-required src="assets/js/learner-ui.js?v=page_recovery_20261001"></script>
+    <script data-page-required src="assets/js/learner-ui.js?v=resonance_20261005"></script>
 </body>
 </html>
