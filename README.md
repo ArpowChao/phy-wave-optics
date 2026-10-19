@@ -52,6 +52,7 @@ N14 的視深實驗分為「拖曳眼睛：看魚也看鳥」「岸上看水中�
 | `assets/js/swing-work.js` | 共振頁盪鞦韆的模型、做功動畫與操作 |
 | `assets/css/swing-work.css` | 鞦韆控制與數值的響應式排版 |
 | `assets/images/snell/` | 斯涅爾窗真實照片對照（來源見下方） |
+| `assets/video/real/`、`assets/images/real/` | 真實影片對照（泳池水下全反射、水槽光扇）與封面 |
 
 ## 修改後驗證
 
@@ -80,6 +81,8 @@ node scripts/audit_swing_work.js
 
 美ら海水族館「黑潮之海」壓克力板尺寸（22.5 m × 8.2 m × 60 cm）依[日本政府廣報 Highlighting Japan 2024 年 9 月號](https://gov-online.go.jp/hlj/en/september_2024/september_2024-07.html)；壓克力折射率 n_d ≈ 1.49 依 [Shimadzu PMMA 折射率資料](https://www.shimadzu.com/opt/products/ref/ref-app03.html)。
 
-斯涅爾窗照片：夕陽與 Lembeh、Manado 照片為 Andrew Marriott 所攝，出自 [DivePhotoGuide〈An In-Depth Guide to Shooting Snell's Window〉](https://www.divephotoguide.com/underwater-photography-techniques/article/underwater-photographer-s-guide-snell-s-window/)，其中 Lembeh 與 Manado 兩組以原文圖片連結載入；鯊魚與自由潛水者兩張由使用者提供，來源待補。權利歸原作者所有。
+真實影片：泳池水下影片轉載自 Instagram @myswimpro（畫面含 Little Rock 標誌），只保留前 26 秒水下片段並移除音軌；水槽光扇影片為 Rosa Brígida，A.I.F.–E.S.T.T.（2010）〈Reflection, refraction and total internal reflection in water/air surface〉，移除音軌。兩支影片分別附在斯涅爾窗／視深拖曳模式與水下光扇模式的對照區。
+
+斯涅爾窗照片：夕陽與 Lembeh、Manado 照片為 Andrew Marriott 所攝，出自 [DivePhotoGuide〈An In-Depth Guide to Shooting Snell's Window〉](https://www.divephotoguide.com/underwater-photography-techniques/article/underwater-photographer-s-guide-snell-s-window/)，其中 Lembeh 與 Manado 兩組以原文圖片連結載入；泳池中仰望（窗內的人、窗外的磁磚）亦為 Andrew Marriott 所攝；鯊魚與自由潛水者兩張由使用者提供，來源待補。權利歸原作者所有。
 
 感謝新竹市立成德高中陳家騏老師提供水波干涉探究模擬器原始設計。本機動畫由原專案以 Manim 製作；外部影片保留原始來源。原創動畫角色與試題圖片的既有權利歸屬不因介面更新而改變。

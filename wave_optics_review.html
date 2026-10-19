@@ -2509,28 +2509,98 @@
               credit: '攝影：Andrew Marriott', link: SNELL_ARTICLE,
               apply: { scene: 'ocean', sun: 9, ripple: 0.6, eyeD: 1.2 } }
         ];
-        function snellPhotosHtml() {
-            const cards = SNELL_PHOTOS.map((ph, i) => `
-                <figure class="snell-photo">
-                    <a class="snell-photo-img" href="${ph.link || ph.src}" target="_blank" rel="noopener">
-                        <img src="${ph.src}" alt="${ph.title}" loading="lazy" ${ph.external ? 'referrerpolicy="no-referrer"' : ''}
-                             onerror="this.parentNode.classList.add('is-missing');this.remove();">
-                        <span class="snell-photo-fallback">圖片無法載入，按此開啟原文</span>
-                    </a>
+        /* 真實影片與照片：放在對應模擬模式的讀數下方，可一鍵把模擬調成接近畫面的情況。
+         * kind: 'video' | 'image'；chapters 為影片時間點；apply 為要套用的參數（有輸入元件就改元件，否則直接改 params）。 */
+        const REAL_MEDIA = {
+            poolVideo: { kind: 'video', src: 'assets/video/real/pool-underwater-mirror.mp4', poster: 'assets/images/real/pool-underwater-mirror.jpg',
+                title: '泳池水下：水面變成一面鏡子',
+                look: '鏡頭在水下斜看水面時，入射角大於臨界角，水面全反射，映出池底的泳道線與泳者的倒影；鏡頭轉向正上方時，窗內才看得到天花板。',
+                credit: '影片：@myswimpro（Instagram 轉載，畫面含 Little Rock 標誌）；僅保留水下片段並移除音軌',
+                chapters: [{ t: 0, label: '斜看水面：映出池底泳道線' }, { t: 13, label: '泳者與水面中的倒影' }, { t: 20, label: '往正上方看：窗內是天花板' }] },
+            poolPhoto: { kind: 'image', src: 'assets/images/snell/pool-window-marriott.jpg', fit: 'contain',
+                title: '泳池中仰望：窗內的人、窗外的磁磚',
+                look: '上方的圓窗內看得到站在池邊的人，被壓縮在窗裡；窗外的水面全反射，映出池底、池壁的磁磚與水中的人。',
+                credit: '攝影：Andrew Marriott' },
+            fanVideo: { kind: 'video', src: 'assets/video/real/light-fan-tank-brigida.mp4', poster: 'assets/images/real/light-fan-tank-brigida.jpg',
+                title: '水槽中的光扇：反射、折射與全反射',
+                look: '彩色濾光片只用來分辨方向。陡的光穿出水面並向外張開；比臨界角斜的光全部反射回水中；光源越接近水面，射出的光扇越寬。',
+                credit: '影片：Rosa Brígida，A.I.F.–E.S.T.T.（2010）〈Reflection, refraction and total internal reflection in water/air surface〉；移除音軌',
+                chapters: [{ t: 0, label: '片頭：作者與出處' }, { t: 10, label: '注水：光源沒入水中' }, { t: 40, label: '斜的光全反射回水中' },
+                           { t: 150, label: '光源接近水面：光扇出水張開' }, { t: 230, label: '近看水面的折射與反射' }] }
+        };
+        const withApply = (item, apply) => Object.assign({}, item, { apply });
+        function realMediaHtml(key, panel) {
+            const cards = panel.items.map((it, i) => {
+                const credit = it.link ? `<a href="${it.link}" target="_blank" rel="noopener">${it.credit}／DivePhotoGuide</a>` : it.credit;
+                const visual = it.kind === 'video'
+                    ? `<div class="snell-photo-img is-video"><video controls preload="none" playsinline muted poster="${it.poster}"><source src="${it.src}" type="video/mp4"></video></div>`
+                    : `<a class="snell-photo-img" href="${it.link || it.src}" target="_blank" rel="noopener">
+                           <img src="${it.src}" alt="${it.title}" loading="lazy" ${it.external ? 'referrerpolicy="no-referrer"' : ''} ${it.fit ? `style="object-fit:${it.fit}"` : ''}
+                                onerror="this.parentNode.classList.add('is-missing');this.remove();">
+                           <span class="snell-photo-fallback">圖片無法載入，按此開啟原文</span>
+                       </a>`;
+                const chapters = (it.chapters || []).map((c) =>
+                    `<button type="button" class="real-chapter" data-t="${c.t}">${Math.floor(c.t / 60)}:${String(c.t % 60).padStart(2, '0')} ${c.label}</button>`).join('');
+                return `
+                <figure class="snell-photo${it.kind === 'video' ? ' is-wide' : ''}" data-item="${i}">
+                    ${visual}
                     <figcaption>
-                        <b>${ph.title}</b>
-                        <span>${ph.look}</span>
-                        <small>${ph.link ? `<a href="${ph.link}" target="_blank" rel="noopener">${ph.credit}／DivePhotoGuide</a>` : ph.credit}</small>
-                        <button type="button" class="lab-btn snell-photo-apply" data-photo="${i}">套用到模擬</button>
+                        <b>${it.title}</b>
+                        ${chapters ? `<div class="real-chapters">${chapters}</div>` : ''}
+                        <span>${it.look}</span>
+                        <small>${credit}</small>
+                        ${it.apply ? `<button type="button" class="lab-btn snell-photo-apply" data-item="${i}">套用到模擬</button>` : ''}
                     </figcaption>
-                </figure>`).join('');
-            return `<section class="snell-photos" hidden>
-                    <h5>真實照片對照：斯涅爾窗</h5>
-                    <p>按「套用到模擬」，把太陽仰角、水面波動與深度調成接近照片的情況，再和上方的仰望影像比較。</p>
+                </figure>`;
+            }).join('');
+            return `<section class="snell-photos" data-panel="${key}" hidden>
+                    <h5>${panel.title}</h5>
+                    <p>${panel.desc}</p>
                     <div class="snell-photo-grid">${cards}</div>
                 </section>`;
         }
-
+        /* 依模式顯示對應的真實影像，並綁定「套用到模擬」與影片章節 */
+        function bindRealMedia({ host, params, disposers, paint, syncOutputs }, labId, panels) {
+            const stage = host.querySelector('.lab-stage');
+            const anchor = host.querySelector('.lab-readout') || stage;
+            if (!stage || host.querySelector('.snell-photos')) return;
+            anchor.insertAdjacentHTML('afterend', Object.entries(panels).map(([k, pnl]) => realMediaHtml(k, pnl)).join(''));
+            const sync = () => {
+                host.querySelectorAll('.snell-photos').forEach((el) => {
+                    const show = el.dataset.panel === params.mode;
+                    if (!show) el.querySelectorAll('video').forEach((v) => { try { v.pause(); } catch (_) { /* 略過 */ } });
+                    el.hidden = !show;
+                });
+            };
+            host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
+            host.querySelectorAll('.snell-photos').forEach((el) => {
+                const items = panels[el.dataset.panel].items;
+                el.querySelectorAll('.snell-photo-apply').forEach((btn) => {
+                    disposers.addEventListener(btn, 'click', () => {
+                        const it = items[Number(btn.dataset.item)];
+                        Object.entries(it.apply).forEach(([k, v]) => {
+                            const input = host.querySelector(`[id$="${labId}-${k}"]`);
+                            if (input) {
+                                input.value = String(v);
+                                input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input'));
+                            } else params[k] = v;
+                        });
+                        paint(); syncOutputs();
+                        stage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                });
+                el.querySelectorAll('.real-chapter').forEach((btn) => {
+                    disposers.addEventListener(btn, 'click', () => {
+                        const video = btn.closest('figure').querySelector('video');
+                        if (!video) return;
+                        const go = () => { video.currentTime = Number(btn.dataset.t); video.play().catch(() => {}); };
+                        if (video.readyState >= 1) go();
+                        else { video.preload = 'metadata'; video.addEventListener('loadedmetadata', go, { once: true }); video.load(); }
+                    });
+                });
+            });
+            sync();
+        }
         LABS.snell = {
             name: '司乃耳定律與全反射',
             tag: 'N13 / N15',
@@ -2620,29 +2690,23 @@
                 return LABS.snell.drawRay(ctx, w, h, p);
             },
 
-            /* 斯涅爾窗模式下，在畫布下方加上真實照片對照 */
-            setup: ({ host, params, disposers }) => {
-                const stage = host.querySelector('.lab-stage');
-                const anchor = host.querySelector('.lab-readout') || stage;
-                if (!stage || host.querySelector('.snell-photos')) return;
-                anchor.insertAdjacentHTML('afterend', snellPhotosHtml());
-                const panel = host.querySelector('.snell-photos');
-                const sync = () => { panel.hidden = params.mode !== 'window'; };
-                host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
-                panel.querySelectorAll('.snell-photo-apply').forEach((btn) => {
-                    disposers.addEventListener(btn, 'click', () => {
-                        const ph = SNELL_PHOTOS[Number(btn.dataset.photo)];
-                        Object.entries(ph.apply).forEach(([k, v]) => {
-                            const input = host.querySelector(`[id$="snell-${k}"]`);
-                            if (!input) return;
-                            input.value = String(v);
-                            input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input'));
-                        });
-                        stage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-                    });
-                });
-                sync();
-            },
+            /* 斯涅爾窗與水下光扇模式：讀數下方附真實影片與照片對照 */
+            setup: (ctx) => bindRealMedia(ctx, 'snell', {
+                window: {
+                    title: '真實影像對照：斯涅爾窗與水面全反射',
+                    desc: '按「套用到模擬」，把太陽仰角、水面波動與深度調成接近畫面的情況，再和上方的仰望影像比較。',
+                    items: [
+                        withApply(REAL_MEDIA.poolVideo, { scene: 'pool', eyeD: 1.0, ripple: 0.15, sun: 60, objX: 3.2 }),
+                        withApply(REAL_MEDIA.poolPhoto, { scene: 'pool', eyeD: 0.8, ripple: 0.25, sun: 70 }),
+                        ...SNELL_PHOTOS
+                    ]
+                },
+                fan: {
+                    title: '真實影像對照：水槽中的光扇',
+                    desc: '影片中光源的位置與傾角會改變；按「套用到模擬」把模擬設成水中光源，再拖動深度比較。',
+                    items: [withApply(REAL_MEDIA.fanVideo, { nw: '1.33', depth: 8 })]
+                }
+            }),
             /* ---------- 單一光線 ---------- */
             drawRay: (ctx, w, h, p) => {
                 const iy = h * 0.5, cx = w * 0.5;
@@ -3165,6 +3229,16 @@
             setup: ({ canvas, host, params, disposers, paint, syncOutputs }) => {
                 const L = LABS.apparent_depth;
                 L._sync = syncOutputs;
+                bindRealMedia({ host, params, disposers, paint, syncOutputs }, 'apparent_depth', {
+                    scene: {
+                        title: '真實影像對照：從水下看水面',
+                        desc: '按「套用到模擬」把眼睛移到水面下，比較水面中的倒影（全反射）與窗內看到的岸上景物。',
+                        items: [
+                            withApply(REAL_MEDIA.poolVideo, { eyeX: 1.0, eyeY: -1.0, refl: 'on' }),
+                            withApply(REAL_MEDIA.poolPhoto, { eyeX: 1.2, eyeY: -0.6, refl: 'on', birdH: 1.8 })
+                        ]
+                    }
+                });
                 const sync = () => {
                     const on = params.mode === 'scene';
                     canvas.style.touchAction = on ? 'none' : '';
