@@ -1662,6 +1662,12 @@
             const lab = LABS[id];
             if (!lab) return '';
             const controlHtml = (c) => {
+                if (c.type === 'checkbox') {
+                    return `
+                        <div class="lab-control lab-check" id="${prefix}${id}-${c.key}-wrap">
+                            <label for="${prefix}${id}-${c.key}"><input type="checkbox" id="${prefix}${id}-${c.key}" ${c.value ? 'checked' : ''}><span>${c.label}</span></label>
+                        </div>`;
+                }
                 if (c.options) {
                     const opts = c.options.map((o) => `<option value="${o.value}" ${String(o.value) === String(c.value) ? 'selected' : ''}>${o.label}</option>`).join('');
                     return `
@@ -1768,11 +1774,14 @@
 
             const params = {};
             const initialValue = c => initialParams && Object.hasOwn(initialParams,c.key) ? initialParams[c.key] : c.value;
+            /* 勾選框的值是布林；其餘控制項（滑桿、選單）可轉成數字就轉成數字 */
+            const parseValue = (c, v) => c.type === 'checkbox' ? !!v : (isNaN(Number(v)) ? v : Number(v));
+            const writeInput = (input, c, v) => { if (c.type === 'checkbox') input.checked = !!v; else input.value = v; };
             (lab.controls || []).forEach((c) => {
                 const value = initialValue(c);
-                params[c.key] = isNaN(Number(value)) ? value : Number(value);
+                params[c.key] = parseValue(c, value);
                 const input = document.getElementById(`${prefix}${id}-${c.key}`);
-                if (input) input.value = value;
+                if (input) writeInput(input, c, value);
             });
             const modeKeys = lab.modes ? lab.modes.map((m) => m.key) : [];
             params.mode = lab.modes
@@ -1812,7 +1821,10 @@
                     const out = document.getElementById(prefix ? `${prefix}${id}-${c.key}-out` : `${id}-${c.key}-out`);
                     if (out) out.textContent = c.fmt ? c.fmt(params[c.key], params) : params[c.key];
                     const wrap = document.getElementById(prefix ? `${prefix}${id}-${c.key}-wrap` : `${id}-${c.key}-wrap`);
-                    if (wrap && c.only) wrap.style.display = c.only.includes(params.mode) ? '' : 'none';
+                    if (wrap && (c.only || c.showIf)) {
+                        const vis = (!c.only || c.only.includes(params.mode)) && (!c.showIf || c.showIf(params));
+                        wrap.style.display = vis ? '' : 'none';
+                    }
                 });
                 const ro = document.getElementById(prefix ? `${prefix}${id}-readout` : `${id}-readout`);
                 if (ro && lab.readouts) {
@@ -1829,9 +1841,9 @@
             (lab.controls || []).forEach((c) => {
                 const input = document.getElementById(prefix ? `${prefix}${id}-${c.key}` : `${id}-${c.key}`);
                 if (input) {
-                    const evt = input.tagName === 'SELECT' ? 'change' : 'input';
+                    const evt = (input.tagName === 'SELECT' || c.type === 'checkbox') ? 'change' : 'input';
                     disposers.addEventListener(input, evt, () => {
-                        params[c.key] = isNaN(Number(input.value)) ? input.value : Number(input.value);
+                        params[c.key] = c.type === 'checkbox' ? input.checked : parseValue(c, input.value);
                         if (c.onChange) c.onChange(params[c.key], params);
                         syncOutputs(); paint();
                     });
@@ -1920,9 +1932,9 @@
                 disposers.addEventListener(resetBtn, 'click', () => {
                     (lab.controls || []).forEach((c) => {
                         const value = initialValue(c);
-                        params[c.key] = isNaN(Number(value)) ? value : Number(value);
+                        params[c.key] = parseValue(c, value);
                         const input = document.getElementById(prefix ? `${prefix}${id}-${c.key}` : `${id}-${c.key}`);
-                        if (input) input.value = value;
+                        if (input) writeInput(input, c, value);
                     });
                     if (lab.onReset) lab.onReset(params);
                     simTime = 0;
@@ -2580,7 +2592,9 @@
                         const it = items[Number(btn.dataset.item)];
                         Object.entries(it.apply).forEach(([k, v]) => {
                             const input = host.querySelector(`[id$="${labId}-${k}"]`);
-                            if (input) {
+                            if (input && input.type === 'checkbox') {
+                                input.checked = !!v; input.dispatchEvent(new Event('change'));
+                            } else if (input) {
                                 input.value = String(v);
                                 input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input'));
                             } else params[k] = v;
@@ -3186,8 +3200,8 @@
             const hits = (yv) => placed.some((b) => left < b.x + b.w + 3 && left + tw + 3 > b.x && yv - 12 < b.y + 3 && yv + 3 > b.y - 12);
             // 依序嘗試 y、y+15、y−15、y+30…，並保持在畫布內
             let yy = Math.max(14, Math.min(y, hMax - 4));
-            for (let k = 1; k <= 16 && hits(yy); k++) {
-                const cand = y + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 15;
+            for (let k = 1; k <= 48 && hits(yy); k++) {
+                const cand = y + (k % 2 ? 1 : -1) * Math.ceil(k / 2) * 14;
                 if (cand >= 14 && cand <= hMax - 4) yy = cand;
             }
             placed.push({ x: left, y: yy, w: tw });
@@ -3199,10 +3213,11 @@
             tag: 'N14',
             hint: '眼睛只能看到「進入眼睛的光線」，並把它們沿直線反向延長，交點就是看到的像。',
             hintFor: (p) => ({
-                scene: '拖曳眼睛到水面上或水面下。魚在水中游、鳥在空中飛；每個物體各有兩條光線進入瞳孔的上、下緣，把它們反向延長（虛線），兩線交點就是眼睛看到的像。眼睛在水面下時，入射角超過臨界角的地方水面像鏡子，可以看到魚的全反射倒影。',
+                scene: '拖曳眼睛到水面上或水面下，用勾選框決定要看魚、看鳥，或兩者一起比較。魚在水中游、鳥在空中飛；每個物體各有兩條光線進入瞳孔的上、下緣，把它們反向延長（虛線），兩線交點就是眼睛看到的像。眼睛在水面下時，入射角超過臨界角的地方水面像鏡子，可以看到魚的全反射倒影。',
                 above: '站在岸上幾乎正上方看水中的魚：魚發出的光從水進入空氣時偏離法線。把進入眼睛的兩條光線反向延長（虛線），交點就是看到的魚，位置比實際淺。改變深度與介質，比較 h′ 與 h·(1/n)。',
                 oblique: '站在池邊斜看池底的硬幣：視線越斜，像越往上浮、也越靠近自己。紅色曲線是整片池底「看起來的位置」——遠處的池底看起來特別淺。虛線是只在正上方才成立的 h/n。',
                 below: '潛在水中往上看岸上的鳥：光從空氣進入水中偏向法線。反向延長進入眼睛的光線，交點比鳥實際的位置高，H′ ≈ n·H。',
+                stack: '純光線模擬：物體在最底層，觀察者在上方空氣中。每一層的厚度與折射率都能調整；光在每個界面依司乃耳定律折射（n·sinθ 在平行界面間守恆）。空氣中的光線反向延長後交會成像，比較近軸像 Σt/n；把光線張角調大，看邊緣光線的像如何偏離。',
                 layers: '從展示窗外看魚：光依序經過「水 → 壓克力（或玻璃）→ 空氣」兩個界面。先選情境：家用魚缸的玻璃約 1 公分，大型水族館的壓克力窗厚達數十公分。每經過一個界面就成一次像，前一次的像是下一個界面的物；總視距 = t/n_g + d/n_w。'
             })[p.mode] || '',
             note: '視深公式 h′/h = n′/n 只在「觀察者幾乎在正上方」時成立。',
@@ -3211,6 +3226,7 @@
                 above: '近軸（幾乎垂直）光線：h′ = h·n′/n，空氣看水中 h′ = 3h/4。像只在<b>鉛直方向</b>被壓縮，水平位置不變，所以插在水中的筷子看起來被折彎。<br>魚其實沒有移動；改變的是光的路徑。',
                 oblique: '斜看時，兩條相鄰光線的反向延長線交點不再落在 h/n，而是更淺，並往觀察者方向移動；視線越接近水平，像越貼近水面。這就是游泳池遠處看起來比腳下淺、容易誤判水深的原因。<br>圖中為兩條同平面相鄰光線的交點（子午像）；雙眼左右並排觀看時，大腦判斷的深度會略有不同，但「越斜越淺」的趨勢相同。',
                 below: '空氣中的物體從水中看，H′ = H·n′/n = n·H（水約 1.33 倍），看起來變高、變遠。<br>同理，水中的人看岸上的人或鳥，會覺得對方比較高；斜看時這個效果更大。',
+                stack: '近乎正上方觀看時，多層平行介質的視深 = Σ（各層厚度 ÷ 該層折射率），與層的順序無關；把兩層對調，近軸像位置不變。<br>紫色「第 j 層看」標出逐層成像：眼睛若位在第 j 層中看到的像：每經過一個界面，前一次的像成為下一個界面的物。<br>光線張角大時，各對光線的反向延長線交在不同深度，像會模糊；某一層的折射率比下方小很多時，斜的光可能在界面全反射，到不了觀察者。',
                 layers: '逐面成像：第一面（水→窗）像距 d·n_g/n_w，在窗材中看魚變遠；這個像再經第二面（窗→空氣），距外壁 (t + d·n_g/n_w)/n_g = t/n_g + d/n_w。多層平行介質的總視距 = Σ（各層厚度 ÷ 該層折射率），與層的順序無關。<br><b>實際情形</b>：家用魚缸的玻璃（n≈1.52）厚約 0.5–1.2 cm，只讓視距少幾毫米，幾乎完全由水決定，魚約在實際距離的 3/4。大型水族館要承受數公尺深的水壓，壓克力窗（n≈1.49）厚達數十公分；沖繩美ら海水族館「黑潮之海」的壓克力板寬 22.5 m、高 8.2 m、厚 60 cm，看起來只有約 40 cm 厚。<br>魚看起來比較近，也就顯得比較大；從斜角看大型展示窗時，會和「斜看池底」一樣更淺、也會變形。'
             })[p.mode] || '',
             modes: [
@@ -3218,9 +3234,10 @@
                 { key: 'above', label: '岸上看水中' },
                 { key: 'oblique', label: '斜看池底' },
                 { key: 'below', label: '水中看岸上' },
-                { key: 'layers', label: '水族箱：空氣—玻璃—水' }
+                { key: 'layers', label: '水族箱：空氣—玻璃—水' },
+                { key: 'stack', label: '多層視深（2–6 層）' }
             ],
-            height: (p, w) => p.mode === 'layers' ? 340
+            height: (p, w) => p.mode === 'layers' ? 340 : p.mode === 'stack' ? 440
                 : p.mode === 'oblique' ? Math.min(380, Math.max(260, Math.round(58 + 4.6 * (w - 20) / 9.5)))
                 : p.mode === 'scene' ? Math.min(460, Math.max(300, Math.round(30 + 6.2 * (w - 20) / 10))) : 380,
             cycle: (p) => p.mode === 'scene' ? 14 : 3.2,
@@ -3229,16 +3246,6 @@
             setup: ({ canvas, host, params, disposers, paint, syncOutputs }) => {
                 const L = LABS.apparent_depth;
                 L._sync = syncOutputs;
-                bindRealMedia({ host, params, disposers, paint, syncOutputs }, 'apparent_depth', {
-                    scene: {
-                        title: '真實影像對照：從水下看水面',
-                        desc: '按「套用到模擬」把眼睛移到水面下，比較水面中的倒影（全反射）與窗內看到的岸上景物。',
-                        items: [
-                            withApply(REAL_MEDIA.poolVideo, { eyeX: 1.0, eyeY: -1.0, refl: 'on' }),
-                            withApply(REAL_MEDIA.poolPhoto, { eyeX: 1.2, eyeY: -0.6, refl: 'on', birdH: 1.8 })
-                        ]
-                    }
-                });
                 const sync = () => {
                     const on = params.mode === 'scene';
                     canvas.style.touchAction = on ? 'none' : '';
@@ -3327,6 +3334,8 @@
                 { key: 'nw', label: '水中介質', value: '1.33', only: ['scene', 'above', 'below'],
                   options: [{ value: '1.33', label: '水 n = 1.33' }, { value: '1.5', label: '玻璃 n = 1.50' }, { value: '2.42', label: '鑽石 n = 2.42' }],
                   fmt: () => '' },
+                { key: 'showFish', type: 'checkbox', label: '顯示魚（水中）', value: true, only: ['scene'] },
+                { key: 'showBird', type: 'checkbox', label: '顯示鳥（空中）', value: true, only: ['scene'] },
                 { key: 'fishD', label: '魚的深度', min: 0.3, max: 2.6, step: 0.1, value: 1.2, fmt: (v) => `${v.toFixed(1)} m`, only: ['scene'] },
                 { key: 'birdH', label: '鳥的高度', min: 0.4, max: 2.6, step: 0.1, value: 1.8, fmt: (v) => `${v.toFixed(1)} m`, only: ['scene'] },
                 { key: 'refl', label: '水面反射', value: 'on', only: ['scene'],
@@ -3337,6 +3346,14 @@
                 { key: 'X', label: '硬幣與池邊的水平距離', min: 0, max: 8, step: 0.1, value: 3, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
                 { key: 'D', label: '池水深度', min: 0.5, max: 3, step: 0.1, value: 2, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
                 { key: 'eyeH', label: '眼睛高出水面', min: 0.3, max: 3, step: 0.1, value: 1.6, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
+                { key: 'layers', label: '層數', min: 2, max: 6, step: 1, value: 3, fmt: (v) => `${v} 層`, only: ['stack'] },
+                ...[1.33, 1.50, 1.80, 1.20, 2.00, 1.60].map((nv, i) => ({ key: 'n' + (i + 1), label: `第 ${i + 1} 層折射率 n${'₁₂₃₄₅₆'[i]}`,
+                    min: 1, max: 2.5, step: 0.01, value: nv, fmt: (v) => v.toFixed(2), only: ['stack'], showIf: (p) => p.layers >= i + 1 })),
+                ...[10, 6, 8, 5, 7, 6].map((tv, i) => ({ key: 't' + (i + 1), label: `第 ${i + 1} 層厚度`,
+                    min: 2, max: 20, step: 1, value: tv, fmt: (v) => `${v} cm`, only: ['stack'], showIf: (p) => p.layers >= i + 1 })),
+                { key: 'spread', label: '光線張角（底層中）', min: 2, max: 45, step: 1, value: 12, fmt: (v) => `±${v}°`, only: ['stack'] },
+                { key: 'stackSteps', label: '成像顯示', value: 'final', only: ['stack'],
+                  options: [{ value: 'final', label: '只看最終像' }, { value: 'steps', label: '逐層成像（中間像）' }], fmt: () => '' },
                 { key: 'tank', label: '情境', value: 'public', only: ['layers'],
                   options: [{ value: 'home', label: '家用魚缸：玻璃 1 cm' }, { value: 'public', label: '大型水族館：壓克力 25 cm' },
                             { value: 'kuroshio', label: '超大展示窗：壓克力 60 cm（美ら海）' }, { value: 'custom', label: '自訂' }],
@@ -3408,11 +3425,11 @@
                     const S = p._scene;
                     if (!S) return [{ label: '眼睛', value: '拖曳畫面中的眼睛' }];
                     const eyeTxt = S.E[1] >= 0 ? `水面上 ${S.E[1].toFixed(1)} m` : `水面下 ${(-S.E[1]).toFixed(1)} m`;
-                    const fishTxt = S.fineF.type === 'direct' ? '同在水中：直接看到實際位置'
+                    const fishTxt = !S.fineF ? '未顯示' : S.fineF.type === 'direct' ? '同在水中：直接看到實際位置'
                         : `像深 ${(-S.fineF.img[1]).toFixed(2)} m（實際 ${(-S.fish[1]).toFixed(2)} m）`;
-                    const birdTxt = S.fineB.type === 'direct' ? '同在空氣中：直接看到實際位置'
+                    const birdTxt = !S.fineB ? '未顯示' : S.fineB.type === 'direct' ? '同在空氣中：直接看到實際位置'
                         : `像高 ${S.fineB.img[1].toFixed(2)} m（實際 ${S.bird[1].toFixed(2)} m）${S.fineB.img[1] > 3 * S.bird[1] ? '：接近窗緣，像被拉得很高' : ''}`;
-                    let mirTxt = '已關閉';
+                    let mirTxt = p.refl === 'off' ? '已關閉' : (S.E[1] < 0 ? '需要顯示魚' : '需要顯示鳥');
                     if (S.mir) {
                         const ang = deg(Math.acos(Math.min(1, S.mir.cosi)));
                         mirTxt = S.E[1] < 0
@@ -3454,6 +3471,19 @@
                         { label: '像往觀察者移近', value: `${Math.max(0, p.X - tr.img[0]).toFixed(2)} m` }
                     ];
                 }
+                if (p.mode === 'stack') {
+                    const ns = L.stackNs(p), ts = L.stackTs(p);
+                    const total = ts.reduce((a, v) => a + v, 0), app = ns.reduce((a, n, i) => a + ts[i] / n, 0);
+                    const edge = L.stackTrace(ns, ts, rad(p.spread));
+                    const edgeTxt = edge.tir !== null ? (edge.tir === -1 ? '在頂面全反射，到不了空氣' : `在第 ${edge.tir + 1} 層下方界面全反射`)
+                        : `${edge.imgDepth.toFixed(1)} cm（與近軸差 ${(app - edge.imgDepth).toFixed(1)} cm）`;
+                    return [
+                        { label: '實際深度 Σt', value: `${total.toFixed(0)} cm` },
+                        { label: '近軸視深 Σt/n', value: `${app.toFixed(1)} cm` },
+                        { label: '各層貢獻 t/n', value: ns.map((n, i) => (ts[i] / n).toFixed(1)).join(' + ') },
+                        { label: `最斜光線（±${p.spread}°）的像`, value: edgeTxt }
+                    ];
+                }
                 const nw = 1.33, ng = p.ng;
                 const fA = p.t / ng + p.d / nw;
                 return [
@@ -3471,6 +3501,7 @@
                 if (p.mode === 'oblique') return L.drawOblique(ctx, w, h, p, t || 0);
                 if (p.mode === 'below') return L.drawBelow(ctx, w, h, p, t || 0);
                 if (p.mode === 'layers') return L.drawLayers(ctx, w, h, p, t || 0);
+                if (p.mode === 'stack') return L.drawStack(ctx, w, h, p);
                 return L.drawAbove(ctx, w, h, p, t || 0);
             },
 
@@ -3511,10 +3542,12 @@
                     dashed(ctx, ...P(E), X(E[0] + r), ys, 'rgba(107,70,193,0.6)');
                 }
 
-                const fishPen = depthPencil(pos.fish, E, n, a, 'auto');
-                const birdPen = depthPencil(pos.bird, E, n, a, 'auto');
-                const showRefl = p.refl !== 'off';
-                const mirPen = showRefl ? depthPencil(eyeInWater ? pos.fish : pos.bird, E, n, a, 'mirror') : null;
+                const hasFish = p.showFish !== false, hasBird = p.showBird !== false;
+                const fishPen = hasFish ? depthPencil(pos.fish, E, n, a, 'auto') : null;
+                const birdPen = hasBird ? depthPencil(pos.bird, E, n, a, 'auto') : null;
+                // 倒影：眼睛在水下看魚（可能全反射），眼睛在空中看鳥（部分反射）
+                const mirObj = eyeInWater ? (hasFish ? pos.fish : null) : (hasBird ? pos.bird : null);
+                const mirPen = p.refl !== 'off' && mirObj ? depthPencil(mirObj, E, n, a, 'mirror') : null;
                 const mirTIR = mirPen && eyeInWater && n * Math.sqrt(1 - mirPen.cosi * mirPen.cosi) > 1;
 
                 const drawPencil = (pen, color, alpha) => {
@@ -3531,15 +3564,15 @@
                     ctx.restore();
                 };
                 if (mirPen) drawPencil(mirPen, C.rose, mirTIR ? 0.95 : Math.max(0.25, Math.min(0.8, mirPen.R * 6)));
-                drawPencil(fishPen, '#c9650a', 1);
-                drawPencil(birdPen, '#5b3fb5', 1);
+                if (fishPen) drawPencil(fishPen, '#c9650a', 1);
+                if (birdPen) drawPencil(birdPen, '#5b3fb5', 1);
 
                 // 物體與像
-                depthFish(ctx, ...P(pos.fish), 13, pos.fdir, false);
-                depthBird(ctx, ...P(pos.bird), 14, false);
+                if (hasFish) depthFish(ctx, ...P(pos.fish), 13, pos.fdir, false);
+                if (hasBird) depthBird(ctx, ...P(pos.bird), 14, false);
                 const inView = (pt) => { const q = P(pt); return q[0] > 4 && q[0] < w - 4 && q[1] > 16 && q[1] < h - 6; };
-                if (fishPen.type === 'refract' && inView(fishPen.img)) depthFish(ctx, ...P(fishPen.img), 13, pos.fdir, true);
-                if (birdPen.type === 'refract' && inView(birdPen.img)) depthBird(ctx, ...P(birdPen.img), 14, true);
+                if (fishPen && fishPen.type === 'refract' && inView(fishPen.img)) depthFish(ctx, ...P(fishPen.img), 13, pos.fdir, true);
+                if (birdPen && birdPen.type === 'refract' && inView(birdPen.img)) depthBird(ctx, ...P(birdPen.img), 14, true);
                 if (mirPen) {
                     ctx.save(); ctx.globalAlpha = mirTIR ? 1 : 0.6;
                     if (eyeInWater) depthFish(ctx, ...P(mirPen.img), 13, pos.fdir, true);
@@ -3556,9 +3589,11 @@
                 depthLabel(ctx, placed, `${depthMedium(n)} n = ${n.toFixed(2)}`, 8, ys + 15, C.blue, w, 'left');
                 if (eyeInWater) depthLabel(ctx, placed, `斯涅爾窗（±${deg(thc).toFixed(1)}°）`, X(E[0]), ys + 15, C.violet, w, 'center');
                 depthLabel(ctx, placed, '眼睛（可拖曳）', ee[0] + 14, ee[1] - 10, C.ink, w, 'left');
-                if (fishPen.type === 'refract') { const q = P(fishPen.img); depthLabel(ctx, placed, '看到的魚（像）', q[0] + 16, q[1] - 8, '#a4540a', w, 'left'); }
-                else { const q = P(pos.fish); depthLabel(ctx, placed, '魚：直接看到', q[0] + 18, q[1] - 8, '#a4540a', w, 'left'); }
-                if (birdPen.type === 'refract' && inView(birdPen.img)) { const q = P(birdPen.img); depthLabel(ctx, placed, '看到的鳥（像）', q[0] + 18, q[1] - 6, '#3a2f7a', w, 'left'); }
+                if (!hasFish && !hasBird) depthLabel(ctx, placed, '勾選「顯示魚」或「顯示鳥」', w / 2, ys - 40, C.muted, w, 'center');
+                if (fishPen && fishPen.type === 'refract') { const q = P(fishPen.img); depthLabel(ctx, placed, '看到的魚（像）', q[0] + 16, q[1] - 8, '#a4540a', w, 'left'); }
+                else if (fishPen) { const q = P(pos.fish); depthLabel(ctx, placed, '魚：直接看到', q[0] + 18, q[1] - 8, '#a4540a', w, 'left'); }
+                if (!birdPen) { /* 未顯示鳥 */ }
+                else if (birdPen.type === 'refract' && inView(birdPen.img)) { const q = P(birdPen.img); depthLabel(ctx, placed, '看到的鳥（像）', q[0] + 18, q[1] - 6, '#3a2f7a', w, 'left'); }
                 else if (birdPen.type === 'refract') {
                     // 接近斯涅爾窗邊緣：像被拉得極高，落在畫面外；標籤放在虛線離開畫面處
                     const S0 = P(birdPen.rays[0].S), q = P(birdPen.img);
@@ -3566,6 +3601,7 @@
                     depthLabel(ctx, placed, '鳥的像在畫面上方（接近窗緣，被拉得很高）', S0[0] + (q[0] - S0[0]) * k, 24, '#3a2f7a', w, 'center');
                 }
                 else { const q = P(pos.bird); depthLabel(ctx, placed, '鳥：直接看到', q[0] + 18, q[1] - 6, '#3a2f7a', w, 'left'); }
+
                 if (mirPen) {
                     const q = P(mirPen.img);
                     const txt = eyeInWater ? (mirTIR ? '魚的倒影（全反射）' : `魚的倒影（部分反射 ${Math.round(mirPen.R * 100)}%）`)
@@ -3574,7 +3610,8 @@
                 }
 
                 // 讀數用的資料（像的位置以極細光束求，避免瞳孔誇大造成誤差）
-                const fineF = depthPencil(pos.fish, E, n, 1e-4, 'auto'), fineB = depthPencil(pos.bird, E, n, 1e-4, 'auto');
+                const fineF = hasFish ? depthPencil(pos.fish, E, n, 1e-4, 'auto') : null;
+                const fineB = hasBird ? depthPencil(pos.bird, E, n, 1e-4, 'auto') : null;
                 p._scene = { E, fish: pos.fish, bird: pos.bird, fineF, fineB, mir: mirPen, mirTIR, thc };
                 const now = performance.now();
                 if (L._sync && (!L._lastSync || now - L._lastSync > 300)) { L._lastSync = now; L._sync(); }
@@ -3736,6 +3773,102 @@
                 labelFit(ctx, `實際池底 D = ${p.D.toFixed(1)} m`, w - 8, yF + 15, '#6b5a2e', 10, 'right', { clampW: w, plate });
                 labelFit(ctx, '空氣', X(0) + 6, ys - 6, C.ink, 10, 'left', { clampW: w, plate });
                 labelFit(ctx, `水 n = ${n.toFixed(2)}`, X(0) + 6, yF - 6, C.blue, 10, 'left', { clampW: w, plate });
+            },
+
+            /* ---------- 多層視深：純光線模擬（2–6 層） ---------- */
+            stackNs: (p) => Array.from({ length: p.layers }, (_, i) => p['n' + (i + 1)]),
+            stackTs: (p) => Array.from({ length: p.layers }, (_, i) => p['t' + (i + 1)]),
+            /* 從底層物點以角度 θ（底層中，與鉛直線夾角）往上追蹤，回傳經過的點與結果 */
+            stackTrace: (ns, ts, theta) => {
+                const N = ns.length, k = ns[N - 1] * Math.sin(theta);      // n·sinθ 在平行界面間守恆
+                let x = 0, y = 0;                                          // y 從底部往上量（cm）
+                const pts = [[0, 0]];
+                for (let i = N - 1; i >= 0; i--) {
+                    const si = k / ns[i];
+                    if (si >= 1) return { pts, tir: i, k };                // 進不了第 i 層：在其下方界面全反射
+                    x += ts[i] * si / Math.sqrt(1 - si * si); y += ts[i];
+                    pts.push([x, y]);
+                }
+                if (k >= 1) return { pts, tir: -1, k };                    // 進不了空氣：頂面全反射
+                const ta = k / Math.sqrt(1 - k * k);                        // 空氣中 tanθ
+                return { pts, tir: null, k, exitX: x, tanAir: ta, imgDepth: ta > 1e-9 ? x / ta : null };
+            },
+            drawStack: (ctx, w, h, p) => {
+                const L = LABS.apparent_depth, ns = L.stackNs(p), ts = L.stackTs(p), N = ns.length;
+                const airH = 70, bot = h - 34;
+                const total = ts.reduce((a, v) => a + v, 0);
+                const tops = ts.map((_, i) => ts.slice(0, i).reduce((a, v) => a + v, 0));   // 各層頂面深度
+                const s = (bot - airH) / total;                             // px / cm
+                const cx = Math.round(w * 0.40);
+                const yTop = airH, yOf = (depthCm) => yTop + depthCm * s;   // 由頂面往下量
+                // 背景：空氣與各層
+                ctx.fillStyle = 'rgba(11,111,146,0.03)'; ctx.fillRect(0, 0, w, airH);
+                ns.forEach((n, i) => {
+                    ctx.fillStyle = `rgba(11,111,146,${Math.min(0.5, 0.05 + (n - 1) * 0.22)})`;
+                    ctx.fillRect(0, yOf(tops[i]), w, ts[i] * s);
+                });
+                ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1.2;
+                [...tops, total].forEach((d) => { ctx.beginPath(); ctx.moveTo(0, yOf(d)); ctx.lineTo(w, yOf(d)); ctx.stroke(); });
+                dashed(ctx, cx, 12, cx, bot + 8, 'rgba(18,49,58,0.25)');
+
+                // 光線：底層物點往上，對稱的 ±θ 各數條
+                const thMax = rad(p.spread), oy = yOf(total);
+                const fan = [];
+                for (let j = 1; j <= 3; j++) fan.push(thMax * j / 3);
+                const colors = ['#d48a00', '#2c8f6e', '#5b3fb5'];
+                const imgs = [];
+                let anyTir = null;
+                fan.forEach((th, j) => {
+                    const tr = L.stackTrace(ns, ts, th);
+                    [-1, 1].forEach((sg) => {
+                        const path = tr.pts.map(([x, y]) => [cx + sg * x * s, oy - y * s]);
+                        ctx.strokeStyle = colors[j]; ctx.lineWidth = 1.8;
+                        ctx.beginPath(); ctx.moveTo(path[0][0], path[0][1]);
+                        path.slice(1).forEach((q) => ctx.lineTo(q[0], q[1]));
+                        if (tr.tir === null) {
+                            // 空氣中：往上畫到畫布頂端；反向延長（虛線）到中心軸
+                            const ex = path[path.length - 1];
+                            const up = ex[1] - 8, dx = sg * tr.tanAir * (up);
+                            ctx.lineTo(ex[0] + dx, 8); ctx.stroke();
+                            arrow(ctx, ex[0], ex[1], ex[0] + dx * 0.5, ex[1] - up * 0.5, colors[j], 1.8);
+                            if (tr.imgDepth !== null) dashed(ctx, ex[0], ex[1], cx, yOf(tr.imgDepth), colors[j]);
+                        } else {
+                            // 全反射：最後一點就在界面上，鏡射前一段，畫出折返的光
+                            ctx.stroke();
+                            const last = path[path.length - 1], prev = path[path.length - 2] || path[0];
+                            ctx.save(); ctx.strokeStyle = C.rose; ctx.lineWidth = 1.8;
+                            ctx.beginPath(); ctx.moveTo(last[0], last[1]); ctx.lineTo(last[0] + (last[0] - prev[0]), prev[1]); ctx.stroke(); ctx.restore();
+                            anyTir = tr.tir;
+                        }
+                    });
+                    if (tr.tir === null && tr.imgDepth !== null) imgs.push(tr.imgDepth);
+                });
+
+                // 物體、近軸像、逐層中間像
+                const paraxial = ns.reduce((a, n, i) => a + ts[i] / n, 0);
+                ctx.fillStyle = '#f08a24'; ctx.strokeStyle = '#a4540a'; ctx.lineWidth = 1.2;
+                ctx.beginPath(); ctx.arc(cx, oy - 4, 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.save(); ctx.setLineDash([3, 2]); ctx.strokeStyle = C.rose; ctx.fillStyle = 'rgba(194,38,74,0.15)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(cx, yOf(paraxial), 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+                const placed = []; placed.hMax = h;
+                const rx = cx + 18;
+                // 先放固定位置的標籤，再放隨參數移動的像
+                depthLabel(ctx, placed, '空氣 n = 1.00（觀察者在正上方）', 8, airH - 8, C.ink, w, 'left');
+                ns.forEach((n, i) => depthLabel(ctx, placed, `第 ${i + 1} 層 n${'₁₂₃₄₅₆'[i]} = ${n.toFixed(2)}，厚 ${ts[i]} cm`, 8, yOf(tops[i]) + Math.min(16, ts[i] * s - 3), C.blue, w, 'left'));
+                depthLabel(ctx, placed, `物體：實際深 ${total.toFixed(0)} cm`, rx, oy - 2, '#a4540a', w, 'left');
+                if (p.stackSteps === 'steps') {
+                    // 從第 j 層看（j = N…1）：像在第 j 層底面以下 n_j·Σ_{k>j} t/n_k
+                    for (let j = N - 1; j >= 1; j--) {
+                        let sum = 0; for (let k = j; k < N; k++) sum += ts[k] / ns[k];
+                        const yImg = yOf(tops[j]) + ns[j - 1] * sum * s;
+                        ctx.save(); ctx.setLineDash([2, 2]); ctx.strokeStyle = C.violet; ctx.lineWidth = 1.3;
+                        ctx.beginPath(); ctx.arc(cx, yImg, 4, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+                        depthLabel(ctx, placed, `第 ${j} 層看`, cx - 14, yImg + 4, C.violet, w, 'right');
+                    }
+                }
+                depthLabel(ctx, placed, `近軸像：Σt/n = ${paraxial.toFixed(1)} cm`, rx, yOf(paraxial) + 4, C.rose, w, 'left');
+                if (anyTir !== null) depthLabel(ctx, placed, anyTir === -1 ? '最斜的光在頂面全反射' : `最斜的光在第 ${anyTir + 1} 層下方界面全反射`, w - 8, 18, C.rose, w, 'right');
+                depthEye(ctx, cx, 24, 'down');
             },
 
             /* ---------- 水族箱：空氣—玻璃—水 ---------- */

@@ -34,7 +34,7 @@ N12 的盪鞦韆動畫提供「正弦波做功對照」與「受迫鞦韆」兩�
 
 N13–N15 的司乃耳實驗分為「單一光線」「水下光扇」「斯涅爾窗（水下仰望）」三種模式。單一光線依非偏振光的菲涅耳公式顯示反射率 R，可看到 R 在臨界角處連續升到 100%。水下光扇對應水槽光扇實驗，標出出光圓 r = h·tanθc。斯涅爾窗左側為側視光路，右側以逐像素光線追蹤算出魚眼仰望影像，可切換泳池／深海與水面波動；畫布下方附真實照片對照，按「套用到模擬」即可把參數調成接近照片的情況。
 
-N14 的視深實驗分為「拖曳眼睛：看魚也看鳥」「岸上看水中」「斜看池底」「水中看岸上」「水族箱：空氣—玻璃—水」五種模式。拖曳模式中眼睛可放在水面上或水面下，魚在水中游、鳥在空中飛，同時比較直射、折射成像與水面倒影（眼睛在水下且入射角大於臨界角時為全反射）。像點一律由兩條進入瞳孔上、下緣的折射光線反向延長的交點求得；其他模式的動畫先讓光從物體走到眼睛，再由眼睛沿直線反推到像。斜看模式畫出整片池底「看起來的位置」；水族箱模式提供家用魚缸（玻璃 1 cm）、大型水族館（壓克力 25 cm）與美ら海黑潮之海（壓克力 60 cm）三種實際情境，可逐面成像，驗證總視距 = Σ 厚度／折射率。
+N14 的視深實驗分為「拖曳眼睛：看魚也看鳥」「岸上看水中」「斜看池底」「水中看岸上」「水族箱：空氣—玻璃—水」「多層視深」六種模式。拖曳模式中眼睛可放在水面上或水面下，魚在水中游、鳥在空中飛，同時比較直射、折射成像與水面倒影（眼睛在水下且入射角大於臨界角時為全反射）。像點一律由兩條進入瞳孔上、下緣的折射光線反向延長的交點求得；其他模式的動畫先讓光從物體走到眼睛，再由眼睛沿直線反推到像。斜看模式畫出整片池底「看起來的位置」；水族箱模式提供家用魚缸（玻璃 1 cm）、大型水族館（壓克力 25 cm）與美ら海黑潮之海（壓克力 60 cm）三種實際情境，可逐面成像，驗證總視距 = Σ 厚度／折射率。「多層視深」為純光線模擬：2–6 層，每層厚度與折射率可調，可看逐層中間像、大張角時的像差與層間全反射。拖曳模式可用勾選框只看魚或只看鳥。
 
 ## 檔案
 
@@ -81,7 +81,7 @@ node scripts/audit_swing_work.js
 
 美ら海水族館「黑潮之海」壓克力板尺寸（22.5 m × 8.2 m × 60 cm）依[日本政府廣報 Highlighting Japan 2024 年 9 月號](https://gov-online.go.jp/hlj/en/september_2024/september_2024-07.html)；壓克力折射率 n_d ≈ 1.49 依 [Shimadzu PMMA 折射率資料](https://www.shimadzu.com/opt/products/ref/ref-app03.html)。
 
-真實影片：泳池水下影片轉載自 Instagram @myswimpro（畫面含 Little Rock 標誌），只保留前 26 秒水下片段並移除音軌；水槽光扇影片為 Rosa Brígida，A.I.F.–E.S.T.T.（2010）〈Reflection, refraction and total internal reflection in water/air surface〉，移除音軌。兩支影片分別附在斯涅爾窗／視深拖曳模式與水下光扇模式的對照區。
+真實影片：泳池水下影片轉載自 Instagram @myswimpro（畫面含 Little Rock 標誌），只保留前 26 秒水下片段並移除音軌；水槽光扇影片為 Rosa Brígida，A.I.F.–E.S.T.T.（2010）〈Reflection, refraction and total internal reflection in water/air surface〉，移除音軌。兩支影片分別附在司乃耳實驗的斯涅爾窗與水下光扇模式的對照區。
 
 斯涅爾窗照片：夕陽與 Lembeh、Manado 照片為 Andrew Marriott 所攝，出自 [DivePhotoGuide〈An In-Depth Guide to Shooting Snell's Window〉](https://www.divephotoguide.com/underwater-photography-techniques/article/underwater-photographer-s-guide-snell-s-window/)，其中 Lembeh 與 Manado 兩組以原文圖片連結載入；泳池中仰望（窗內的人、窗外的磁磚）亦為 Andrew Marriott 所攝；鯊魚與自由潛水者兩張由使用者提供，來源待補。權利歸原作者所有。
 
