@@ -18,7 +18,7 @@ const LESSON_LABS = {
     N06:{id:'ripple',mode:'refract'}, N07:{id:'water_interference',mode:'2D'},
     N08:{id:'sound',mode:'medium'}, N09:{id:'longitudinal'},
     N10:{id:'pipes',mode:'open',params:{idx:1}}, N11:{id:'timbre'}, N12:{id:'pipes',mode:'closed',params:{idx:1}},
-    N13:{id:'snell',params:{n1:1,n2:1.5,th1:30}}, N14:{id:'apparent_depth',mode:'above'},
+    N13:{id:'snell',params:{n1:1,n2:1.5,th1:30}}, N14:{id:'apparent_depth',mode:'scene'},
     N15:{id:'snell',params:{n1:1.5,n2:1,th1:35}}, N16:{id:'lens'},N17:{id:'lens',params:{p:5,f:10}},
     N18:{id:'young',mode:'setup'},N19:{id:'young',mode:'setup'},N20:{id:'diffraction',mode:'huygens'}
 };
