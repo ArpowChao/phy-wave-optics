@@ -2354,6 +2354,9 @@
             const e = rad(p.sun);
             const sx = -Math.cos(e), sz = Math.sin(e);           // 太陽在 −x 方向的天空
             const sunCos = Math.cos(rad(2.2)), glowK = 260;
+            const warm = Math.max(0, Math.min(1, (16 - p.sun) / 12));     // 低角度太陽：暮色
+            const skyDim = 0.55 + 0.45 * Math.min(1, p.sun / 25);
+            const sunRGB = [255, 248 - 70 * warm, 228 - 150 * warm], glowRGB = [255, 236 - 70 * warm, 190 - 110 * warm];
             const bx = p.objX, bz = -SNELL_BALL.z, br = SNELL_BALL.r;
             const water = ocean ? [6, 34, 62] : [38, 150, 168];
             const L = ocean ? 11 : 9;
@@ -2401,7 +2404,7 @@
             const sky = (vx, vy, vz) => {
                 const el = Math.max(0, vz);
                 const tz = Math.pow(el, 0.55);
-                let r = 200 + (52 - 200) * tz, g = 226 + (128 - 226) * tz, b = 240 + (206 - 240) * tz;
+                let r = (200 + (52 - 200) * tz) * skyDim, g = (226 + (128 - 226) * tz) * skyDim, b = (240 + (206 - 240) * tz) * skyDim;
                 // 雲：投影到高空水平面，越近地平線越擠
                 if (el > 0.06) {
                     const cx = vx / el, cy = vy / el;
@@ -2411,14 +2414,17 @@
                 }
                 // 地平線上的樹林與建築剪影（仰角約 5°–15°）
                 const ph = Math.atan2(vy, vx);
-                const ridge = 0.09 + 0.16 * (0.5 + 0.5 * Math.sin(ph * 5 + 0.5)) * (0.55 + 0.45 * Math.sin(ph * 13));
-                if (el < ridge) { r = 40; g = 78; b = 52; }
+                // 泳池：周圍的樹與建築；深海：開闊海面，只剩遠方低矮的島影
+                const ridge = ocean
+                    ? 0.006 + 0.03 * Math.max(0, Math.sin(ph * 3 + 2.2)) * (0.5 + 0.5 * Math.sin(ph * 11))
+                    : 0.09 + 0.16 * (0.5 + 0.5 * Math.sin(ph * 5 + 0.5)) * (0.55 + 0.45 * Math.sin(ph * 13));
+                if (el < ridge) { r = 40 * skyDim; g = 70 * skyDim; b = 56 * skyDim; }
                 // 太陽
                 const cs = vx * sx + vz * sz;
-                if (cs > sunCos) { r = 255; g = 252; b = 228; }
+                if (cs > sunCos) { r = sunRGB[0]; g = sunRGB[1]; b = sunRGB[2]; }
                 else {
-                    const gl = Math.exp((cs - 1) * glowK) * 0.9 + Math.exp((cs - 1) * 18) * 0.25;
-                    r += (255 - r) * Math.min(1, gl); g += (240 - g) * Math.min(1, gl); b += (190 - b) * Math.min(1, gl);
+                    const gl = Math.min(1, Math.exp((cs - 1) * glowK) * 0.9 + Math.exp((cs - 1) * (18 - 8 * warm)) * (0.25 + 0.35 * warm));
+                    r += (glowRGB[0] - r) * gl; g += (glowRGB[1] - g) * gl; b += (glowRGB[2] - b) * gl;
                 }
                 out[0] = r; out[1] = g; out[2] = b;
             };
@@ -2468,6 +2474,61 @@
             }
             snellView.key = key;
             return img;
+        }
+
+
+        /* 斯涅爾窗的真實照片：與模擬並排對照。apply 為「套用到模擬」時要設定的參數。
+         * 外部圖片採原文連結；載入失敗時改顯示文字連結。 */
+        const SNELL_ARTICLE = 'https://www.divephotoguide.com/underwater-photography-techniques/article/underwater-photographer-s-guide-snell-s-window/';
+        const SNELL_PHOTOS = [
+            { src: 'assets/images/snell/sunset-sulawesi-marriott.jpg', title: '低角度的夕陽（印尼蘇拉威西）',
+              look: '太陽很低，所以影像落在窗緣附近；水面的波浪把窗緣撕成鋸齒；窗外映出幽暗深水而一片漆黑。',
+              credit: '攝影：Andrew Marriott', link: SNELL_ARTICLE,
+              apply: { scene: 'ocean', sun: 10, ripple: 0.55, eyeD: 1.0 } },
+            { src: 'assets/images/snell/shark-window.jpg', title: '鯊魚與窗中的天空',
+              look: '藍天與白雲全部擠在圓窗內，越靠近窗緣的雲越扁；窗外是全反射映出的藍色海水。',
+              credit: '來源待補（使用者提供）',
+              apply: { scene: 'ocean', sun: 62, ripple: 0.2, eyeD: 2.0 } },
+            { src: 'assets/images/snell/freedivers-window.jpg', title: '自由潛水者與正上方的太陽',
+              look: '太陽接近天頂，影像在窗的中央；潛水者在窗內呈剪影；窗外暗藍，看不到天空。',
+              credit: '來源待補（使用者提供）',
+              apply: { scene: 'ocean', sun: 84, ripple: 0.25, eyeD: 2.6 } },
+            { src: 'https://www.divephotoguide.com/images/lightboximage/m/1582820588.jpg', external: true,
+              title: '淺水軟珊瑚與岸上叢林（Lembeh）',
+              look: '在很淺的水中，太陽與岸上的樹林都在窗內；樹林被擠成窗緣的一圈深色剪影。',
+              credit: '攝影：Andrew Marriott', link: SNELL_ARTICLE,
+              apply: { scene: 'ocean', sun: 38, ripple: 0.1, eyeD: 0.6 } },
+            { src: 'https://www.divephotoguide.com/images/lightboximage/m/1582820645.jpg', external: true,
+              title: '同一片日落（Manado）之一',
+              look: '與下一張相隔約 20 秒：太陽仰角幾乎不變，但水面起伏不同，窗緣的形狀完全不一樣。',
+              credit: '攝影：Andrew Marriott', link: SNELL_ARTICLE,
+              apply: { scene: 'ocean', sun: 9, ripple: 0.35, eyeD: 1.2 } },
+            { src: 'https://www.divephotoguide.com/images/lightboximage/m/1582820686.jpg', external: true,
+              title: '同一片日落（Manado）之二',
+              look: '約 20 秒後。在模擬中按「播放」讓水面起伏，觀察窗緣隨時間變形。',
+              credit: '攝影：Andrew Marriott', link: SNELL_ARTICLE,
+              apply: { scene: 'ocean', sun: 9, ripple: 0.6, eyeD: 1.2 } }
+        ];
+        function snellPhotosHtml() {
+            const cards = SNELL_PHOTOS.map((ph, i) => `
+                <figure class="snell-photo">
+                    <a class="snell-photo-img" href="${ph.link || ph.src}" target="_blank" rel="noopener">
+                        <img src="${ph.src}" alt="${ph.title}" loading="lazy" ${ph.external ? 'referrerpolicy="no-referrer"' : ''}
+                             onerror="this.parentNode.classList.add('is-missing');this.remove();">
+                        <span class="snell-photo-fallback">圖片無法載入，按此開啟原文</span>
+                    </a>
+                    <figcaption>
+                        <b>${ph.title}</b>
+                        <span>${ph.look}</span>
+                        <small>${ph.link ? `<a href="${ph.link}" target="_blank" rel="noopener">${ph.credit}／DivePhotoGuide</a>` : ph.credit}</small>
+                        <button type="button" class="lab-btn snell-photo-apply" data-photo="${i}">套用到模擬</button>
+                    </figcaption>
+                </figure>`).join('');
+            return `<section class="snell-photos" hidden>
+                    <h5>真實照片對照：斯涅爾窗</h5>
+                    <p>按「套用到模擬」，把太陽仰角、水面波動與深度調成接近照片的情況，再和上方的仰望影像比較。</p>
+                    <div class="snell-photo-grid">${cards}</div>
+                </section>`;
         }
 
         LABS.snell = {
@@ -2559,6 +2620,29 @@
                 return LABS.snell.drawRay(ctx, w, h, p);
             },
 
+            /* 斯涅爾窗模式下，在畫布下方加上真實照片對照 */
+            setup: ({ host, params, disposers }) => {
+                const stage = host.querySelector('.lab-stage');
+                const anchor = host.querySelector('.lab-readout') || stage;
+                if (!stage || host.querySelector('.snell-photos')) return;
+                anchor.insertAdjacentHTML('afterend', snellPhotosHtml());
+                const panel = host.querySelector('.snell-photos');
+                const sync = () => { panel.hidden = params.mode !== 'window'; };
+                host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
+                panel.querySelectorAll('.snell-photo-apply').forEach((btn) => {
+                    disposers.addEventListener(btn, 'click', () => {
+                        const ph = SNELL_PHOTOS[Number(btn.dataset.photo)];
+                        Object.entries(ph.apply).forEach(([k, v]) => {
+                            const input = host.querySelector(`[id$="snell-${k}"]`);
+                            if (!input) return;
+                            input.value = String(v);
+                            input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input'));
+                        });
+                        stage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    });
+                });
+                sync();
+            },
             /* ---------- 單一光線 ---------- */
             drawRay: (ctx, w, h, p) => {
                 const iy = h * 0.5, cx = w * 0.5;
@@ -2887,6 +2971,15 @@
                 ctx.beginPath(); ctx.arc(vcx, vcy, vR - 0.5, 0, Math.PI * 2); ctx.clip();
                 ctx.imageSmoothingEnabled = true;
                 ctx.drawImage(off.canvas, 0, 0, N, N, V.x, V.y, V.s, V.s);
+                // 相機對著太陽時的過曝光暈（照片中的亮團與光芒）：畫在太陽影像的位置
+                const aS = deg(Math.asin(Math.cos(rad(p.sun)) / n));
+                const sx0 = vcx - aS / SNELL_FOV * vR, bloomR = V.s * (0.07 + 0.05 * Math.max(0, (20 - p.sun) / 20));
+                const warmB = Math.max(0, Math.min(1, (16 - p.sun) / 12));
+                const bg = ctx.createRadialGradient(sx0, vcy, 0, sx0, vcy, bloomR);
+                bg.addColorStop(0, `rgba(255,${Math.round(250 - 60 * warmB)},${Math.round(225 - 130 * warmB)},0.95)`);
+                bg.addColorStop(0.35, `rgba(255,${Math.round(230 - 70 * warmB)},${Math.round(170 - 100 * warmB)},0.45)`);
+                bg.addColorStop(1, 'rgba(255,220,150,0)');
+                ctx.fillStyle = bg; ctx.beginPath(); ctx.arc(sx0, vcy, bloomR, 0, Math.PI * 2); ctx.fill();
                 const rW = deg(thc) / SNELL_FOV * vR;
                 ctx.setLineDash([6, 5]); ctx.strokeStyle = 'rgba(255,255,255,0.75)'; ctx.lineWidth = 1.2;
                 ctx.beginPath(); ctx.arc(vcx, vcy, rW, 0, Math.PI * 2); ctx.stroke();
@@ -2896,6 +2989,474 @@
                 labelFit(ctx, `窗緣＝地平線（${deg(thc).toFixed(1)}°）`, vcx, vcy - rW - 6, '#ffffff', 10, 'center', { clampW: w, plate: vp, maxW: V.s - 20 });
                 labelFit(ctx, ocean ? '窗外：全反射映出幽暗深水' : '窗外：全反射映出池底與浮球',
                     vcx, Math.min(V.y + V.s - 8, vcy + (rW + vR) / 2 + 4), '#ffffff', 10, 'center', { clampW: w, plate: vp, maxW: V.s - 20 });
+            }
+        };
+
+        /* 9b. 視深：岸上看水中、斜看、水中看岸上、多層介質 ------------------- */
+        /* 所有像點都由「真實折射光線的反向延長線交點」求得，不是直接代公式畫上去：
+         *   兩條從物體出發、進入眼睛的相鄰光線，各自依司乃耳定律折射，
+         *   在觀察者所在介質中反向延長，交點就是眼睛看到的像。
+         * 近乎正上方時交點與 h' = h·n'/n 一致；斜看時交點才會偏離公式。 */
+        const DEPTH_MEDIA = { '1.33': '水', '1.5': '玻璃', '2.42': '鑽石' };
+        const depthMedium = (n) => DEPTH_MEDIA[String(n)] || '介質';
+        function depthFish(ctx, x, y, size, dir, ghost) {
+            ctx.save();
+            ctx.translate(x, y); ctx.scale(dir, 1);
+            ctx.beginPath();
+            ctx.ellipse(0, 0, size, size * 0.48, 0, 0, Math.PI * 2);
+            ctx.moveTo(-size * 0.85, 0);
+            ctx.lineTo(-size * 1.55, -size * 0.5); ctx.lineTo(-size * 1.55, size * 0.5); ctx.closePath();
+            if (ghost) {
+                ctx.setLineDash([4, 3]); ctx.strokeStyle = 'rgba(194,38,74,0.85)'; ctx.lineWidth = 1.5;
+                ctx.fillStyle = 'rgba(194,38,74,0.10)'; ctx.fill(); ctx.stroke();
+            } else {
+                ctx.fillStyle = '#f08a24'; ctx.fill();
+                ctx.strokeStyle = '#a4540a'; ctx.lineWidth = 1.2; ctx.stroke();
+                ctx.fillStyle = '#1b1b1b'; ctx.beginPath(); ctx.arc(size * 0.55, -size * 0.1, size * 0.12, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
+        }
+        function depthBird(ctx, x, y, size, ghost) {
+            ctx.save();
+            ctx.lineWidth = ghost ? 1.6 : 2.6; ctx.lineCap = 'round';
+            ctx.strokeStyle = ghost ? 'rgba(194,38,74,0.85)' : '#3a2f7a';
+            if (ghost) ctx.setLineDash([4, 3]);
+            ctx.beginPath();
+            ctx.moveTo(x - size, y - size * 0.45);
+            ctx.quadraticCurveTo(x - size * 0.45, y - size * 0.6, x, y);
+            ctx.quadraticCurveTo(x + size * 0.45, y - size * 0.6, x + size, y - size * 0.45);
+            ctx.stroke();
+            ctx.restore();
+        }
+        function depthEye(ctx, x, y, look) {
+            // look: 'down' | 'up' | 'right' —— 瞳孔偏向觀看方向
+            const dx = look === 'right' ? 2.5 : 0, dy = look === 'down' ? 1.8 : look === 'up' ? -1.8 : 0;
+            ctx.save();
+            ctx.fillStyle = '#ffffff'; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.4;
+            ctx.beginPath(); ctx.ellipse(x, y, 11, 7, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(x + dx, y + dy, 3.4, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+        /* 在單調函數上二分求根（f(lo) 與 f(hi) 異號） */
+        function depthSolve(f, lo, hi) {
+            let flo = f(lo);
+            for (let i = 0; i < 60; i++) {
+                const mid = (lo + hi) / 2, fm = f(mid);
+                if ((fm > 0) === (flo > 0)) { lo = mid; flo = fm; } else hi = mid;
+            }
+            return (lo + hi) / 2;
+        }
+        /* 兩條直線 P1 + t·d1 與 P2 + u·d2 的交點 */
+        function depthIntersect(p1, d1, p2, d2) {
+            const den = d1[0] * d2[1] - d1[1] * d2[0];
+            if (Math.abs(den) < 1e-12) return null;
+            const t = ((p2[0] - p1[0]) * d2[1] - (p2[1] - p1[1]) * d2[0]) / den;
+            return [p1[0] + d1[0] * t, p1[1] + d1[1] * t];
+        }
+        /* 垂直尺寸線：左右各一條短橫線，中間文字放在 labelX */
+        function depthBracket(ctx, x, y1, y2, color, dash) {
+            ctx.save();
+            if (dash) ctx.setLineDash([4, 3]);
+            ctx.strokeStyle = color; ctx.lineWidth = 1.4;
+            ctx.beginPath();
+            ctx.moveTo(x, y1); ctx.lineTo(x, y2);
+            ctx.moveTo(x - 5, y1); ctx.lineTo(x + 5, y1);
+            ctx.moveTo(x - 5, y2); ctx.lineTo(x + 5, y2);
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        LABS.apparent_depth = {
+            name: '視深：從不同位置與介質看物體',
+            tag: 'N14',
+            hint: '眼睛只能看到「進入眼睛的光線」，並把它們沿直線反向延長，交點就是看到的像。',
+            hintFor: (p) => ({
+                above: '站在岸上幾乎正上方看水中的魚：魚發出的光從水進入空氣時偏離法線。把進入眼睛的兩條光線反向延長（虛線），交點就是看到的魚，位置比實際淺。改變深度與介質，比較 h′ 與 h·(1/n)。',
+                oblique: '站在池邊斜看池底的硬幣：視線越斜，像越往上浮、也越靠近自己。紅色曲線是整片池底「看起來的位置」——遠處的池底看起來特別淺。虛線是只在正上方才成立的 h/n。',
+                below: '潛在水中往上看岸上的鳥：光從空氣進入水中偏向法線。反向延長進入眼睛的光線，交點比鳥實際的位置高，H′ ≈ n·H。',
+                layers: '從水族箱外看箱內的魚：光依序經過「水 → 玻璃（或壓克力）→ 空氣」兩個界面。每經過一個界面就成一次像，前一次的像是下一個界面的物。總視距 = t/n_g + d/n_w。'
+            })[p.mode] || '',
+            note: '視深公式 h′/h = n′/n 只在「觀察者幾乎在正上方」時成立。',
+            noteFor: (p) => ({
+                above: '近軸（幾乎垂直）光線：h′ = h·n′/n，空氣看水中 h′ = 3h/4。像只在<b>鉛直方向</b>被壓縮，水平位置不變，所以插在水中的筷子看起來被折彎。<br>魚其實沒有移動；改變的是光的路徑。',
+                oblique: '斜看時，兩條相鄰光線的反向延長線交點不再落在 h/n，而是更淺，並往觀察者方向移動；視線越接近水平，像越貼近水面。這就是游泳池遠處看起來比腳下淺、容易誤判水深的原因。<br>圖中為兩條同平面相鄰光線的交點（子午像）；雙眼左右並排觀看時，大腦判斷的深度會略有不同，但「越斜越淺」的趨勢相同。',
+                below: '空氣中的物體從水中看，H′ = H·n′/n = n·H（水約 1.33 倍），看起來變高、變遠。<br>同理，水中的人看岸上的人或鳥，會覺得對方比較高；斜看時這個效果更大。',
+                layers: '逐面成像：① 水→玻璃界面，像距 d·n_g/n_w（在玻璃中看，魚變遠）；② 這個像再經玻璃→空氣界面，距外壁 (t + d·n_g/n_w)/n_g = t/n_g + d/n_w。<br>結論：多層平行介質的總視距 = Σ（各層厚度 ÷ 該層折射率），與層的順序無關。水族館的厚壓克力（n ≈ 1.49）讓魚看起來更靠近、更大。'
+            })[p.mode] || '',
+            modes: [
+                { key: 'above', label: '岸上看水中' },
+                { key: 'oblique', label: '斜看池底' },
+                { key: 'below', label: '水中看岸上' },
+                { key: 'layers', label: '水族箱：空氣—玻璃—水' }
+            ],
+            height: (p, w) => p.mode === 'layers' ? 340
+                : p.mode === 'oblique' ? Math.min(380, Math.max(260, Math.round(58 + 4.6 * (w - 20) / 9.5))) : 380,
+            cycle: 3.2,
+            /* 動畫：① 光脈衝沿真實光路從物體走到眼睛；② 再由眼睛沿進入方向直線反推到像。
+             * fwd / back 是折線陣列（每條為 [[x,y],...]），cap 為說明文字的位置。 */
+            animate: (ctx, w, t, fwd, back, cap) => {
+                const T = 3.2, u = (((t % T) + T) % T) / T;
+                const len = (pts) => { let L = 0; for (let i = 1; i < pts.length; i++) L += Math.hypot(pts[i][0] - pts[i - 1][0], pts[i][1] - pts[i - 1][1]); return L; };
+                const trace = (pts, f, color, glow) => {
+                    const total = len(pts); let left = total * Math.max(0, Math.min(1, f));
+                    ctx.save(); ctx.lineCap = 'round';
+                    ctx.strokeStyle = glow; ctx.lineWidth = 6; ctx.globalAlpha = 0.55;
+                    ctx.beginPath(); ctx.moveTo(pts[0][0], pts[0][1]);
+                    let tip = pts[0];
+                    for (let i = 1; i < pts.length && left > 0; i++) {
+                        const a = pts[i - 1], b = pts[i], sl = Math.hypot(b[0] - a[0], b[1] - a[1]);
+                        const k = Math.min(1, left / (sl || 1));
+                        tip = [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k];
+                        ctx.lineTo(tip[0], tip[1]); left -= sl;
+                    }
+                    ctx.stroke(); ctx.restore();
+                    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = color; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(tip[0], tip[1], 4.2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                };
+                const plate = 'rgba(255,255,255,0.9)';
+                if (u < 0.6) {
+                    fwd.forEach((pts) => trace(pts, u / 0.6, '#d48a00', 'rgba(255,214,90,0.9)'));
+                    labelFit(ctx, '① 光從物體出發，折射後進入眼睛', cap[0], cap[1], '#8a5a00', 11, cap[2], { clampW: w, plate });
+                } else {
+                    back.forEach((pts) => trace(pts, (u - 0.6) / 0.4, C.rose, 'rgba(194,38,74,0.35)'));
+                    labelFit(ctx, '② 眼睛沿進入的方向直線反推 → 看到像', cap[0], cap[1], C.rose, 11, cap[2], { clampW: w, plate });
+                }
+            },
+            controls: [
+                { key: 'nw', label: '水中介質', value: '1.33', only: ['above', 'below'],
+                  options: [{ value: '1.33', label: '水 n = 1.33' }, { value: '1.5', label: '玻璃 n = 1.50' }, { value: '2.42', label: '鑽石 n = 2.42' }],
+                  fmt: () => '' },
+                { key: 'h', label: '魚的實際深度 h', min: 10, max: 100, step: 1, value: 60, fmt: (v) => `${v} cm`, only: ['above'] },
+                { key: 'hb', label: '鳥在水面上的高度 H', min: 10, max: 100, step: 1, value: 50, fmt: (v) => `${v} cm`, only: ['below'] },
+                { key: 'X', label: '硬幣與池邊的水平距離', min: 0, max: 8, step: 0.1, value: 3, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
+                { key: 'D', label: '池水深度', min: 0.5, max: 3, step: 0.1, value: 2, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
+                { key: 'eyeH', label: '眼睛高出水面', min: 0.3, max: 3, step: 0.1, value: 1.6, fmt: (v) => `${v.toFixed(1)} m`, only: ['oblique'] },
+                { key: 'd', label: '魚到玻璃內壁的距離 d', min: 10, max: 150, step: 1, value: 60, fmt: (v) => `${v} cm`, only: ['layers'] },
+                { key: 't', label: '玻璃（壓克力）厚度 t', min: 0.5, max: 30, step: 0.5, value: 10, fmt: (v) => `${v} cm`, only: ['layers'] },
+                { key: 'ng', label: '玻璃折射率 n_g', min: 1.4, max: 1.9, step: 0.01, value: 1.5, fmt: (v) => v.toFixed(2), only: ['layers'] },
+                { key: 'steps', label: '成像顯示', value: 'steps', only: ['layers'],
+                  options: [{ value: 'steps', label: '逐面成像（兩個界面）' }, { value: 'final', label: '只看最終像' }],
+                  fmt: () => '' }
+            ],
+
+            /* ---- 物理：每個模式回傳畫圖與讀數共用的幾何量 ---- */
+            above: (p, eyeHalfCm, eyeUpCm) => {
+                const n = Number(p.nw), h = p.h;
+                // 兩條邊緣光線的水中角 α：恰好打到眼睛（寬 2·eyeHalf）的左右緣
+                const reach = (a) => h * Math.tan(a) + eyeUpCm * Math.tan(Math.asin(n * Math.sin(a))) - eyeHalfCm;
+                const a = depthSolve(reach, 0, Math.asin(1 / n) - 1e-4);
+                const th = Math.asin(n * Math.sin(a));
+                const xs = h * Math.tan(a);
+                const hImg = xs / Math.tan(th);            // 反向延長線與鉛直線的交點深度
+                return { n, h, a, th, xs, hImg, hFormula: h / n };
+            },
+            below: (p, eyeHalfCm, eyeDownCm) => {
+                const n = Number(p.nw), H = p.hb;
+                const reach = (th) => H * Math.tan(th) + eyeDownCm * Math.tan(Math.asin(Math.sin(th) / n)) - eyeHalfCm;
+                const th = depthSolve(reach, 0, Math.PI / 2 - 1e-3);
+                const a = Math.asin(Math.sin(th) / n);
+                const xs = H * Math.tan(th);
+                const HImg = xs / Math.tan(a);
+                return { n, H, th, a, xs, HImg, HFormula: n * H };
+            },
+            /* 斜看：池邊眼睛在 (0, eyeH)，池底物體在 (X, −D)；回傳真實光路與像點 */
+            obliqueTrace: (X, D, eyeH, n) => {
+                if (X < 1e-3) return { xs: 0, a: 0, th: 0, img: [0, -D / n] };
+                const f = (xs) => n * (X - xs) / Math.hypot(X - xs, D) - xs / Math.hypot(xs, eyeH);
+                const xs = depthSolve(f, 0, X);
+                const a = Math.atan((X - xs) / D), th = Math.asin(Math.min(1, n * Math.sin(a)));
+                // 相鄰光線：水中角 a + δ，從同一個物點出發
+                const ray = (aa) => {
+                    const x0 = X - D * Math.tan(aa), tt = Math.asin(Math.min(0.999999, n * Math.sin(aa)));
+                    return { p: [x0, 0], d: [Math.sin(tt), -Math.cos(tt)] };   // 反向延長（往水下）
+                };
+                const da = 1e-4, r1 = ray(a), r2 = ray(a + da);
+                const img = depthIntersect(r1.p, r1.d, r2.p, r2.d) || [xs, -D / n];
+                return { xs, a, th, img };
+            },
+            obliqueN: 1.33,
+            layers: (p, eyeHalfCm, eyeLeftCm) => {
+                const nw = 1.33, ng = p.ng, t = p.t, d = p.d;
+                // 由水中角 α 追蹤：水 → 玻璃 → 空氣；空氣中到達眼睛平面時的高度 = eyeHalf
+                const path = (a) => {
+                    const b = Math.asin(nw * Math.sin(a) / ng);
+                    const g = Math.asin(Math.min(1, ng * Math.sin(b)));
+                    const y1 = d * Math.tan(a), y0 = y1 + t * Math.tan(b), ye = y0 + eyeLeftCm * Math.tan(g);
+                    return { a, b, g, y1, y0, ye };
+                };
+                const a = depthSolve((aa) => path(aa).ye - eyeHalfCm, 0, Math.asin(1 / nw) - 1e-4);
+                const r = path(a);
+                const imgGlass = r.y1 / Math.tan(r.b);      // 第一次成像：距內壁（在玻璃中看）
+                const imgAir = r.y0 / Math.tan(r.g);        // 最終像：距外壁
+                return { nw, ng, t, d, ...r, imgGlass, imgAir,
+                    fGlass: d * ng / nw, fAir: t / ng + d / nw };
+            },
+
+            readouts: (p) => {
+                const L = LABS.apparent_depth;
+                if (p.mode === 'above') {
+                    const n = Number(p.nw);
+                    return [
+                        { label: '實際深度 h', value: `${p.h} cm` },
+                        { label: '視深 h′ = h·(1/n)', value: `${(p.h / n).toFixed(1)} cm` },
+                        { label: '看起來淺了', value: `${(p.h - p.h / n).toFixed(1)} cm（${Math.round((1 - 1 / n) * 100)}%）` },
+                        { label: '比值 h′/h = n′/n', value: `${(1 / n).toFixed(3)}` }
+                    ];
+                }
+                if (p.mode === 'below') {
+                    const n = Number(p.nw);
+                    return [
+                        { label: '實際高度 H', value: `${p.hb} cm` },
+                        { label: '看起來的高度 H′ = n·H', value: `${(p.hb * n).toFixed(1)} cm` },
+                        { label: '看起來高了', value: `${(p.hb * (n - 1)).toFixed(1)} cm` },
+                        { label: '比值 H′/H = n′/n', value: `${n.toFixed(2)}` }
+                    ];
+                }
+                if (p.mode === 'oblique') {
+                    const n = L.obliqueN, tr = L.obliqueTrace(p.X, p.D, p.eyeH, n);
+                    const app = -tr.img[1];
+                    return [
+                        { label: '視線與鉛直線夾角', value: `${deg(tr.th).toFixed(1)}°` },
+                        { label: '正上方公式 D/n', value: `${(p.D / n).toFixed(2)} m` },
+                        { label: '斜看時的視深', value: `${app.toFixed(2)} m（${Math.round(app / p.D * 100)}%）` },
+                        { label: '像往觀察者移近', value: `${Math.max(0, p.X - tr.img[0]).toFixed(2)} m` }
+                    ];
+                }
+                const nw = 1.33, ng = p.ng;
+                const fA = p.t / ng + p.d / nw;
+                return [
+                    { label: '魚到外壁的實際距離 t + d', value: `${(p.t + p.d).toFixed(1)} cm` },
+                    { label: '水的部分 d/n_w', value: `${(p.d / nw).toFixed(1)} cm` },
+                    { label: '玻璃的部分 t/n_g', value: `${(p.t / ng).toFixed(1)} cm` },
+                    { label: '總視距 t/n_g + d/n_w', value: `${fA.toFixed(1)} cm` },
+                    { label: '看起來近了', value: `${(p.t + p.d - fA).toFixed(1)} cm` }
+                ];
+            },
+            draw: (ctx, w, h, p, t) => {
+                const L = LABS.apparent_depth;
+                if (p.mode === 'oblique') return L.drawOblique(ctx, w, h, p, t || 0);
+                if (p.mode === 'below') return L.drawBelow(ctx, w, h, p, t || 0);
+                if (p.mode === 'layers') return L.drawLayers(ctx, w, h, p, t || 0);
+                return L.drawAbove(ctx, w, h, p, t || 0);
+            },
+
+            /* ---------- 岸上看水中 ---------- */
+            drawAbove: (ctx, w, h, p, t) => {
+                const n = Number(p.nw);
+                const ys = Math.round(h * 0.34), cx = Math.round(w * 0.42);
+                const s = (h - ys - 34) / 104;                  // px / cm
+                const eyeY = 34, eyeHalf = 22;
+                const g = LABS.apparent_depth.above(p, eyeHalf / s, (ys - eyeY) / s);
+                ctx.fillStyle = 'rgba(11,111,146,0.04)'; ctx.fillRect(0, 0, w, ys);
+                ctx.fillStyle = `rgba(11,111,146,${0.08 + (n - 1) * 0.12})`; ctx.fillRect(0, ys, w, h - ys);
+                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(0, ys); ctx.lineTo(w, ys); ctx.stroke();
+                dashed(ctx, cx, eyeY + 10, cx, h - 16, 'rgba(18,49,58,0.28)');
+
+                const fy = ys + g.h * s, iy = ys + g.hImg * s;
+                const fwd = [], back = [];
+                // 兩條邊緣光線 + 中央光線：水中實線，空氣中實線，反向延長虛線
+                [-1, 0, 1].forEach((sg) => {
+                    const xs = cx + sg * g.xs * s;
+                    const ex = xs + sg * Math.tan(g.th) * (ys - eyeY) * 1;
+                    if (sg !== 0) { fwd.push([[cx, fy], [xs, ys], [ex, eyeY + 8]]); back.push([[ex, eyeY + 8], [xs, ys], [cx, iy]]); }
+                    ctx.strokeStyle = C.blue; ctx.lineWidth = sg === 0 ? 1.3 : 2;
+                    ctx.globalAlpha = sg === 0 ? 0.5 : 1;
+                    ctx.beginPath(); ctx.moveTo(cx, fy); ctx.lineTo(xs, ys); ctx.stroke();
+                    ctx.globalAlpha = 1;
+                    if (sg !== 0) {
+                        arrow(ctx, xs, ys, xs + (ex - xs) * 0.55, ys + (eyeY + 8 - ys) * 0.55, C.blue, 2);
+                        ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(xs + (ex - xs) * 0.55, ys + (eyeY + 8 - ys) * 0.55); ctx.lineTo(ex, eyeY + 8); ctx.stroke();
+                        dashed(ctx, xs, ys, cx, iy, 'rgba(194,38,74,0.9)');
+                    }
+                });
+                depthFish(ctx, cx, fy, 15, 1, false);
+                depthFish(ctx, cx, iy, 15, 1, true);
+                depthEye(ctx, cx, eyeY, 'down');
+                LABS.apparent_depth.animate(ctx, w, t, fwd, back, [w - 8, 18, 'right']);
+
+                // 右側尺寸：實深與視深
+                const bx1 = Math.min(w - 120, cx + 70), bx2 = bx1 + 26;
+                depthBracket(ctx, bx1, ys, fy, '#a4540a', false);
+                depthBracket(ctx, bx2, ys, iy, C.rose, true);
+                const plate = 'rgba(255,255,255,0.86)';
+                labelFit(ctx, `實深 h = ${p.h} cm`, bx2 + 10, fy + 4, '#a4540a', 11, 'left', { clampW: w, plate });
+                labelFit(ctx, `視深 h′ = ${g.hFormula.toFixed(1)} cm`, bx2 + 10, Math.min(iy + 4, fy - 18), C.rose, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, '空氣 n′ = 1.00', 10, ys - 8, C.ink, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, `${depthMedium(n)} n = ${n.toFixed(2)}`, 10, ys + 18, C.blue, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, '眼睛（幾乎正上方）', cx + 18, eyeY + 4, C.ink, 11, 'left', { clampW: w });
+                labelFit(ctx, '虛線：折射光的反向延長線，交於像', 10, h - 10, C.rose, 10, 'left', { clampW: w, maxW: w - 20 });
+            },
+
+            /* ---------- 水中看岸上 ---------- */
+            drawBelow: (ctx, w, h, p, t) => {
+                const n = Number(p.nw);
+                const ys = Math.round(h * 0.70), cx = Math.round(w * 0.42);
+                const s = (ys - 30) / (n * 104);                // 讓 n·H 的像也放得下
+                const eyeY = h - 30, eyeHalf = 22;
+                const g = LABS.apparent_depth.below(p, eyeHalf / s, (eyeY - ys) / s);
+                ctx.fillStyle = 'rgba(11,111,146,0.03)'; ctx.fillRect(0, 0, w, ys);
+                ctx.fillStyle = `rgba(11,111,146,${0.08 + (n - 1) * 0.12})`; ctx.fillRect(0, ys, w, h - ys);
+                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(0, ys); ctx.lineTo(w, ys); ctx.stroke();
+                dashed(ctx, cx, 10, cx, eyeY - 10, 'rgba(18,49,58,0.28)');
+
+                const by = ys - g.H * s, iy = ys - g.HImg * s;
+                const fwd = [], back = [];
+                [-1, 0, 1].forEach((sg) => {
+                    const xs = cx + sg * g.xs * s;
+                    const ex = xs + sg * Math.tan(g.a) * (eyeY - ys);
+                    if (sg !== 0) { fwd.push([[cx, by], [xs, ys], [ex, eyeY - 8]]); back.push([[ex, eyeY - 8], [xs, ys], [cx, iy]]); }
+                    ctx.strokeStyle = C.orange; ctx.lineWidth = sg === 0 ? 1.3 : 2;
+                    ctx.globalAlpha = sg === 0 ? 0.5 : 1;
+                    ctx.beginPath(); ctx.moveTo(cx, by); ctx.lineTo(xs, ys); ctx.stroke();
+                    ctx.globalAlpha = 1;
+                    if (sg !== 0) {
+                        arrow(ctx, xs, ys, xs + (ex - xs) * 0.55, ys + (eyeY - 8 - ys) * 0.55, C.orange, 2);
+                        ctx.strokeStyle = C.orange; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(xs + (ex - xs) * 0.55, ys + (eyeY - 8 - ys) * 0.55); ctx.lineTo(ex, eyeY - 8); ctx.stroke();
+                        dashed(ctx, xs, ys, cx, iy, 'rgba(194,38,74,0.9)');
+                    }
+                });
+                depthBird(ctx, cx, by, 16, false);
+                depthBird(ctx, cx, iy, 16, true);
+                depthEye(ctx, cx, eyeY, 'up');
+                LABS.apparent_depth.animate(ctx, w, t, fwd, back, [w - 8, 18, 'right']);
+
+                const bx1 = Math.min(w - 120, cx + 70), bx2 = bx1 + 26;
+                depthBracket(ctx, bx1, ys, by, '#3a2f7a', false);
+                depthBracket(ctx, bx2, ys, iy, C.rose, true);
+                const plate = 'rgba(255,255,255,0.86)';
+                labelFit(ctx, `實際高度 H = ${p.hb} cm`, bx2 + 10, by + 4, '#3a2f7a', 11, 'left', { clampW: w, plate });
+                labelFit(ctx, `看起來 H′ = ${g.HFormula.toFixed(1)} cm`, bx2 + 10, Math.min(iy + 4, by - 18), C.rose, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, '空氣 n = 1.00', 10, ys - 8, C.ink, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, `${depthMedium(n)} n′ = ${n.toFixed(2)}`, 10, ys + 18, C.blue, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, '潛水者的眼睛', cx + 18, eyeY + 4, C.ink, 11, 'left', { clampW: w });
+            },
+
+            /* ---------- 斜看池底 ---------- */
+            drawOblique: (ctx, w, h, p, t) => {
+                const L = LABS.apparent_depth, n = L.obliqueN;
+                const xL = -0.9, xR = 8.6;
+                const s = Math.min((w - 20) / (xR - xL), (h - 58) / (p.D + p.eyeH + 0.5));
+                const ox = 10 - xL * s + ((w - 20) - (xR - xL) * s) / 2;
+                const ys = 22 + (p.eyeH + 0.25) * s;
+                const X = (x) => ox + x * s, Y = (y) => ys - y * s;
+                const yF = Y(-p.D);
+                // 池岸、池水、池底
+                ctx.fillStyle = 'rgba(11,111,146,0.03)'; ctx.fillRect(0, 0, w, ys);
+                ctx.fillStyle = 'rgba(11,111,146,0.16)'; ctx.fillRect(X(0), ys, w - X(0), yF - ys);
+                ctx.fillStyle = '#d9d2c3'; ctx.fillRect(0, ys, X(0), h - ys);
+                ctx.fillStyle = '#e7e2d6'; ctx.fillRect(X(0), yF, w - X(0), h - yF);
+                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.moveTo(X(0), ys); ctx.lineTo(w, ys); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(X(0), ys); ctx.lineTo(X(0), yF); ctx.lineTo(w, yF); ctx.stroke();
+                // 正上方公式的位置（只在正下方成立）
+                dashed(ctx, X(0), Y(-p.D / n), w, Y(-p.D / n), 'rgba(107,70,193,0.7)');
+                // 看起來的池底：每個池底點的像
+                ctx.strokeStyle = C.rose; ctx.lineWidth = 2.2; ctx.beginPath();
+                let first = true;
+                for (let x = 0; x <= xR + 0.01; x += 0.05) {
+                    const tr = L.obliqueTrace(x, p.D, p.eyeH, n);
+                    const px = X(tr.img[0]), py = Y(tr.img[1]);
+                    if (first) { ctx.moveTo(px, py); first = false; } else ctx.lineTo(px, py);
+                }
+                ctx.stroke();
+
+                // 選定的硬幣：真實光路與視線
+                const tr = L.obliqueTrace(p.X, p.D, p.eyeH, n);
+                const ex = X(0), ey = Y(p.eyeH);
+                const cxp = X(p.X), cyp = yF - 4;
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(cxp, cyp); ctx.lineTo(X(tr.xs), ys); ctx.stroke();
+                arrow(ctx, X(tr.xs), ys, X(tr.xs) + (ex - X(tr.xs)) * 0.5, ys + (ey - ys) * 0.5, C.blue, 2);
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(X(tr.xs) + (ex - X(tr.xs)) * 0.5, ys + (ey - ys) * 0.5); ctx.lineTo(ex + 6, ey + 4); ctx.stroke();
+                dashed(ctx, X(tr.xs), ys, X(tr.img[0]), Y(tr.img[1]), 'rgba(194,38,74,0.9)');
+                // 硬幣與它的像
+                ctx.fillStyle = '#d9a514'; ctx.strokeStyle = '#8a6400'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.ellipse(cxp, cyp, 9, 3.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.save(); ctx.setLineDash([3, 2]); ctx.strokeStyle = C.rose; ctx.fillStyle = 'rgba(194,38,74,0.15)';
+                ctx.beginPath(); ctx.ellipse(X(tr.img[0]), Y(tr.img[1]), 9, 3.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); ctx.restore();
+                depthEye(ctx, ex, ey, 'right');
+                LABS.apparent_depth.animate(ctx, w, t,
+                    [[[cxp, cyp], [X(tr.xs), ys], [ex + 6, ey + 4]]],
+                    [[[ex + 6, ey + 4], [X(tr.xs), ys], [X(tr.img[0]), Y(tr.img[1])]]], [w - 8, 16, 'right']);
+                // 人（簡化）：從腳到眼
+                ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(ex - 10, ey + 8); ctx.lineTo(ex - 10, ys); ctx.stroke();
+
+                const plate = 'rgba(255,255,255,0.86)';
+                labelFit(ctx, `正上方公式 D/n = ${(p.D / n).toFixed(2)} m`, w - 8, Y(-p.D / n) - 5, C.violet, 10, 'right', { clampW: w, plate });
+                labelFit(ctx, '紅線：看起來的池底', w - 8, yF + 29, C.rose, 10, 'right', { clampW: w, plate });
+                labelFit(ctx, `實際池底 D = ${p.D.toFixed(1)} m`, w - 8, yF + 15, '#6b5a2e', 10, 'right', { clampW: w, plate });
+                labelFit(ctx, '空氣', X(0) + 6, ys - 6, C.ink, 10, 'left', { clampW: w, plate });
+                labelFit(ctx, `水 n = ${n.toFixed(2)}`, X(0) + 6, yF - 6, C.blue, 10, 'left', { clampW: w, plate });
+            },
+
+            /* ---------- 水族箱：空氣—玻璃—水 ---------- */
+            drawLayers: (ctx, w, h, p, t) => {
+                const L = LABS.apparent_depth;
+                const ay = Math.round(h * 0.47);                       // 光軸
+                const eyeX = 26, x0 = Math.round(26 + Math.max(60, w * 0.16));   // 外壁位置
+                const s = (w - x0 - 34) / (p.t + p.d);                 // px / cm
+                const eyeHalf = 18;
+                const g = L.layers(p, eyeHalf / s, (x0 - eyeX) / s);
+                const X = (cm) => x0 + cm * s;                          // 從外壁往水裡量
+                const xi = X(p.t);
+                // 區域
+                ctx.fillStyle = 'rgba(11,111,146,0.03)'; ctx.fillRect(0, 0, x0, h);
+                ctx.fillStyle = 'rgba(110,170,190,0.38)'; ctx.fillRect(x0, 0, xi - x0, h);
+                ctx.fillStyle = 'rgba(11,111,146,0.15)'; ctx.fillRect(xi, 0, w - xi, h);
+                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1.3;
+                ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, h); ctx.moveTo(xi, 0); ctx.lineTo(xi, h); ctx.stroke();
+                dashed(ctx, eyeX, ay, w - 6, ay, 'rgba(18,49,58,0.28)');
+
+                const fx = X(p.t + p.d);
+                const steps = p.steps === 'steps';
+                const fwd = [], back = [];
+                [-1, 1].forEach((sg) => {
+                    const p1 = [xi, ay - sg * g.y1 * s], p0 = [x0, ay - sg * g.y0 * s], pe = [eyeX + 8, ay - sg * eyeHalf];
+                    fwd.push([[fx, ay], p1, p0, pe]); back.push([pe, p0, [X(g.imgAir), ay]]);
+                    ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(fx, ay); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p0[0], p0[1]); ctx.stroke();
+                    arrow(ctx, p0[0], p0[1], (p0[0] + pe[0]) / 2, (p0[1] + pe[1]) / 2, C.blue, 2);
+                    ctx.beginPath(); ctx.moveTo((p0[0] + pe[0]) / 2, (p0[1] + pe[1]) / 2); ctx.lineTo(pe[0], pe[1]); ctx.stroke();
+                    dashed(ctx, p0[0], p0[1], X(g.imgAir), ay, 'rgba(194,38,74,0.9)');
+                    if (steps) dashed(ctx, p1[0], p1[1], xi + g.imgGlass * s, ay, 'rgba(107,70,193,0.85)');
+                });
+                depthFish(ctx, fx, ay, 14, -1, false);
+                if (steps) {
+                    ctx.save(); ctx.globalAlpha = 0.9;
+                    ctx.setLineDash([3, 3]); ctx.strokeStyle = C.violet; ctx.lineWidth = 1.4;
+                    const gx = xi + g.imgGlass * s;
+                    ctx.beginPath(); ctx.arc(gx, ay, 6, 0, Math.PI * 2); ctx.stroke();
+                    ctx.restore();
+                }
+                depthFish(ctx, X(g.imgAir), ay, 14, -1, true);
+                depthEye(ctx, eyeX, ay, 'right');
+                LABS.apparent_depth.animate(ctx, w, t, fwd, back, [6, ay + 44, 'left']);
+
+                // 頂部：介質名稱（玻璃單獨一行，避免薄玻璃時與水的標籤相撞）
+                const plate = 'rgba(255,255,255,0.86)';
+                labelFit(ctx, '空氣 n = 1.00', 6, 16, C.ink, 11, 'left', { clampW: w, plate, maxW: x0 - 10 });
+                labelFit(ctx, `水 n_w = ${g.nw.toFixed(2)}`, Math.max(xi + 6, x0 + 60), 16, C.blue, 11, 'left', { clampW: w, plate });
+                labelFit(ctx, `玻璃 n_g = ${g.ng.toFixed(2)}，厚 t`, x0 + 4, 34, '#2e6f86', 11, 'left', { clampW: w, plate });
+
+                // 底部：距離尺寸（都從外壁量起）
+                const rowH = 22, base = h - 12 - (steps ? 2 : 1) * rowH;
+                const bar = (y, xa, xb, color, dash, text) => {
+                    ctx.save(); if (dash) ctx.setLineDash([4, 3]);
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.4;
+                    ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xb, y);
+                    ctx.moveTo(xa, y - 4); ctx.lineTo(xa, y + 4); ctx.moveTo(xb, y - 4); ctx.lineTo(xb, y + 4); ctx.stroke();
+                    ctx.restore();
+                    labelFit(ctx, text, Math.max(xb + 6, x0 + 6), y + 4, color, 10, 'left', { clampW: w, plate });
+                };
+                bar(base - rowH, x0, fx, '#a4540a', false, `實際 t + d = ${(p.t + p.d).toFixed(1)} cm`);
+                if (steps) bar(base, xi, xi + g.imgGlass * s, C.violet, true, `第一面成像（在玻璃中看）：距內壁 ${g.fGlass.toFixed(1)} cm`);
+                bar(base + (steps ? rowH : 0), x0, X(g.imgAir), C.rose, true, `${steps ? '第二面成像（從空氣看）' : '從空氣看'}：距外壁 ${g.fAir.toFixed(1)} cm`);
             }
         };
 

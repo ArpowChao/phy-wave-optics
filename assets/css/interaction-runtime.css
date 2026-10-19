@@ -288,3 +288,18 @@
     }
     .lab-speed input[type="range"] { flex: 1; width: auto; }
 }
+
+/* 斯涅爾窗：真實照片對照 */
+.snell-photos { margin: 0.9rem 0 0.4rem; }
+.snell-photos h5 { margin: 0 0 0.25rem; font-size: 0.95rem; }
+.snell-photos > p { margin: 0 0 0.7rem; font-size: 0.82rem; color: var(--text-muted, #5b7480); }
+.snell-photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 0.75rem; }
+.snell-photo { margin: 0; display: flex; flex-direction: column; border: 1px solid rgba(15, 60, 80, 0.12); border-radius: 10px; overflow: hidden; background: #fff; }
+.snell-photo-img { display: block; position: relative; aspect-ratio: 4 / 3; background: #0b161c; }
+.snell-photo-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.snell-photo-fallback { display: none; position: absolute; inset: 0; align-items: center; justify-content: center; padding: 1rem; text-align: center; color: #cfe9f2; font-size: 0.8rem; }
+.snell-photo-img.is-missing .snell-photo-fallback { display: flex; }
+.snell-photo figcaption { display: flex; flex-direction: column; gap: 0.3rem; padding: 0.6rem 0.7rem 0.7rem; font-size: 0.8rem; line-height: 1.5; flex: 1; }
+.snell-photo figcaption small { color: #6b8590; font-size: 0.72rem; }
+.snell-photo figcaption small a { color: inherit; }
+.snell-photo-apply { align-self: flex-start; margin-top: auto; }

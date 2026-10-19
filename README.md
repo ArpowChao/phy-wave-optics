@@ -32,6 +32,10 @@ python -m http.server 8000
 
 N12 的盪鞦韆動畫提供「正弦波做功對照」與「受迫鞦韆」兩種視角。可調推力頻率比、相位、推力與阻尼，暫停、逐步或拖曳時間；同步看推力 F、速度 v、功率 Fv 及累積做功。固定波形不把累積功當作振幅；受迫小角度模型以 RK4 同時計算運動、外力功與耗散，驗證 E − E₀ = W − D。
 
+N13–N15 的司乃耳實驗分為「單一光線」「水下光扇」「斯涅爾窗（水下仰望）」三種模式。單一光線依非偏振光的菲涅耳公式顯示反射率 R，可看到 R 在臨界角處連續升到 100%。水下光扇對應水槽光扇實驗，標出出光圓 r = h·tanθc。斯涅爾窗左側為側視光路，右側以逐像素光線追蹤算出魚眼仰望影像，可切換泳池／深海與水面波動；畫布下方附真實照片對照，按「套用到模擬」即可把參數調成接近照片的情況。
+
+N14 的視深實驗分為「岸上看水中」「斜看池底」「水中看岸上」「水族箱：空氣—玻璃—水」四種模式。像點一律由兩條相鄰折射光線的反向延長線交點求得；動畫先讓光從物體走到眼睛，再由眼睛沿直線反推到像。斜看模式畫出整片池底「看起來的位置」，多層模式可逐面成像，驗證總視距 = Σ 厚度／折射率。
+
 ## 檔案
 
 | 檔案 | 用途 |
@@ -47,6 +51,7 @@ N12 的盪鞦韆動畫提供「正弦波做功對照」與「受迫鞦韆」兩�
 | `assets/js/wave-runtime.js` | 時鐘、高 DPI 畫布與切換頁面的資源清理 |
 | `assets/js/swing-work.js` | 共振頁盪鞦韆的模型、做功動畫與操作 |
 | `assets/css/swing-work.css` | 鞦韆控制與數值的響應式排版 |
+| `assets/images/snell/` | 斯涅爾窗真實照片對照（來源見下方） |
 
 ## 修改後驗證
 
@@ -72,5 +77,7 @@ node scripts/audit_swing_work.js
 物理敘述比對 [OpenStax 波的反射與疊加](https://openstax.org/books/university-physics-volume-1/pages/16-5-interference-of-waves)、[聲速](https://openstax.org/books/university-physics-volume-1/pages/17-2-speed-of-sound)、[共振](https://openstax.org/books/college-physics-2e/pages/16-8-forced-oscillations-and-resonance) 與 [有限縫寬雙縫繞射](https://openstax.org/books/university-physics-volume-3/pages/4-3-double-slit-diffraction)。塔可馬吊橋影片採 [WSDOT 的扭轉顫振說明](https://www.wsdot.wa.gov/TNBhistory/bridges-failure.htm)，列為延伸，不當作簡單受迫共振。
 
 歷屆試題圖片來自大考中心公開試卷；題意整理與補充題以文字標示，未經佐證的答對率已移除。109 年樂器題是第 15 題；資源檔名 `drte-109-06.png` 與識別碼 `DRTE-109-06` 是舊名稱，保留以避免破壞既有錯題紀錄。
+
+斯涅爾窗照片：夕陽與 Lembeh、Manado 照片為 Andrew Marriott 所攝，出自 [DivePhotoGuide〈An In-Depth Guide to Shooting Snell's Window〉](https://www.divephotoguide.com/underwater-photography-techniques/article/underwater-photographer-s-guide-snell-s-window/)，其中 Lembeh 與 Manado 兩組以原文圖片連結載入；鯊魚與自由潛水者兩張由使用者提供，來源待補。權利歸原作者所有。
 
 感謝新竹市立成德高中陳家騏老師提供水波干涉探究模擬器原始設計。本機動畫由原專案以 Manim 製作；外部影片保留原始來源。原創動畫角色與試題圖片的既有權利歸屬不因介面更新而改變。
