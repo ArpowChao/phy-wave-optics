@@ -314,3 +314,18 @@
 
 .lab-check label { justify-content: flex-start; align-items: center; cursor: pointer; padding: 0.35rem 0; }
 .lab-check input[type="checkbox"] { width: 1.05rem; height: 1.05rem; accent-color: #0b6f92; margin: 0; cursor: pointer; }
+
+/* 視深評估練習 */
+.depth-practice { margin: 0.9rem 0; padding: 0.9rem 1rem; border: 1px solid rgba(11, 111, 146, 0.18); border-radius: 10px; background: rgba(11, 111, 146, 0.04); }
+.depth-practice h5 { margin: 0 0 0.35rem; font-size: 0.95rem; }
+.depth-practice .dp-q { margin: 0 0 0.7rem; line-height: 1.7; }
+.depth-practice .dp-depth { display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; font-weight: 600; margin-bottom: 0.7rem; }
+.depth-practice .dp-input { width: 6.5rem; padding: 0.4rem 0.5rem; border: 1px solid #bfcfcb; border-radius: 7px; font: inherit; }
+.depth-practice .dp-zone > span { display: block; font-weight: 600; margin-bottom: 0.4rem; }
+.depth-practice .dp-choices { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 0.7rem; }
+.depth-practice .dp-choice { display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.35rem 0.65rem; border: 1px solid rgba(15, 60, 80, 0.16); border-radius: 999px; background: #fff; cursor: pointer; font-size: 0.85rem; }
+.depth-practice .dp-choice input { accent-color: #0b6f92; margin: 0; }
+.depth-practice .dp-feedback p { margin: 0.35rem 0; line-height: 1.7; }
+.depth-practice .dp-ok { color: #12805c; } .depth-practice .dp-no { color: #c2264a; }
+.depth-practice .dp-warn { color: #c2264a; font-weight: 700; }
+.depth-practice .dp-ext { color: #5b7480; font-size: 0.85rem; }
