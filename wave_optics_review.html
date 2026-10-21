@@ -1320,6 +1320,7 @@
                 'DRTE-109-06': { lab: 'pipes', mode: 'closed', guide: "💡 <b>開管 vs 閉管諧音輔助思考</b>：切換「開管」與「閉管」，比較開管基音 $f = \\frac{v}{2L}$ 與閉管第一泛音/第三諧音 $f = \\frac{3v}{4L'}$ 的管長比！" },
                 'N14-LAKE-1': { lab: 'apparent_depth', mode: 'practice', guide: '<b>湖邊玩水</b>：在「評估練習」模式先換算實際深度，再看水面落在身體哪個位置；按「換一題」換身高與深度。' },
                 'N14-LAKE-2': { lab: 'apparent_depth', mode: 'practice', guide: '<b>同一個湖、不同身高</b>：在「評估練習」模式作答後，比較實際水位與「以為的水位」。' },
+                'N14-LAKE-4': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來到腰？</b>在「評估練習」模式用「身體感覺」出題，看看不同身高時實際水位是不是都差不多。' },
                 'N14-LAKE-3': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來只到膝蓋？</b>在「評估練習」模式揭曉後，對照膝、胯、肚臍的高度。' },
                 'DRTE-109-14': { lab: 'snell', mode: null, guide: '<b>逐一畫界面</b>：觀察高、低折射率之間的偏折方向。題目夾層的兩界面平行，且兩外側介質相同，因此出射方向與入射方向平行。' }
             };
@@ -3216,7 +3217,7 @@
          * 身體部位高度採常用人體比例（以身高 H 為 1）：膝 0.285、胯 0.47、肚臍 0.60、胸 0.72、肩 0.82、下巴 0.87、口鼻約 0.90。
          * 分區以這些位置為界；出題時避開分界 ±0.02，避免答案模稜兩可。 */
         const BODY_MARKS = [
-            { key: 'knee', label: '膝', f: 0.285 }, { key: 'waist', label: '肚臍', f: 0.60 },
+            { key: 'knee', label: '膝', f: 0.285 }, { key: 'crotch', label: '胯', f: 0.47 }, { key: 'waist', label: '肚臍', f: 0.60 },
             { key: 'chest', label: '胸', f: 0.72 }, { key: 'shoulder', label: '肩', f: 0.82 }, { key: 'mouth', label: '口鼻', f: 0.90 }
         ];
         const BODY_ZONES = [
@@ -3243,10 +3244,49 @@
                 if (near || (tries < 1500 && bodyZone(r) !== target)) continue;
                 // 多數題目刻意讓「以為的位置」與「實際位置」落在不同區，凸顯錯覺
                 if (target.key !== 'z0' && bodyZone(r) === bodyZone(rp) && Math.random() < 0.75) continue;
-                return { H, hp, real, r, rp, zone: bodyZone(r), illusion: bodyZone(rp) };
+                return numQ({ H, hp, real, r, rp });
             }
-            return { H: 160, hp: 90, real: 120, r: 0.75, rp: 0.5625, zone: bodyZone(0.75), illusion: bodyZone(0.5625) };
+            return numQ({ H: 160, hp: 90, real: 120, r: 0.75, rp: 0.5625 });
         }
+        function numQ(q) {
+            const zone = bodyZone(q.r), illusion = bodyZone(q.rp);
+            return Object.assign(q, { kind: 'num', zone, illusion, answerKey: zone.key, choices: BODY_ZONES,
+                realLabel: zone.label, appLabel: illusion.label });
+        }
+        /* 用身體感覺估：一般人會說「看起來大概到我的腰」，而不是「看起來 100 cm」。
+         * 因為比較的是自己的身體，實際位置 = 看起來的位置 × 4/3，與身高無關。
+         * 選用的部位都讓 ×4/3（或 ×3/4）後落在另一個部位附近，答案不會模稜兩可。 */
+        const LANDMARKS = {
+            knee: { label: '膝蓋', f: 0.285 }, thigh: { label: '大腿', f: 0.38 }, crotch: { label: '胯下（臀部）', f: 0.47 },
+            waist: { label: '腰（肚臍）', f: 0.60 }, chest: { label: '胸口', f: 0.72 }, shoulder: { label: '肩膀', f: 0.82 },
+            mouth: { label: '淹過口鼻', f: 0.90 }
+        };
+        const lmChoices = (keys) => keys.map((k) => ({ key: k, label: LANDMARKS[k].label }));
+        const nearestLm = (r, keys) => r >= 0.88 && keys.includes('mouth') ? 'mouth'
+            : keys.reduce((a, k) => Math.abs(LANDMARKS[k].f - r) < Math.abs(LANDMARKS[a].f - r) ? k : a, keys[0]);
+        function bodyQuestion() {
+            const heights = [150, 160, 170, 180];
+            const H = heights[Math.floor(Math.random() * heights.length)];
+            if (Math.random() < 0.65) {
+                // 順向：看起來到某部位 → 實際到哪裡
+                const src = ['knee', 'thigh', 'crotch', 'waist', 'chest'][Math.floor(Math.random() * 5)];
+                const rp = LANDMARKS[src].f, r = rp * LAKE_N;
+                const keys = ['thigh', 'crotch', 'waist', 'chest', 'shoulder', 'mouth'];
+                const ans = nearestLm(r, keys);
+                return { kind: 'fwd', H, hp: rp * H, real: r * H, r, rp, src, answerKey: ans, choices: lmChoices(keys),
+                    realLabel: LANDMARKS[ans].label, appLabel: LANDMARKS[src].label };
+            }
+            // 反向：想讓水只到某部位 → 站在岸上看，最多只能「看起來」到哪裡
+            const target = ['thigh', 'crotch', 'waist', 'shoulder'][Math.floor(Math.random() * 4)];
+            const r = LANDMARKS[target].f, rp = r / LAKE_N;
+            const keys = ['knee', 'thigh', 'crotch', 'waist', 'chest'];
+            const ans = nearestLm(rp, keys);
+            return { kind: 'rev', H, hp: rp * H, real: r * H, r, rp, target, answerKey: ans, choices: lmChoices(keys),
+                realLabel: LANDMARKS[target].label, appLabel: LANDMARKS[ans].label };
+        }
+        /* 「水到胸口」／「淹過口鼻」：後者本身已有動詞，不再加「水到」 */
+        const toWhere = (label) => label.startsWith('淹') ? label : `水到${label}`;
+        const newLakeQuestion = (style) => style === 'number' ? lakeQuestion() : bodyQuestion();
         /* 簡化的人形：腳底在 (x, yFeet)，身高 Hpx；ghost 時畫成虛線 */
         function drawPerson(ctx, x, yFeet, Hpx, style) {
             const st = style || {};
@@ -3280,7 +3320,7 @@
                 above: '站在岸上幾乎正上方看水中的魚：魚發出的光從水進入空氣時偏離法線。把進入眼睛的兩條光線反向延長（虛線），交點就是看到的魚，位置比實際淺。改變深度與介質，比較 h′ 與 h·(1/n)。',
                 oblique: '站在池邊斜看池底的硬幣：視線越斜，像越往上浮、也越靠近自己。紅色曲線是整片池底「看起來的位置」——遠處的池底看起來特別淺。虛線是只在正上方才成立的 h/n。',
                 below: '潛在水中往上看岸上的鳥：光從空氣進入水中偏向法線。反向延長進入眼睛的光線，交點比鳥實際的位置高，H′ ≈ n·H。',
-                practice: '評估練習：從岸上幾乎正上方看清澈的湖，湖底「看起來」比實際淺。先把看起來的深度換回實際深度，再判斷走進去站直時水面會到身體哪裡。作答後畫面會揭曉，並對照「以為的位置」。',
+                practice: '評估練習：一般人估水深是拿自己的身體比，例如「看起來大概到腰」。從岸上幾乎正上方看清澈的湖，湖底「看起來」比實際淺；判斷走進去站直時水面實際會到哪裡（或反過來：想讓水只到某處，看起來最多只能到哪裡）。作答後畫面會揭曉。也可切換成用公分數字作答。',
                 stack: '先選情境。「全反射判斷」：光由最上層往下入射，調整 θ₁，看光在哪個界面全反射；右側標出每個界面是否可能全反射與所需角度。「視深」：物體在最底層，觀察者在上方空氣中。每一層的厚度與折射率都能調整；光在每個界面依司乃耳定律折射（n·sinθ 在平行界面間守恆）。空氣中的光線反向延長後交會成像，比較近軸像 Σt/n；把光線張角調大，看邊緣光線的像如何偏離。',
                 layers: '從展示窗外看魚：光依序經過「水 → 壓克力（或玻璃）→ 空氣」兩個界面。先選情境：家用魚缸的玻璃約 1 公分，大型水族館的壓克力窗厚達數十公分。每經過一個界面就成一次像，前一次的像是下一個界面的物；總視距 = t/n_g + d/n_w。'
             })[p.mode] || '',
@@ -3342,16 +3382,23 @@
                 // 評估練習：作答面板（只在「評估練習」模式顯示）
                 const roAnchor = host.querySelector('.lab-stage');
                 if (roAnchor && !host.querySelector('.depth-practice')) {
-                    const zoneBtns = BODY_ZONES.map((z) => `<label class="dp-choice"><input type="radio" name="dp-zone-${host.id}" value="${z.key}"><span>${z.label}</span></label>`).join('');
                     roAnchor.insertAdjacentHTML('afterend', `
                         <section class="depth-practice" hidden>
                             <div class="dp-head">
                                 <h5>評估練習：湖邊玩水</h5>
-                                <button type="button" class="lab-btn dp-new" data-dp="next">🎲 重新出題</button>
+                                <div class="dp-head-tools">
+                                    <label class="dp-style">出題方式
+                                        <select class="lab-select dp-style-sel">
+                                            <option value="body">用身體感覺（一般人的估法）</option>
+                                            <option value="number">用公分數字（進階）</option>
+                                        </select>
+                                    </label>
+                                    <button type="button" class="lab-btn dp-new" data-dp="next">🎲 重新出題</button>
+                                </div>
                             </div>
                             <p class="dp-q"></p>
                             <label class="dp-depth">① 湖水實際深度約為 <input type="number" inputmode="decimal" min="0" step="1" class="dp-input" aria-label="實際深度（公分）"> cm</label>
-                            <div class="dp-zone"><span>② 走進去站直時，水面大約會到身體哪裡？</span><div class="dp-choices">${zoneBtns}</div></div>
+                            <div class="dp-zone"><span class="dp-ask"></span><div class="dp-choices"></div></div>
                             <div class="lab-buttons">
                                 <button type="button" class="lab-btn" data-dp="check">檢查答案</button>
                                 <button type="button" class="lab-btn" data-dp="hint">提示</button>
@@ -3360,11 +3407,27 @@
                         </section>`);
                     const panel = host.querySelector('.depth-practice');
                     const fb = panel.querySelector('.dp-feedback'), inp = panel.querySelector('.dp-input');
+                    const depthRow = panel.querySelector('.dp-depth'), styleSel = panel.querySelector('.dp-style-sel');
                     const fill = () => {
                         const q = L.lakeQ(params);
-                        panel.querySelector('.dp-q').innerHTML = `身高 <b>${q.H} cm</b> 的同學在湖邊，從幾乎正上方往下看，覺得清澈的湖底「看起來」約 <b>${q.hp} cm</b> 深。水的折射率取 4/3。`;
+                        const name = `dp-zone-${host.id}`;
+                        depthRow.style.display = q.kind === 'num' ? '' : 'none';
+                        let prompt, ask;
+                        if (q.kind === 'num') {
+                            prompt = `身高 <b>${q.H} cm</b> 的同學在湖邊，從幾乎正上方往下看，覺得清澈的湖底「看起來」約 <b>${q.hp} cm</b> 深。水的折射率取 4/3。`;
+                            ask = '② 走進去站直時，水面大約會到身體哪裡？';
+                        } else if (q.kind === 'fwd') {
+                            prompt = `身高 <b>${q.H} cm</b> 的同學站在清澈的湖邊，從幾乎正上方往下看，覺得湖水「大概到我的<b>${q.appLabel}</b>」那麼深。`;
+                            ask = '走進去站直時，水面實際會到哪裡？';
+                        } else {
+                            prompt = `身高 <b>${q.H} cm</b> 的同學想找一處水只到<b>${q.realLabel}</b>的地方玩水。他站在岸上從幾乎正上方往下看。`;
+                            ask = '湖水最多只能「看起來」到他身體的哪裡，走進去才不會超過' + q.realLabel + '？';
+                        }
+                        panel.querySelector('.dp-q').innerHTML = prompt;
+                        panel.querySelector('.dp-ask').textContent = ask;
+                        panel.querySelector('.dp-choices').innerHTML = q.choices.map((c) =>
+                            `<label class="dp-choice"><input type="radio" name="${name}" value="${c.key}"><span>${c.label}</span></label>`).join('');
                     };
-                    // 練習模式用不到時間軸、播放與回到預設值，先收起來
                     const scrub = host.querySelector('.lab-scrub');
                     const playRow = host.querySelector('[data-role="toggle"]')?.closest('.lab-buttons');
                     const showPanel = () => {
@@ -3377,38 +3440,59 @@
                     host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', showPanel));
                     showPanel();
                     const ok = (b) => b ? '<b class="dp-ok">✔</b>' : '<b class="dp-no">✘</b>';
+                    const rule = '<p class="dp-rule">規則：看起來到哪裡，實際就再高出 1/3（× 4/3），和身高無關——膝蓋 → 大腿、胯下 → 腰、<b>腰 → 肩膀</b>、胸口 → 淹過口鼻。</p>';
+                    const safety = (r, appLabel) => r >= 0.88 ? `<p class="dp-warn">水會淹過口鼻，有溺水危險！看起來只到${appLabel}，千萬不要貿然下水。</p>`
+                        : r >= 0.78 ? '<p class="dp-warn">水到肩膀附近，很難站穩，也容易被水流帶走。</p>' : '';
+                    const newQuestion = () => {
+                        // 只換題目，不重新載入頁面，模式與畫面都留在原地
+                        params._lake = newLakeQuestion(params._lakeStyle || 'body'); params._lakeChecked = false;
+                        inp.value = ''; fb.innerHTML = ''; fill(); paint(); syncOutputs();
+                    };
+                    disposers.addEventListener(styleSel, 'change', () => { params._lakeStyle = styleSel.value; newQuestion(); });
                     disposers.addEventListener(panel.querySelector('[data-dp="check"]'), 'click', () => {
                         const q = L.lakeQ(params);
-                        const val = Number(inp.value), pick = panel.querySelector('input[type="radio"]:checked');
-                        if (!inp.value || !Number.isFinite(val) || !pick) { fb.innerHTML = '請先填寫實際深度，並選擇水面會到的部位。'; return; }
-                        const dOK = Math.abs(val - q.real) <= 2, zOK = pick.value === q.zone.key;
-                        let dNote = '';
-                        if (!dOK && Math.abs(val - q.hp * 0.75) <= 2) dNote = '（你乘了 3/4，方向反了：實際比看起來<b>深</b>）';
-                        else if (!dOK && Math.abs(val - q.hp) <= 2) dNote = '（這是看起來的深度，還沒換算）';
-                        const zNote = !zOK && pick.value === q.illusion.key && q.illusion !== q.zone ? '（這是用「看起來的深度」判斷的結果）' : '';
-                        const extra = q.real - q.hp;
-                        let safe = '';
-                        if (q.r >= 0.88) safe = '<p class="dp-warn">水會淹過口鼻，有溺水危險！看起來只到' + q.illusion.label + '，千萬不要貿然下水。</p>';
-                        else if (q.r >= 0.80) safe = '<p class="dp-warn">水到肩膀以上，很難站穩，也容易被水流帶走。</p>';
+                        const pick = panel.querySelector('input[type="radio"]:checked');
+                        const val = Number(inp.value);
+                        if (!pick || (q.kind === 'num' && (!inp.value || !Number.isFinite(val)))) {
+                            fb.innerHTML = q.kind === 'num' ? '請先填寫實際深度，並選擇水面會到的部位。' : '請先選一個答案。';
+                            return;
+                        }
                         params._lakeChecked = true;
-                        fb.innerHTML = `
-                            <p>${ok(dOK)} ① 實際深度 h = (4/3) × ${q.hp} = <b>${q.real.toFixed(0)} cm</b>；你的答案 ${val} cm ${dNote}</p>
-                            <p>${ok(zOK)} ② ${q.real.toFixed(0)} ÷ ${q.H} ≈ <b>${Math.round(q.r * 100)}%</b> 身高 → 水到<b>${q.zone.label}</b> ${zNote}</p>
-                            <p>錯覺：只看視深，${q.hp} ÷ ${q.H} ≈ ${Math.round(q.rp * 100)}%，會以為只到${q.illusion.label}；實際多了 ${extra.toFixed(0)} cm。</p>
-                            ${safe}
-                            <p class="dp-ext">延伸：若站在岸邊斜看遠處，湖底看起來更淺，實際可能比 4/3 倍還深（見「斜看池底」）。</p>`;
+                        const pickLabel = q.choices.find((c) => c.key === pick.value)?.label;
+                        const good = pick.value === q.answerKey;
+                        const cmApp = Math.round(q.hp), cmReal = Math.round(q.real);
+                        if (q.kind === 'fwd') {
+                            const naive = !good && pick.value === q.src ? '（你選的是「看起來」的位置，還沒換算）' : '';
+                            fb.innerHTML = `
+                                <p>${ok(good)} 看起來到${q.appLabel}：約身高 ${Math.round(q.rp * 100)}%（${q.H} cm 的人約 ${cmApp} cm）。實際 = 4/3 × ${cmApp} ≈ <b>${cmReal} cm</b>，約身高 ${Math.round(q.r * 100)}% → <b>${toWhere(q.realLabel)}</b>。你選：${pickLabel} ${naive}</p>
+                                ${rule}${safety(q.r, q.appLabel)}`;
+                        } else if (q.kind === 'rev') {
+                            const naive = !good && pick.value === q.target ? '（看起來已經到這裡，實際就超過了）' : '';
+                            fb.innerHTML = `
+                                <p>${ok(good)} 想要水只到${q.realLabel}：約身高 ${Math.round(q.r * 100)}%（約 ${cmReal} cm）。看起來的深度 = 3/4 × ${cmReal} ≈ <b>${cmApp} cm</b>，約身高 ${Math.round(q.rp * 100)}% → 最多只能看起來到<b>${q.appLabel}</b>。你選：${pickLabel} ${naive}</p>
+                                ${rule}<p>反過來說：看起來已經到${q.realLabel}的地方，實際會到 ${Math.round(q.r * 4 / 3 * 100)}% 身高，比你想的深。</p>`;
+                        } else {
+                            const dOK = Math.abs(val - q.real) <= 2;
+                            let dNote = '';
+                            if (!dOK && Math.abs(val - q.hp * 0.75) <= 2) dNote = '（你乘了 3/4，方向反了：實際比看起來<b>深</b>）';
+                            else if (!dOK && Math.abs(val - q.hp) <= 2) dNote = '（這是看起來的深度，還沒換算）';
+                            const zNote = !good && pick.value === q.illusion.key && q.illusion !== q.zone ? '（這是用「看起來的深度」判斷的結果）' : '';
+                            fb.innerHTML = `
+                                <p>${ok(dOK)} ① 實際深度 h = (4/3) × ${q.hp} = <b>${q.real.toFixed(0)} cm</b>；你的答案 ${val} cm ${dNote}</p>
+                                <p>${ok(good)} ② ${q.real.toFixed(0)} ÷ ${q.H} ≈ <b>${Math.round(q.r * 100)}%</b> 身高 → <b>${toWhere(q.zone.label)}</b> ${zNote}</p>
+                                <p>錯覺：只看視深，${q.hp} ÷ ${q.H} ≈ ${Math.round(q.rp * 100)}%，會以為只到${q.illusion.label}；實際多了 ${(q.real - q.hp).toFixed(0)} cm。</p>
+                                ${safety(q.r, q.illusion.label)}`;
+                        }
+                        fb.innerHTML += '<p class="dp-ext">延伸：若站在岸邊斜看遠處，湖底看起來更淺，實際可能比 4/3 倍還深（見「斜看池底」）。</p>';
                         paint(); syncOutputs();
                     });
                     disposers.addEventListener(panel.querySelector('[data-dp="hint"]'), 'click', () => {
-                        fb.innerHTML = '<p>提示：近乎正上方看時 h′ = h × n′/n = h × 3/4，所以實際深度 h = h′ × 4/3。再算「實際深度 ÷ 身高」，對照：膝 28%、胯 47%、肚臍 60%、胸 72%、肩 82%、口鼻約 90%。</p>';
+                        const q = L.lakeQ(params);
+                        fb.innerHTML = q.kind === 'num'
+                            ? '<p>提示：近乎正上方看時 h′ = h × 3/4，所以實際深度 h = h′ × 4/3。再算「實際深度 ÷ 身高」，對照：膝 28%、胯 47%、肚臍 60%、胸 72%、肩 82%、口鼻約 90%。</p>'
+                            : '<p>提示：實際深度是看起來的 4/3 倍。把部位換成身高的百分比：膝 28%、大腿 38%、胯下 47%、肚臍 60%、胸 72%、肩 82%、口鼻約 90%，' + (q.kind === 'fwd' ? '再乘 4/3' : '再乘 3/4') + '，看落在哪個部位附近。</p>';
                     });
-                    disposers.addEventListener(panel.querySelector('[data-dp="next"]'), 'click', () => {
-                        // 只換題目，不重新載入頁面，模式與畫面都留在原地
-                        params._lake = lakeQuestion(); params._lakeChecked = false;
-                        inp.value = ''; panel.querySelectorAll('input[type="radio"]').forEach((r) => { r.checked = false; });
-                        fb.innerHTML = ''; fill(); paint(); syncOutputs();
-                        inp.focus({ preventScroll: true });
-                    });
+                    disposers.addEventListener(panel.querySelector('[data-dp="next"]'), 'click', () => { newQuestion(); inp.focus({ preventScroll: true }); });
                 }
                 // 多層類題：一次帶入題目的折射率，切到全反射判斷
                 const dirSel = host.querySelector('[id$="apparent_depth-stackDir"]');
@@ -3624,11 +3708,17 @@
                 }
                 if (p.mode === 'practice') {
                     const q = L.lakeQ(p), shown = p._lakeChecked === true;
+                    if (q.kind !== 'num') return [
+                        { label: '身高', value: `${q.H} cm` },
+                        { label: q.kind === 'fwd' ? '看起來到' : '想要水只到', value: q.kind === 'fwd' ? `${q.appLabel}（身高 ${Math.round(q.rp * 100)}%）` : `${q.realLabel}（身高 ${Math.round(q.r * 100)}%）` },
+                        { label: q.kind === 'fwd' ? '實際會到' : '最多只能看起來到', value: shown ? (q.kind === 'fwd' ? `${q.realLabel}（${Math.round(q.r * 100)}%）` : `${q.appLabel}（${Math.round(q.rp * 100)}%）`) : '作答後揭曉' },
+                        { label: '規則', value: shown ? '實際 = 看起來 × 4/3，與身高無關' : '作答後揭曉' }
+                    ];
                     return [
                         { label: '身高', value: `${q.H} cm` },
                         { label: '看起來的深度 h′', value: `${q.hp} cm` },
                         { label: '實際深度 h', value: shown ? `${q.real.toFixed(0)} cm` : '作答後揭曉' },
-                        { label: '水面在身高的', value: shown ? `${Math.round(q.r * 100)}%：${q.zone.label}` : '作答後揭曉' }
+                        { label: '水面在身高的', value: shown ? `${Math.round(q.r * 100)}%：${toWhere(q.zone.label)}` : '作答後揭曉' }
                     ];
                 }
                 if (p.mode === 'stack' && p.stackDir !== 'depth') {
@@ -4144,7 +4234,7 @@
             },
 
             /* ---------- 評估練習：湖邊玩水 ---------- */
-            lakeQ: (p) => { if (!p._lake) p._lake = lakeQuestion(); return p._lake; },
+            lakeQ: (p) => { if (!p._lake) p._lake = newLakeQuestion(p._lakeStyle || 'body'); return p._lake; },
             drawPractice: (ctx, w, h, p) => {
                 const q = LABS.apparent_depth.lakeQ(p), shown = p._lakeChecked === true;
                 const top = 14, bot = h - 14;
@@ -4164,19 +4254,32 @@
                 ctx.strokeStyle = 'rgba(18,49,58,0.55)'; ctx.lineWidth = 1.5;
                 ctx.beginPath(); ctx.moveTo(shoreX, ys); ctx.lineTo(w, ys); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(shoreX, ys); ctx.lineTo(shoreX, shown ? yR : bot); ctx.stroke();
-                // 看起來的湖底
-                ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = C.violet; ctx.lineWidth = 1.6;
-                ctx.beginPath(); ctx.moveTo(shoreX, yA); ctx.lineTo(w, yA); ctx.stroke(); ctx.restore();
+                // 看起來的湖底（反向題作答前不畫：那正是要學生推的）
+                const showApparent = shown || q.kind !== 'rev';
+                if (showApparent) {
+                    ctx.save(); ctx.setLineDash([6, 4]); ctx.strokeStyle = C.violet; ctx.lineWidth = 1.6;
+                    ctx.beginPath(); ctx.moveTo(shoreX, yA); ctx.lineTo(w, yA); ctx.stroke(); ctx.restore();
+                }
                 if (shown) { ctx.strokeStyle = '#7a6338'; ctx.lineWidth = 2.2; ctx.beginPath(); ctx.moveTo(shoreX, yR); ctx.lineTo(w, yR); ctx.stroke(); }
 
                 const Hpx = q.H * s;
-                drawPerson(ctx, shoreX - Math.max(24, Hpx * 0.2), ys, Hpx, {});
+                const shoreP = shoreX - Math.max(24, Hpx * 0.2);
+                drawPerson(ctx, shoreP, ys, Hpx, {});
                 const placed = []; placed.hMax = h;
                 depthLabel(ctx, placed, `身高 ${q.H} cm`, 6, ys - Hpx - 6 < 14 ? 14 : ys - Hpx - 6, C.ink, w, 'left');
                 const lakeW = w - shoreX;
-                depthLabel(ctx, placed, `看起來的湖底：${q.hp} cm`, w - 8, yA - 6, C.violet, w, 'right');
+                // 岸上的人身上標出「看起來到這裡」或「想要水只到這裡」
+                if (q.kind !== 'num') {
+                    const markF = q.kind === 'fwd' ? q.rp : q.r, my = ys - markF * Hpx;
+                    ctx.strokeStyle = q.kind === 'fwd' ? C.violet : C.rose; ctx.lineWidth = 3;
+                    ctx.beginPath(); ctx.moveTo(shoreP - Hpx * 0.2, my); ctx.lineTo(shoreP + Hpx * 0.2, my); ctx.stroke();
+                    depthLabel(ctx, placed, q.kind === 'fwd' ? `看起來：大概到${q.appLabel}` : `想要：水只到${q.realLabel}`,
+                        shoreP + Hpx * 0.24, my + 4, q.kind === 'fwd' ? C.violet : C.rose, w, 'left');
+                }
+                if (showApparent) depthLabel(ctx, placed, q.kind === 'num' ? `看起來的湖底：${q.hp} cm` : `看起來的湖底（到${q.appLabel}的深度）`, w - 8, yA - 6, C.violet, w, 'right');
                 if (!shown) {
-                    depthLabel(ctx, placed, '實際有多深？走進去水會到哪裡？', shoreX + lakeW * 0.5, Math.min(bot - 10, yA + 34), C.ink, w, 'center');
+                    const ask = q.kind === 'rev' ? '湖水最多只能「看起來」到哪裡？' : '走進去，水實際會到哪裡？';
+                    depthLabel(ctx, placed, ask, shoreX + lakeW * 0.5, Math.min(bot - 10, (showApparent ? yA : ys) + 34), C.ink, w, 'center');
                     return;
                 }
                 // 揭曉：站在實際湖底的人，與「以為」站在看起來湖底的人
@@ -4193,9 +4296,9 @@
                     ctx.beginPath(); ctx.moveTo(x1, yy); ctx.lineTo(x1 + 8, yy); ctx.stroke();
                 });
                 BODY_MARKS.forEach((m) => depthLabel(ctx, placed, m.label, xReal + Hpx * 0.16 + 11, yR - m.f * Hpx + 4, C.muted, w, 'left'));
-                depthLabel(ctx, placed, `實際：水到${q.zone.label}（${Math.round(q.r * 100)}%）`, xReal, ys - 10, C.rose, w, 'center');
-                depthLabel(ctx, placed, `以為：只到${q.illusion.label}（${Math.round(q.rp * 100)}%）`, xGhost, ys - 26, C.violet, w, 'center');
-                depthLabel(ctx, placed, `實際湖底：${q.real.toFixed(0)} cm`, w - 8, yR + 15, '#5c4a28', w, 'right');
+                depthLabel(ctx, placed, `實際：${toWhere(q.realLabel)}（${Math.round(q.r * 100)}%）`, xReal, ys - 10, C.rose, w, 'center');
+                depthLabel(ctx, placed, `看起來：到${q.appLabel}（${Math.round(q.rp * 100)}%）`, xGhost, ys - 26, C.violet, w, 'center');
+                depthLabel(ctx, placed, `實際湖底：約 ${q.real.toFixed(0)} cm`, w - 8, yR + 15, '#5c4a28', w, 'right');
             },
 
             /* ---------- 水族箱：空氣—玻璃—水 ---------- */

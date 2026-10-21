@@ -334,3 +334,9 @@
 .depth-practice .dp-head h5 { margin: 0; }
 .depth-practice .dp-new { background: #0b6f92; color: #fff; border-color: #0b6f92; font-size: 0.9rem; padding: 0.5rem 1rem; }
 .depth-practice .dp-new:hover { background: #095a76; }
+
+.depth-practice .dp-head-tools { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.depth-practice .dp-style { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 600; }
+.depth-practice .dp-style .lab-select { min-height: 38px; padding: 0.35rem 0.5rem; font-size: 0.85rem; }
+.depth-practice .dp-rule { background: rgba(11, 111, 146, 0.07); border-radius: 8px; padding: 0.45rem 0.65rem; }
+.depth-practice .dp-style { white-space: nowrap; }
