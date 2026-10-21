@@ -3340,19 +3340,21 @@
                 disposers.addEventListener(canvas, 'pointerup', end);
                 disposers.addEventListener(canvas, 'pointercancel', end);
                 // 評估練習：作答面板（只在「評估練習」模式顯示）
-                const roAnchor = host.querySelector('.lab-readout');
+                const roAnchor = host.querySelector('.lab-stage');
                 if (roAnchor && !host.querySelector('.depth-practice')) {
                     const zoneBtns = BODY_ZONES.map((z) => `<label class="dp-choice"><input type="radio" name="dp-zone-${host.id}" value="${z.key}"><span>${z.label}</span></label>`).join('');
-                    roAnchor.insertAdjacentHTML('beforebegin', `
+                    roAnchor.insertAdjacentHTML('afterend', `
                         <section class="depth-practice" hidden>
-                            <h5>評估練習：湖邊玩水</h5>
+                            <div class="dp-head">
+                                <h5>評估練習：湖邊玩水</h5>
+                                <button type="button" class="lab-btn dp-new" data-dp="next">🎲 重新出題</button>
+                            </div>
                             <p class="dp-q"></p>
                             <label class="dp-depth">① 湖水實際深度約為 <input type="number" inputmode="decimal" min="0" step="1" class="dp-input" aria-label="實際深度（公分）"> cm</label>
                             <div class="dp-zone"><span>② 走進去站直時，水面大約會到身體哪裡？</span><div class="dp-choices">${zoneBtns}</div></div>
                             <div class="lab-buttons">
                                 <button type="button" class="lab-btn" data-dp="check">檢查答案</button>
                                 <button type="button" class="lab-btn" data-dp="hint">提示</button>
-                                <button type="button" class="lab-btn" data-dp="next">換一題</button>
                             </div>
                             <div class="dp-feedback" aria-live="polite"></div>
                         </section>`);
@@ -3362,7 +3364,16 @@
                         const q = L.lakeQ(params);
                         panel.querySelector('.dp-q').innerHTML = `身高 <b>${q.H} cm</b> 的同學在湖邊，從幾乎正上方往下看，覺得清澈的湖底「看起來」約 <b>${q.hp} cm</b> 深。水的折射率取 4/3。`;
                     };
-                    const showPanel = () => { panel.hidden = params.mode !== 'practice'; if (!panel.hidden) fill(); };
+                    // 練習模式用不到時間軸、播放與回到預設值，先收起來
+                    const scrub = host.querySelector('.lab-scrub');
+                    const playRow = host.querySelector('[data-role="toggle"]')?.closest('.lab-buttons');
+                    const showPanel = () => {
+                        const on = params.mode === 'practice';
+                        panel.hidden = !on;
+                        if (scrub) scrub.style.display = on ? 'none' : '';
+                        if (playRow) playRow.style.display = on ? 'none' : '';
+                        if (on) fill();
+                    };
                     host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', showPanel));
                     showPanel();
                     const ok = (b) => b ? '<b class="dp-ok">✔</b>' : '<b class="dp-no">✘</b>';
@@ -3392,9 +3403,11 @@
                         fb.innerHTML = '<p>提示：近乎正上方看時 h′ = h × n′/n = h × 3/4，所以實際深度 h = h′ × 4/3。再算「實際深度 ÷ 身高」，對照：膝 28%、胯 47%、肚臍 60%、胸 72%、肩 82%、口鼻約 90%。</p>';
                     });
                     disposers.addEventListener(panel.querySelector('[data-dp="next"]'), 'click', () => {
+                        // 只換題目，不重新載入頁面，模式與畫面都留在原地
                         params._lake = lakeQuestion(); params._lakeChecked = false;
                         inp.value = ''; panel.querySelectorAll('input[type="radio"]').forEach((r) => { r.checked = false; });
                         fb.innerHTML = ''; fill(); paint(); syncOutputs();
+                        inp.focus({ preventScroll: true });
                     });
                 }
                 // 多層類題：一次帶入題目的折射率，切到全反射判斷
