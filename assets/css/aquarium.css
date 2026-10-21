@@ -1,0 +1,26 @@
+.aquarium-guide[hidden], .aquarium-settings[hidden] { display: none; }
+.aquarium-guide { margin: 16px 0; padding: 18px; border: 1px solid #d8e6e9; border-radius: 14px; background: #f7fbfc; color: #12313a; }
+.aquarium-guide h5 { margin: 0 0 12px; font-size: 15px; }
+.aquarium-angles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.aquarium-angle { padding: 12px 14px; border: 1px solid #d8e6e9; border-top: 3px solid var(--ray-color); border-radius: 9px; background: white; }
+.aquarium-angle span { display: block; font-size: 12px; }
+.aquarium-angle strong { display: block; margin: 4px 0; font-size: 24px; line-height: 1.2; color: var(--ray-color); }
+.aquarium-angle small { font-size: 12px; line-height: 1.6; }
+.aquarium-guide p { margin: 12px 0 0; font-size: 13px; line-height: 1.8; }
+.aquarium-guide summary, .aquarium-settings summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+.aquarium-guide details { margin-top: 14px; }
+.aquarium-zooms { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
+.aquarium-zooms figure { margin: 0; padding: 12px; border: 1px solid #d8e6e9; border-radius: 10px; background: white; }
+.aquarium-zooms figcaption { font-size: 13px; font-weight: 600; }
+.aquarium-zooms svg { display: block; width: 100%; max-height: 180px; }
+.aquarium-zooms .aquarium-zoom-note { margin-top: 0; }
+.aquarium-settings { grid-column: 1 / -1; padding: 14px; border: 1px solid #d8e6e9; border-radius: 10px; }
+.aquarium-settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; padding-top: 16px; }
+.aquarium-settings p { font-size: 12px; line-height: 1.7; margin: 12px 0 0; color: #516e78; }
+@media (max-width: 600px) {
+    .aquarium-guide { padding: 12px; }
+    .aquarium-angles { gap: 6px; }
+    .aquarium-angle { padding: 10px 7px; }
+    .aquarium-angle strong { font-size: 20px; }
+    .aquarium-zooms { grid-template-columns: 1fr; }
+}

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>波動與光學・學習筆記</title>
     <meta name="description" content="波動、聲波、幾何光學、物理光學四章的知識節點複習、互動實驗與分級題庫。">
+    <link rel="stylesheet" href="assets/css/aquarium.css?v=20261021">
 
     <script>
         /* 獨立於應用程式：必要腳本失敗時仍提供可見的復原入口。 */
@@ -3359,7 +3360,7 @@
                 below: '潛在水中往上看岸上的鳥：光從空氣進入水中偏向法線。反向延長進入眼睛的光線，交點比鳥實際的位置高，H′ ≈ n·H。',
                 practice: '評估練習：一般人估水深是拿熟悉的東西比，例如「看起來大概有一張課桌那麼深」。從岸上幾乎正上方看清澈的湖，湖底「看起來」比實際淺；判斷走進去站直時，水面實際會到身體哪裡。作答後畫面會揭曉。也可切換成用公分數字作答。',
                 stack: '先選情境。「全反射判斷」：光由最上層往下入射，調整 θ₁，看光在哪個界面全反射；右側標出每個界面是否可能全反射與所需角度。「視深」：物體在最底層，觀察者在上方空氣中。每一層的厚度與折射率都能調整；光在每個界面依司乃耳定律折射（n·sinθ 在平行界面間守恆）。空氣中的光線反向延長後交會成像，比較近軸像 Σt/n；把光線張角調大，看邊緣光線的像如何偏離。',
-                layers: '從展示窗外看魚：光依序經過「水 → 壓克力（或玻璃）→ 空氣」兩個界面。先選情境：家用魚缸的玻璃約 1 公分，大型水族館的壓克力窗厚達數十公分。每經過一個界面就成一次像，前一次的像是下一個界面的物；總視距 = t/n_g + d/n_w。'
+                layers: '先找橘色真魚，再沿空氣中的光線向右反推：粉紅色虛像比真魚靠近窗面。光實際往左走，依序經過「水 → 窗材 → 空氣」；實線是光路，粉紅虛線只是反向延長線。'
             })[p.mode] || '',
             note: '視深公式 h′/h = n′/n 只在「觀察者幾乎在正上方」時成立。',
             noteFor: (p) => ({
@@ -3369,7 +3370,7 @@
                 below: '空氣中的物體從水中看，H′ = H·n′/n = n·H（水約 1.33 倍），看起來變高、變遠。<br>同理，水中的人看岸上的人或鳥，會覺得對方比較高；斜看時這個效果更大。',
                 practice: '物品高度為常見的大約值：運動鞋約 12 cm、1.5 公升寶特瓶約 30 cm、椅子座面約 45 cm、課桌約 75 cm、廚房流理台約 85 cm、直立式洗衣機約 100 cm、雙門冰箱約 150 cm。<br>題目假設人站在岸邊、幾乎正上方看腳前方的水；圖中他身上標的公分數依常用人體比例估算。<br>近乎正上方觀看時 h′ = h·n′/n。眼睛在空氣（n′ = 1）、湖底在水中（n = 4/3），所以 h′ = 3h/4，實際深度 h = 4h′/3，比看起來深三分之一。<br>身體部位約略高度（以身高為 100%）：膝 28%、胯 47%、肚臍 60%、胸 72%、肩 82%、下巴 87%、口鼻約 90%。實際比例因人而異，題目答案避開了分界附近的情況。<br>在岸邊斜看遠處時，湖底看起來更淺（見「斜看池底」），實際深度往往比 4/3 倍還深；再加上湖底可能突然變深、有淤泥或水流，判斷水深不能只靠眼睛。<br><b>湖水有雜質，n 會變嗎？</b>溶解的鹽、糖、礦物質會讓 n 稍微變大（純水約 1.333，海水約 1.34），但只差不到 0.5%：看起來 90 cm 的湖，實際深度只多約 0.6 cm，不影響判斷。泥沙、藻類等懸浮物主要讓光散射、水變混濁而看不清湖底，幾乎不改變 n——看不到湖底時，根本無從估計深度。',
                 stack: '<b>全反射判斷</b>：平行界面間 n·sinθ 守恆，等於 n₁sinθ₁。光要到達某界面，n₁sinθ₁ 必須小於上方每一層的 n；在該界面全反射則要 n₁sinθ₁ ≥ 下方的 n。所以界面「可能」全反射 ⇔ 下方的 n 小於上方所有層 n 的最小值。以類題為例：(A) 1.5 < 1.7 可能；(B) 1.3 < 1.5 可能；(C) 1.6 比上方大，不可能；(D) 1.4 雖小於 1.6，但光要到 (D) 必須先通過 n = 1.3 的層，n₁sinθ₁ < 1.3 < 1.4，不可能；(E) 1.0 < 1.3 可能。<br><b>視深</b>：近乎正上方觀看時，多層平行介質的視深 = Σ（各層厚度 ÷ 該層折射率），與層的順序無關；把兩層對調，近軸像位置不變。<br>紫色「第 j 層看」標出逐層成像：眼睛若位在第 j 層中看到的像：每經過一個界面，前一次的像成為下一個界面的物。<br>光線張角大時，各對光線的反向延長線交在不同深度，像會模糊；某一層的折射率比下方小很多時，斜的光可能在界面全反射，到不了觀察者。',
-                layers: '逐面成像：第一面（水→窗）像距 d·n_g/n_w，在窗材中看魚變遠；這個像再經第二面（窗→空氣），距外壁 (t + d·n_g/n_w)/n_g = t/n_g + d/n_w。多層平行介質的總視距 = Σ（各層厚度 ÷ 該層折射率），與層的順序無關。<br><b>實際情形</b>：家用魚缸的玻璃（n≈1.52）厚約 0.5–1.2 cm，只讓視距少幾毫米，幾乎完全由水決定，魚約在實際距離的 3/4。大型水族館要承受數公尺深的水壓，壓克力窗（n≈1.49）厚達數十公分；沖繩美ら海水族館「黑潮之海」的壓克力板寬 22.5 m、高 8.2 m、厚 60 cm，看起來只有約 40 cm 厚。<br>魚看起來比較近，也就顯得比較大；從斜角看大型展示窗時，會和「斜看池底」一樣更淺、也會變形。'
+                layers: '<b>先看最後的虛像：</b>主圖用兩條對稱光線的反向延長線求交點；它們是求像用的光束，不是同一瞳孔的上下緣。圖中距離使用這組光線的實際交點，與讀數一致。<br><b>接近正視時：</b>近軸視距 ≈ t/n_g + d/n_w。光束角度變大時，圖中的交點會偏離此近似值；不能用同一個近軸像點代表所有斜光線。<br><b>逐面成像（進階）：</b>第一面（水→窗）的近軸像距為 d·n_g/n_w，從內壁量起；第二面（窗→空氣）再把它當作物，得到 (t + d·n_g/n_w)/n_g。第一面的中間像只供計算，不代表窗外的人同時看到兩隻魚。<br><b>為什麼折角很小？</b>水（n = 1.33）和玻璃或壓克力（約 1.5）的折射率接近，光束角度小時偏折尤其不明顯。局部圖保持真實角度，可對照原方向的灰色虛線。家用薄玻璃在主圖中可能很窄，可展開局部圖分別看兩個界面。'
             })[p.mode] || '',
             modes: [
                 { key: 'scene', label: '拖曳眼睛：看魚也看鳥' },
@@ -3380,7 +3381,7 @@
                 { key: 'stack', label: '多層視深（2–6 層）' },
                 { key: 'practice', label: '評估練習：湖邊玩水' }
             ],
-            height: (p, w) => p.mode === 'layers' ? 340 : p.mode === 'stack' ? 440 : p.mode === 'practice' ? 440
+            height: (p, w) => p.mode === 'layers' ? (w >= 900 ? 440 : 360) : p.mode === 'stack' ? 440 : p.mode === 'practice' ? 440
                 : p.mode === 'oblique' ? Math.min(380, Math.max(260, Math.round(58 + 4.6 * (w - 20) / 9.5)))
                 : p.mode === 'scene' ? Math.min(460, Math.max(300, Math.round(30 + 6.2 * (w - 20) / 10))) : 380,
             cycle: (p) => p.mode === 'scene' ? 14 : 3.2,
@@ -3418,6 +3419,7 @@
                 disposers.addEventListener(canvas, 'pointercancel', end);
                 // 評估練習：作答面板（只在「評估練習」模式顯示）
                 const roAnchor = host.querySelector('.lab-stage');
+                L.setupAquarium({ host, params, disposers });
                 if (roAnchor && !host.querySelector('.depth-practice')) {
                     roAnchor.insertAdjacentHTML('afterend', `
                         <section class="depth-practice" hidden>
@@ -3594,10 +3596,10 @@
                 const plate = 'rgba(255,255,255,0.9)';
                 if (u < 0.6) {
                     fwd.forEach((pts) => trace(pts, u / 0.6, '#d48a00', 'rgba(255,214,90,0.9)'));
-                    labelFit(ctx, '① 光從物體出發，折射後進入眼睛', cap[0], cap[1], '#8a5a00', 11, cap[2], { clampW: w, plate });
+                    labelFit(ctx, cap[3] || '① 光從物體出發，折射後進入眼睛', cap[0], cap[1], '#8a5a00', 11, cap[2], { clampW: w, plate });
                 } else {
                     back.forEach((pts) => trace(pts, (u - 0.6) / 0.4, C.rose, 'rgba(194,38,74,0.35)'));
-                    labelFit(ctx, '② 眼睛沿進入的方向直線反推 → 看到像', cap[0], cap[1], C.rose, 11, cap[2], { clampW: w, plate });
+                    labelFit(ctx, cap[4] || '② 眼睛沿進入的方向直線反推 → 看到像', cap[0], cap[1], C.rose, 11, cap[2], { clampW: w, plate });
                 }
             },
             controls: [
@@ -3637,8 +3639,8 @@
                 { key: 'd', label: '魚到窗內壁的距離 d', min: 10, max: 800, step: 5, value: 200, fmt: (v) => v >= 100 ? `${(v / 100).toFixed(2)} m` : `${v} cm`, only: ['layers'] },
                 { key: 't', label: '窗的厚度 t', min: 0.5, max: 70, step: 0.5, value: 25, fmt: (v) => `${v} cm`, only: ['layers'] },
                 { key: 'ng', label: '窗材折射率 n_g（玻璃 1.52／壓克力 1.49）', min: 1.4, max: 1.6, step: 0.01, value: 1.49, fmt: (v) => v.toFixed(2), only: ['layers'] },
-                { key: 'steps', label: '成像顯示', value: 'steps', only: ['layers'],
-                  options: [{ value: 'steps', label: '逐面成像（兩個界面）' }, { value: 'final', label: '只看最終像' }],
+                { key: 'steps', label: '成像顯示', value: 'final', only: ['layers'],
+                  options: [{ value: 'final', label: '只看最後的虛像' }, { value: 'steps', label: '進階：加入第一面的中間像' }],
                   fmt: () => '' }
             ],
 
@@ -3783,19 +3785,12 @@
                         { label: `最斜光線（±${p.spread}°）的像`, value: edgeTxt }
                     ];
                 }
-                const nw = 1.33, ng = p.ng;
-                const fA = p.t / ng + p.d / nw;
+                const g = L.layers(p, rad(p.beam));
                 return [
                     { label: '魚到外壁的實際距離 t + d', value: `${(p.t + p.d).toFixed(1)} cm` },
-                    { label: '水的部分 d/n_w', value: `${(p.d / nw).toFixed(1)} cm` },
-                    { label: `${depthWindow(p)}的部分 t/n_g`, value: `${(p.t / ng).toFixed(1)} cm（實際厚 ${p.t} cm）` },
-                    { label: '總視距 t/n_g + d/n_w', value: `${fA.toFixed(1)} cm` },
-                    { label: '看起來近了', value: `${(p.t + p.d - fA).toFixed(1)} cm（${Math.round((1 - fA / (p.t + p.d)) * 100)}%）` },
-                    { label: '眼睛離窗 1 m 時，魚看起來放大', value: `約 ×${((100 + p.t + p.d) / (100 + fA)).toFixed(2)}` },
-                    { label: `張角 ±${p.beam}° 這對光線的像`, value: (() => {
-                        const g = L.layers(p, rad(p.beam));
-                        return g.tir ? '在窗外壁全反射，光出不來' : `距外壁 ${g.imgAir.toFixed(1)} cm（近軸 ${fA.toFixed(1)} cm）`;
-                    })() }
+                    { label: `圖中光束（±${p.beam}°）的虛像距外壁`, value: g.tir ? '外壁全反射，沒有透射像' : `${g.imgAir.toFixed(1)} cm` },
+                    { label: '接近正視的近似值 t/n_g + d/n_w', value: `${g.fAir.toFixed(1)} cm` },
+                    { label: '圖中虛像比真魚靠近窗面', value: g.tir ? '這組光線無法射入空氣' : `${(p.t + p.d - g.imgAir).toFixed(1)} cm` }
                 ];
             },
             draw: (ctx, w, h, p, t) => {
@@ -4347,90 +4342,160 @@
                 depthLabel(ctx, placed, `實際：${toWhere(q.zone.label)}（${Math.round(q.r * 100)}%）`, xReal, ys - 10, C.rose, w, 'center');
                 depthLabel(ctx, placed, `以為：只到${q.illusion.label}（${Math.round(q.rp * 100)}%）`, xGhost, ys - 26, C.violet, w, 'center');
             },
+            /* 水族箱的角度讀數與局部圖：沿用主圖的 Snell 計算，不放大折角。 */
+            setupAquarium: ({ host, params, disposers }) => {
+                const stage = host.querySelector('.lab-stage');
+                if (!stage || host.querySelector('.aquarium-guide')) return;
+                stage.insertAdjacentHTML('afterend', `
+                    <section class="aquarium-guide" hidden aria-label="水族箱折射判讀">
+                        <h5>兩次折射，分開看</h5>
+                        <div class="aquarium-angles">
+                            <div class="aquarium-angle" style="--ray-color:#0b6f92"><span>① 水中</span><strong data-angle="water"></strong><small>n = 1.33</small></div>
+                            <div class="aquarium-angle" style="--ray-color:#6b46c1"><span>② 窗材中</span><strong data-angle="window"></strong><small data-angle="window-note"></small></div>
+                            <div class="aquarium-angle" style="--ray-color:#a4540a"><span>③ 空氣中</span><strong data-angle="air"></strong><small data-angle="air-note"></small></div>
+                        </div>
+                        <p class="aquarium-explain"></p>
+                        <details><summary>看兩個界面的局部光路</summary>
+                            <p>所有角度都從水平法線量起。局部圖保持真實角度；灰色虛線是原方向的延續，用來比較偏折。</p>
+                            <div class="aquarium-zooms"></div>
+                        </details>
+                    </section>`);
+                const panel = host.querySelector('.aquarium-guide');
+                const controls = host.querySelector('.lab-controls');
+                const advanced = document.createElement('details');
+                advanced.className = 'aquarium-settings';
+                advanced.innerHTML = '<summary>進階：光束角度、窗材與逐面成像</summary><div class="aquarium-settings-grid"></div><p>第一面的中間像只供逐面計算，並非窗外的人同時看到另一條魚。主圖以對稱光束求像，未表示同一瞳孔的大小。</p>';
+                controls.appendChild(advanced);
+                ['beam', 't', 'ng', 'steps'].forEach((key) => {
+                    const wrap = host.querySelector(`[id$="apparent_depth-${key}-wrap"]`);
+                    if (wrap) advanced.querySelector('.aquarium-settings-grid').appendChild(wrap);
+                });
+                const zoom = (title, right, left, incoming, outgoing, tir) => {
+                    const length = Math.min(120, 48 / Math.max(Math.sin(incoming), Math.sin(outgoing || 0), 0.01));
+                    const point = (angle, sign, flipY = false) => `${160 + sign * length * Math.cos(angle)},${78 + (flipY ? -1 : sign) * length * Math.sin(angle)}`;
+                    const end = tir ? point(incoming, 1, true) : point(outgoing, -1);
+                    return `<figure><figcaption>${title}</figcaption><svg viewBox="0 0 320 150" role="img" aria-label="${title}${tir ? '：外壁全反射' : '：角度依司乃耳定律計算'}">
+                        <rect width="160" height="150" fill="${left.fill}"/><rect x="160" width="160" height="150" fill="${right.fill}"/>
+                        <path d="M160 0V150" stroke="#8099a2"/><path d="M10 78H310" stroke="#8099a2" stroke-dasharray="4 4"/>
+                        <path d="M${point(incoming, 1)}L160 78L${point(incoming, -1)}" fill="none" stroke="#9baab0" stroke-dasharray="4 4"/>
+                        <path d="M${point(incoming, 1)}L160 78" fill="none" stroke="${right.color}" stroke-width="3"/>
+                        <path d="M160 78L${end}" fill="none" stroke="${tir ? '#c2264a' : left.color}" stroke-width="3"/>
+                        <circle cx="160" cy="78" r="4" fill="white" stroke="#12313a"/>
+                        <text x="10" y="20" font-size="12" fill="${left.color}">${left.name}</text><text x="310" y="20" text-anchor="end" font-size="12" fill="${right.color}">${right.name}</text>
+                        <text x="10" y="142" font-size="11" fill="#516e78">← 光從右往左行進；水平虛線為法線</text>
+                    </svg><p class="aquarium-zoom-note">${tir ? '窗內入射角超過臨界角，光反射回窗內。' : `${deg(incoming).toFixed(1)}° → ${deg(outgoing).toFixed(1)}°，${outgoing < incoming ? '偏向' : '偏離'}法線 ${Math.abs(deg(incoming - outgoing)).toFixed(1)}°`}</p></figure>`;
+                };
+                const update = () => {
+                    const on = params.mode === 'layers';
+                    panel.hidden = advanced.hidden = !on;
+                    if (!on) return;
+                    const g = LABS.apparent_depth.layers(params, rad(params.beam));
+                    const set = (key, text) => { panel.querySelector(`[data-angle="${key}"]`).textContent = text; };
+                    set('water', `${deg(g.a).toFixed(1)}°`);
+                    set('window', `${deg(g.b).toFixed(1)}°`);
+                    set('window-note', `偏向法線 ${deg(g.a - g.b).toFixed(1)}°`);
+                    set('air', g.tir ? '全反射' : `${deg(g.g).toFixed(1)}°`);
+                    set('air-note', g.tir ? '這組光線無法射出' : `偏離法線 ${deg(g.g - g.b).toFixed(1)}°`);
+                    panel.querySelector('.aquarium-explain').textContent = g.tir
+                        ? '這組光線在窗與空氣的界面全反射，因此不畫穿入空氣的光線或虛像。把進階設定中的光束角度調小，可再次看到透射光。'
+                        : `水和${depthWindow(params)}的折射率接近（1.33 與 ${g.ng.toFixed(2)}），這次只偏折 ${deg(g.a - g.b).toFixed(1)}°，所以折角較不明顯。折射一直有發生；角度較小時尤其不易看出。`;
+                    const water = { name: '水', color: '#0b6f92', fill: '#e5f3f7' };
+                    const glass = { name: depthWindow(params), color: '#6b46c1', fill: '#f0eafa' };
+                    const air = { name: '空氣', color: '#a4540a', fill: '#fff8ec' };
+                    panel.querySelector('.aquarium-zooms').innerHTML = zoom('① 水 → 窗材', water, glass, g.a, g.b, false)
+                        + zoom('② 窗材 → 空氣', glass, air, g.b, g.g, g.tir);
+                };
+                ['input', 'change', 'click'].forEach((event) => disposers.addEventListener(host, event, update));
+                update();
+            },
             /* ---------- 水族箱：空氣—玻璃—水 ---------- */
             drawLayers: (ctx, w, h, p, t) => {
-                const L = LABS.apparent_depth;
-                const ay = Math.round(h * 0.47);                       // 光軸
-                const eyeX = 26, x0 = Math.round(26 + Math.max(60, w * 0.16));   // 外壁位置
-                const g = L.layers(p, rad(p.beam));
-                // 比例尺固定：只由窗厚、距離與窗材決定（逐面成像時連第一面的像也放得下），不隨張角改變
-                const reach = p.steps === 'steps' ? Math.max(p.t + p.d, p.t + p.d * p.ng / 1.33) : p.t + p.d;
-                const s = (w - x0 - 34) / reach;   // px / cm
-                const X = (cm) => x0 + cm * s;                          // 從外壁往水裡量
-                const xi = X(p.t);
-                // 區域
-                ctx.fillStyle = 'rgba(11,111,146,0.03)'; ctx.fillRect(0, 0, x0, h);
-                ctx.fillStyle = 'rgba(110,170,190,0.38)'; ctx.fillRect(x0, 0, xi - x0, h);
-                ctx.fillStyle = 'rgba(11,111,146,0.15)'; ctx.fillRect(xi, 0, w - xi, h);
-                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1.3;
-                ctx.beginPath(); ctx.moveTo(x0, 0); ctx.lineTo(x0, h); ctx.moveTo(xi, 0); ctx.lineTo(xi, h); ctx.stroke();
-                dashed(ctx, eyeX, ay, w - 6, ay, 'rgba(18,49,58,0.28)');
-
-                const fx = X(p.t + p.d);
+                const L = LABS.apparent_depth, g = L.layers(p, rad(p.beam));
                 const steps = p.steps === 'steps';
+                const plate = 'rgba(255,255,255,0.94)';
+                const airColor = '#a4540a', glassColor = C.violet;
+                const lineH = 24, chartTop = 66, chartBottom = h - 124;
+                const ay = (chartTop + chartBottom) / 2;
+                const reach = steps ? Math.max(p.t + p.d, p.t + g.imgGlass) : p.t + p.d;
+                const airRun = Math.min(30, (p.t + p.d) * 0.14);
+                const airRise = g.tir ? g.y0 + p.t * Math.tan(g.b) + p.d * 0.25 * Math.tan(g.a)
+                    : g.y0 + airRun * Math.tan(g.g);
+                // Both axes use the same scale. Even steep/TIR rays must fit inside the chart.
+                const scale = Math.min((w - 72) / (reach + airRun), (chartBottom - chartTop) / (2 * Math.max(airRise, 1)));
+                const chartWidth = (reach + airRun) * scale;
+                const x0 = (w - chartWidth) / 2 + airRun * scale;
+                const X = (cm) => x0 + cm * scale;
+                const xi = X(p.t), fx = X(p.t + p.d);
+                const imageX = g.tir ? null : X(g.imgAir);
+                ctx.fillStyle = '#fffaf0'; ctx.fillRect(0, 0, x0, chartBottom + 12);
+                ctx.fillStyle = '#eee9f7'; ctx.fillRect(x0, 0, xi - x0, chartBottom + 12);
+                ctx.fillStyle = '#e6f3f7'; ctx.fillRect(xi, 0, w - xi, chartBottom + 12);
+                ctx.strokeStyle = '#829ca6'; ctx.lineWidth = 1.2;
+                ctx.beginPath(); ctx.moveTo(x0, 44); ctx.lineTo(x0, chartBottom + 12);
+                ctx.moveTo(xi, 44); ctx.lineTo(xi, chartBottom + 12); ctx.stroke();
+                dashed(ctx, 12, ay, w - 12, ay, '#a6bac2');
+                // Separate rows keep medium labels legible even with a 1 cm window.
+                labelFit(ctx, '空氣 n = 1.00', 10, 20, airColor, 11, 'left', { clampW: w });
+                labelFit(ctx, '水 n = 1.33', w - 10, 20, C.blue, 11, 'right', { clampW: w });
+                labelFit(ctx, `${depthWindow(p)} n = ${g.ng.toFixed(2)} · 厚 ${p.t} cm`, w / 2, 41, glassColor, 11, 'center', { clampW: w, maxW: w - 20 });
                 const fwd = [], back = [];
-                [-1, 1].forEach((sg) => {
-                    const p1 = [xi, ay - sg * g.y1 * s], p0 = [x0, ay - sg * g.y0 * s];
-                    ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.moveTo(fx, ay); ctx.lineTo(p1[0], p1[1]); ctx.lineTo(p0[0], p0[1]); ctx.stroke();
-                    if (steps) dashed(ctx, p1[0], p1[1], xi + g.imgGlass * s, ay, 'rgba(107,70,193,0.85)');
-                    if (g.tir) {
-                        // 外壁全反射：光折返回窗材，出不了水族箱
-                        const refl = [xi, p0[1] - sg * (xi - x0) * Math.tan(g.b)];
-                        // 穿回窗材後在內壁折射回水中，再走一段（只畫在畫布內）
-                        const runW = Math.max(20, Math.min((fx - xi) * 0.6, (ay - 6 - Math.abs(refl[1] - ay)) / Math.max(1e-6, Math.tan(g.a))));
-                        const back2 = [xi + runW, refl[1] - sg * runW * Math.tan(g.a)];
-                        ctx.strokeStyle = C.rose; ctx.lineWidth = 2;
-                        ctx.beginPath(); ctx.moveTo(p0[0], p0[1]); ctx.lineTo(refl[0], refl[1]); ctx.lineTo(back2[0], back2[1]); ctx.stroke();
-                        arrow(ctx, refl[0], refl[1], (refl[0] + back2[0]) / 2, (refl[1] + back2[1]) / 2, C.rose, 2);
-                        fwd.push([[fx, ay], p1, p0, refl, back2]);
-                        return;
+                const segment = (a, b, color, withArrow) => {
+                    ctx.strokeStyle = color; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.moveTo(...a); ctx.lineTo(...b); ctx.stroke();
+                    if (withArrow && Math.hypot(b[0] - a[0], b[1] - a[1]) > 20) {
+                        const at = (u) => [a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u];
+                        arrow(ctx, ...at(0.45), ...at(0.58), color, 2);
                     }
-                    // 空氣中繼續往左走到眼睛附近；太斜時在畫布邊緣前停下
-                    const tg = Math.tan(g.g), maxDy = ay - 10 - g.y0 * s;
-                    const run = Math.max(0, Math.min(x0 - eyeX - 14, tg > 1e-9 ? maxDy / tg : Infinity));
-                    const pe = [x0 - run, ay - sg * (g.y0 * s + run * tg)];
-                    fwd.push([[fx, ay], p1, p0, pe]); back.push([pe, p0, [X(g.imgAir), ay]]);
-                    arrow(ctx, p0[0], p0[1], (p0[0] + pe[0]) / 2, (p0[1] + pe[1]) / 2, C.blue, 2);
-                    ctx.strokeStyle = C.blue; ctx.lineWidth = 2;
-                    ctx.beginPath(); ctx.moveTo((p0[0] + pe[0]) / 2, (p0[1] + pe[1]) / 2); ctx.lineTo(pe[0], pe[1]); ctx.stroke();
-                    dashed(ctx, p0[0], p0[1], X(g.imgAir), ay, 'rgba(194,38,74,0.9)');
-                });
-                depthFish(ctx, fx, ay, 14, -1, false);
-                if (steps) {
-                    ctx.save(); ctx.globalAlpha = 0.9;
-                    ctx.setLineDash([3, 3]); ctx.strokeStyle = C.violet; ctx.lineWidth = 1.4;
-                    const gx = xi + g.imgGlass * s;
-                    ctx.beginPath(); ctx.arc(gx, ay, 6, 0, Math.PI * 2); ctx.stroke();
-                    ctx.restore();
-                }
-                if (!g.tir) depthFish(ctx, X(g.imgAir), ay, 14, -1, true);
-                depthEye(ctx, eyeX, ay, 'right');
-                if (g.tir) {
-                    labelFit(ctx, '外壁全反射：光出不來，從這麼斜的角度看，窗像一面鏡子', 6, ay + 44, C.rose, 11, 'left', { clampW: w, plate: 'rgba(255,255,255,0.9)', maxW: w - 12 });
-                } else {
-                    LABS.apparent_depth.animate(ctx, w, t, fwd, back, [6, ay + 44, 'left']);
-                }
-
-                // 頂部：介質名稱（玻璃單獨一行，避免薄玻璃時與水的標籤相撞）
-                const plate = 'rgba(255,255,255,0.86)';
-                labelFit(ctx, '空氣 n = 1.00', 6, 16, C.ink, 11, 'left', { clampW: w, plate, maxW: x0 - 10 });
-                labelFit(ctx, `水 n_w = ${g.nw.toFixed(2)}`, Math.max(xi + 6, x0 + 60), 16, C.blue, 11, 'left', { clampW: w, plate });
-                labelFit(ctx, `${depthWindow(p)} n_g = ${g.ng.toFixed(2)}，厚 t = ${p.t} cm`, x0 + 4, 34, '#2e6f86', 11, 'left', { clampW: w, plate });
-
-                // 底部：距離尺寸（都從外壁量起）
-                const rowH = 22, base = h - 12 - (steps ? 2 : 1) * rowH;
-                const bar = (y, xa, xb, color, dash, text) => {
-                    ctx.save(); if (dash) ctx.setLineDash([4, 3]);
-                    ctx.strokeStyle = color; ctx.lineWidth = 1.4;
-                    ctx.beginPath(); ctx.moveTo(xa, y); ctx.lineTo(xb, y);
-                    ctx.moveTo(xa, y - 4); ctx.lineTo(xa, y + 4); ctx.moveTo(xb, y - 4); ctx.lineTo(xb, y + 4); ctx.stroke();
-                    ctx.restore();
-                    labelFit(ctx, text, Math.max(xb + 6, x0 + 6), y + 4, color, 10, 'left', { clampW: w, plate });
                 };
-                bar(base - rowH, x0, fx, '#a4540a', false, `實際 t + d = ${(p.t + p.d).toFixed(1)} cm`);
-                if (steps) bar(base, xi, xi + g.fGlass * s, C.violet, true, `第一面成像（在${depthWindow(p)}中看）：近軸距內壁 ${g.fGlass.toFixed(1)} cm`);
-                bar(base + (steps ? rowH : 0), x0, X(g.fAir), C.rose, true, `${steps ? '第二面成像（從空氣看）' : '從空氣看'}：近軸距外壁 ${g.fAir.toFixed(1)} cm`);
+                [-1, 1].forEach((sign) => {
+                    const fish = [fx, ay], inner = [xi, ay - sign * g.y1 * scale];
+                    const outer = [x0, ay - sign * g.y0 * scale];
+                    segment(fish, inner, C.blue, true);
+                    segment(inner, outer, glassColor, true);
+                    if (steps) dashed(ctx, ...inner, X(p.t + g.imgGlass), ay, 'rgba(107,70,193,0.55)');
+                    if (g.tir) {
+                        const reflected = [xi, outer[1] - sign * p.t * Math.tan(g.b) * scale];
+                        const end = [xi + p.d * 0.25 * scale, reflected[1] - sign * p.d * 0.25 * Math.tan(g.a) * scale];
+                        segment(outer, reflected, C.rose, false); segment(reflected, end, C.rose, true);
+                        fwd.push([fish, inner, outer, reflected, end]);
+                    } else {
+                        const end = [X(-airRun), ay - sign * airRise * scale];
+                        segment(outer, end, airColor, true);
+                        dashed(ctx, ...outer, imageX, ay, C.rose);
+                        fwd.push([fish, inner, outer, end]); back.push([end, outer, [imageX, ay]]);
+                    }
+                    [inner, outer].forEach(([x, y]) => {
+                        ctx.fillStyle = '#fff'; ctx.strokeStyle = '#516e78'; ctx.lineWidth = 1.2;
+                        ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    });
+                });
+                depthFish(ctx, fx, ay, 12, -1, false);
+                labelFit(ctx, '真魚', fx, ay - 18, '#a4540a', 11, 'center', { clampW: w, plate });
+                if (!g.tir) {
+                    if (fx - imageX >= 32) depthFish(ctx, imageX, ay, 12, -1, true);
+                    else { ctx.fillStyle = C.rose; ctx.beginPath(); ctx.arc(imageX, ay, 4, 0, Math.PI * 2); ctx.fill(); }
+                    labelFit(ctx, '最後的虛像', imageX, ay + 25, C.rose, 11, 'center', { clampW: w, plate });
+                }
+                if (steps) {
+                    const midX = X(p.t + g.imgGlass);
+                    ctx.strokeStyle = glassColor; ctx.setLineDash([3, 3]);
+                    ctx.beginPath(); ctx.arc(midX, ay, 5, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+                    labelFit(ctx, '第一面中間像', midX, ay + 49, glassColor, 10, 'center', { clampW: w, plate });
+                }
+                const bar = (row, end, text, color, dash) => {
+                    const y = h - 92 + row * lineH;
+                    ctx.save(); if (dash) ctx.setLineDash([4, 3]);
+                    ctx.strokeStyle = color; ctx.lineWidth = 1.2;
+                    ctx.beginPath(); ctx.moveTo(x0, y); ctx.lineTo(end, y);
+                    ctx.moveTo(x0, y - 4); ctx.lineTo(x0, y + 4); ctx.moveTo(end, y - 4); ctx.lineTo(end, y + 4); ctx.stroke(); ctx.restore();
+                    labelFit(ctx, text, 10, y + 4, color, 11, 'left', { clampW: w, maxW: w - 20, plate });
+                };
+                bar(0, fx, `實際距外壁 ${(p.t + p.d).toFixed(1)} cm`, '#a4540a', false);
+                if (!g.tir) bar(1, imageX, `這組光束的虛像 ${g.imgAir.toFixed(1)} cm`, C.rose, true);
+                else labelFit(ctx, '外壁全反射：這組光線無法射入空氣', 10, h - 64, C.rose, 11, 'left', { clampW: w, maxW: w - 20 });
+                if (steps) labelFit(ctx, '紫色：僅供逐面計算的中間像', 10, h - 40, glassColor, 10, 'left', { clampW: w });
+                if (!g.tir) L.animate(ctx, w, t, fwd, back, [10, h - 16, 'left',
+                    '① 實線：光從魚往空氣側傳播 ←', '② 粉紅虛線：沿出射方向反推到虛像']);
             }
         };
 
@@ -8943,7 +9008,7 @@
         /* 開發用：?selftest=1 會載入互動實驗的自動化視覺健檢（正常瀏覽不受影響） */
         if (/[?&]selftest=1/.test(location.search)) {
             const st = document.createElement('script');
-            st.src = 'scripts/lab-selftest.js?v=swing_20261005';
+            st.src = 'scripts/lab-selftest.js?v=aquarium_20261021';
             document.head.appendChild(st);
         }
 

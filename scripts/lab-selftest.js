@@ -65,6 +65,8 @@
         out.push('swing:compare:0', 'swing:compare:90', 'swing:compare:180',
             'swing:compare:detuned', 'swing:dynamic:0', 'swing:dynamic:180',
             'swing:dynamic:detuned');
+        out.push('aquarium:home:steps', 'aquarium:public:critical', 'aquarium:public:tir',
+            'aquarium:custom:close', 'aquarium:kuroshio:steps');
         return out;
     }
 
@@ -117,7 +119,20 @@
             try {
                 if (route.startsWith('swing:')) scanSwingFrames(host, route, widthPx);
                 else {
-                    renderRoute('lab-' + route);
+                    if (route.startsWith('aquarium:')) {
+                        renderRoute('lab-apparent_depth:layers');
+                        const [, preset, state] = route.split(':');
+                        const set = (key, value) => {
+                            const input = host.querySelector('#apparent_depth-' + key);
+                            input.value = value;
+                            input.dispatchEvent(new Event(input.tagName === 'SELECT' ? 'change' : 'input', { bubbles: true }));
+                        };
+                        set('tank', preset);
+                        set('steps', state === 'steps' || state === 'close' ? 'steps' : 'final');
+                        if (state === 'critical') set('beam', 48);
+                        if (state === 'tir') set('beam', 70);
+                        if (state === 'close') { set('t', 70); set('d', 10); set('ng', 1.4); }
+                    } else renderRoute('lab-' + route);
                     const stage = host.querySelector('.lab-stage');
                     if (stage) { stage.style.boxSizing = 'content-box'; stage.style.width = widthPx + 'px'; }
                 }
