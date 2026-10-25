@@ -340,3 +340,28 @@
 .depth-practice .dp-style .lab-select { min-height: 38px; padding: 0.35rem 0.5rem; font-size: 0.85rem; }
 .depth-practice .dp-rule { background: rgba(11, 111, 146, 0.07); border-radius: 8px; padding: 0.45rem 0.65rem; }
 .depth-practice .dp-style { white-space: nowrap; }
+/* ---- 出題模式：讀數先藏起來，點一下單張卡片才揭曉 ---- */
+.lab-btn[data-role="quiz"].is-on {
+    background: #fff7ed;
+    border-color: #ea580c;
+    color: #c2410c;
+}
+.lab-btn[data-role="random"] { border-color: rgba(234, 88, 12, 0.35); }
+.lab-readout div.is-masked {
+    cursor: pointer;
+    border: 1.5px dashed rgba(234, 88, 12, 0.55);
+    background: repeating-linear-gradient(135deg, rgba(234, 88, 12, 0.05) 0 8px, rgba(234, 88, 12, 0.10) 8px 16px);
+}
+.lab-readout div.is-masked strong { color: #c2410c; letter-spacing: 0.08em; }
+.lab-readout div.is-masked:hover { border-color: #ea580c; }
+.lab-readout div.is-revealed { border: 1.5px solid rgba(234, 88, 12, 0.45); }
+.lab-quiz-banner {
+    margin-top: 0.6rem;
+    padding: 0.45rem 0.75rem;
+    border-radius: 8px;
+    background: #fff7ed;
+    border: 1px solid rgba(234, 88, 12, 0.35);
+    color: #9a3412;
+    font-size: 0.8rem;
+    font-weight: 700;
+}

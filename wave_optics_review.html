@@ -97,8 +97,12 @@
 
         * { box-sizing: border-box; margin: 0; padding: 0; }
 
+        html { background: hsl(200, 22%, 95%); }
+        body::before {
+            content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none;
+            background: radial-gradient(circle at 50% 0%, hsl(200, 34%, 99%) 0%, hsl(200, 22%, 95%) 100%);
+        }
         body {
-            background: radial-gradient(circle at 50% 0%, hsl(200, 34%, 99%) 0%, hsl(200, 22%, 95%) 100%) no-repeat fixed;
             color: var(--text-main);
             font-family: 'Outfit', 'Noto Sans TC', system-ui, sans-serif;
             line-height: 1.6;
