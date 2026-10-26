@@ -4507,12 +4507,14 @@
             name: '視差法找虛像的位置',
             tag: 'N13 / N14',
             hint: '',
-            hintFor: (p) => p.mode === 'mirror'
-                ? '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。大頭針 A 立在玻璃板前，玻璃板當平面鏡。眼睛左右搖擺，透過玻璃看 A 的像 A′ 與板後的參考針 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）前後移動，直到眼睛怎麼晃，B 都和 A′ 黏在一起不錯開——這時 B 的位置就是像的位置。'
-                : '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。硬幣 A 在燒杯底，參考針 B 夾在燒杯外側。從上方往下看，眼睛左右搖擺，比較 A 的像與 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）上下移動，直到兩者沒有視差，量 B 到水面的距離就是視深 h′，再用 n = h ÷ h′ 求折射率。',
-            noteFor: (p) => p.mode === 'mirror'
-                ? '<b>判斷口訣</b>：兩個東西沒有重合時，比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 太近，往後移；B 跟著眼睛同向跑 → B 太遠，往前移。<br><b>平面鏡的像是精確的</b>：不論眼睛偏多少，B 放在鏡後 d 處都完全沒有視差，所以像距 = 物距。<br><b>為什麼用露出的上半截對準</b>：玻璃有厚度，隔著玻璃看到的 B 下半截會被折射側移，看起來和露出的上半截斷開；只有露出玻璃板的上半截是直接看到的，所以要用它來對準 A′。把玻璃板調厚、搖擺調大，斷開會更明顯。'
-                : '<b>判斷口訣</b>：比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 比像高（太靠近水面），往下移；B 跟著眼睛同向跑 → B 太深，往上移。<br><b>視深 h′ = h / n 只是近似</b>：把搖擺幅度調大，會發現 B 放在 h/n 也還有一點點視差，因為斜看時像會再變淺。實驗時眼睛要在正上方附近、小幅度搖擺。<br><b>求折射率</b>：n = 實深 ÷ 視深 = h ÷ h′。',
+            hintFor: (p) => ({
+                mirror: '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。大頭針 A 立在平面鏡前。鏡子不透明，鏡後的參考針 B 比鏡子高，只有露出鏡子上緣的上半截看得到。眼睛左右搖擺，比較鏡中的 A′ 和露出的 B，拖曳 3D 圖中綠色的 B 針頭（或用滑桿）前後移動，直到怎麼晃都對得齊——這時 B 的位置就是像的位置。',
+                slab: '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。大頭針 A 貼在厚壓克力的背面，眼睛隔著壓克力看 A，A 的像會變近。參考針 B 從上方垂下，針尖在壓克力上方。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）前後移動，直到 B 的針尖和 A 的像沒有視差，量 B 到壓克力前表面的距離就是視深 h′，再用 n = 厚度 ÷ h′ 求壓克力的折射率。'
+            })[p.mode] || '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。硬幣 A 在燒杯底，參考針 B 夾在燒杯外側。從上方往下看，眼睛左右搖擺，比較 A 的像與 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）上下移動，直到兩者沒有視差，量 B 到水面的距離就是視深 h′，再用 n = h ÷ h′ 求折射率。',
+            noteFor: (p) => ({
+                mirror: '<b>判斷口訣</b>：兩個東西沒有重合時，比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 太近，往後移；B 跟著眼睛同向跑 → B 太遠，往前移。<br><b>平面鏡的像是精確的</b>：不論眼睛偏多少，B 放在鏡後 d 處都完全沒有視差，所以像距 = 物距。<br><b>為什麼 B 要比鏡子高</b>：鏡子不透明，鏡後的東西看不到；B 只有露出鏡子上緣的那一截看得到，就用這一截去對準鏡中的 A′。',
+                slab: '<b>判斷口訣</b>：眼睛往右、B 相對往左 → B 比像近，往後移；B 跟著眼睛同向跑 → B 比像遠，往前移。<br><b>隔著壓克力看，A 會變近</b>：A 貼在背面，實際離前表面一個厚度 t；光從壓克力射入空氣時偏離法線，反向延長交在離前表面約 t ÷ n 處。<br><b>求折射率</b>：n = 厚度 ÷ 視深 = t ÷ h′。搖擺幅度調大時，B 放在 t ÷ n 也會留一點視差，因為斜看時像會再變近一點。'
+            })[p.mode] || '<b>判斷口訣</b>：比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 比像高（太靠近水面），往下移；B 跟著眼睛同向跑 → B 太深，往上移。<br><b>視深 h′ = h / n 只是近似</b>：把搖擺幅度調大，會發現 B 放在 h/n 也還有一點點視差，因為斜看時像會再變淺。實驗時眼睛要在正上方附近、小幅度搖擺。<br><b>求折射率</b>：n = 實深 ÷ 視深 = h ÷ h′。',
             /* 實驗下方的教學：為什麼「沒有視差」就是找到像的位置 */
             teach: `
                 <h4>教學：為什麼「沒有視差」就找到了像？</h4>
@@ -4594,14 +4596,15 @@
                 <p>因此拿一個真的物體（參考針 B）去和像比：移到和像沒有視差時，B 和像離眼睛一樣遠，<b>B 所在的位置就是像的位置</b>，直接用尺量 B 就好。</p>
                 <h5>4. 怎麼判斷 B 要往哪裡移</h5>
                 <ul>
-                    <li>眼睛往右、B 相對往左 → B 比像<b>近</b>：燒杯實驗把 B 往下移，平面鏡實驗把 B 往後移。</li>
-                    <li>眼睛往右、B 也往右 → B 比像<b>遠</b>：燒杯實驗把 B 往上移，平面鏡實驗把 B 往前移。</li>
-                    <li>把 B 的針尖對準硬幣的對稱軸（或讓 B 露出的上半截對準 A′），比較好看出有沒有偏。</li>
+                    <li>眼睛往右、B 相對往左 → B 比像<b>近</b>：燒杯實驗把 B 往下移，平面鏡與壓克力實驗把 B 往後移。</li>
+                    <li>眼睛往右、B 也往右 → B 比像<b>遠</b>：燒杯實驗把 B 往上移，平面鏡與壓克力實驗把 B 往前移。</li>
+                    <li>把 B 的針尖對準硬幣的對稱軸、讓 B 露出鏡子上緣的那一截對準 A′、或讓 B 的針尖對準壓克力裡 A 的像，比較好看出有沒有偏。</li>
                 </ul>
                 <h5>5. 用量到的位置算答案</h5>
                 <ul>
                     <li><b>燒杯視深</b>：B 到水面的距離就是視深 h′，折射率 n = 實深 h ÷ 視深 h′。</li>
-                    <li><b>平面鏡</b>：B 到玻璃板的距離就是像距，會發現像距 = 物距。</li>
+                    <li><b>平面鏡</b>：B 到鏡面的距離就是像距，會發現像距 = 物距。</li>
+                    <li><b>厚壓克力</b>：B 到壓克力前表面的距離就是視深 h′，折射率 n = 厚度 t ÷ 視深 h′。</li>
                 </ul>
                 <p class="teach-tip">注意：視深公式 h′ = h ÷ n 只在接近正上方觀看時成立。做實驗時眼睛要在正上方附近、小幅度左右晃；晃得太大，即使 B 在 h′ 也會留下一點視差。</p>
                 <h5>6. 真實照片：天文學家用視差量恆星的距離（地科）</h5>
@@ -4622,28 +4625,31 @@
             height: (p, w) => w >= 640 ? 420 : 680,
             cycle: 4,
             modes: [
-                { key: 'depth', label: '燒杯視深：測折射率' },
-                { key: 'mirror', label: '平面鏡成像：找像距' }
+                { key: 'depth', label: '燒杯視深：測液體折射率' },
+                { key: 'mirror', label: '平面鏡：找像距' },
+                { key: 'slab', label: '厚壓克力：測壓克力折射率' }
             ],
             controls: [
                 { key: 'h', label: '硬幣實深 h', min: 4, max: 20, step: 0.5, value: 12, only: ['depth'], fmt: (v) => `${v} cm` },
                 { key: 'n', label: '液體折射率 n', min: 1, max: 1.8, step: 0.01, value: 1.33, only: ['depth'], showIf: (p) => !p.hideN, fmt: (v) => Number(v).toFixed(2) },
-                { key: 'hideN', label: '隱藏折射率（自己測出來）', type: 'checkbox', value: false, only: ['depth'] },
+                { key: 'tk', label: '壓克力厚度 t', min: 2, max: 8, step: 0.5, value: 6, only: ['slab'], fmt: (v) => `${v} cm` },
+                { key: 'na', label: '壓克力折射率 n', min: 1.3, max: 1.8, step: 0.01, value: 1.49, only: ['slab'], showIf: (p) => !p.hideN, fmt: (v) => Number(v).toFixed(2) },
+                { key: 'hideN', label: '隱藏折射率（自己測出來）', type: 'checkbox', value: false, only: ['depth', 'slab'] },
                 { key: 'd', label: '大頭針 A 的物距 d', min: 3, max: 14, step: 0.5, value: 8, only: ['mirror'], fmt: (v) => `鏡前 ${v} cm` },
-                { key: 'gt', label: '玻璃板厚度', min: 0.2, max: 3, step: 0.1, value: 1.2, only: ['mirror'], fmt: (v) => `${Number(v).toFixed(1)} cm` },
-                { key: 'zb', label: '參考針 B 的位置', min: 0, max: 25, step: 0.1, value: 4, fmt: (v, p) => p.mode === 'mirror' ? `鏡後 ${Number(v).toFixed(1)} cm` : `水面下 ${Number(v).toFixed(1)} cm` },
+                { key: 'zb', label: '參考針 B 的位置', min: 0, max: 25, step: 0.1, value: 4, fmt: (v, p) => `${({ mirror: '鏡後', slab: '前表面後' })[p.mode] || '水面下'} ${Number(v).toFixed(1)} cm` },
                 { key: 'amp', label: '眼睛左右搖擺幅度', min: 0, max: 8, step: 0.5, value: 4, fmt: (v) => `±${v} cm` },
-                { key: 'H', label: '眼睛到水面／玻璃板', min: 15, max: 40, step: 1, value: 20, fmt: (v) => `${v} cm` }
+                { key: 'H', label: '眼睛到水面／鏡面／壓克力', min: 15, max: 40, step: 1, value: 20, fmt: (v) => `${v} cm` }
             ],
             extraButtons: [
                 {
-                    action: 'liquid', label: '🎲 換一種未知液體',
+                    action: 'liquid', label: '🎲 隨機未知折射率',
                     onClick: (p, api) => {
-                        p.n = Math.round((1.3 + Math.random() * 0.35) * 100) / 100;
+                        const key = p.mode === 'slab' ? 'na' : 'n';
+                        p[key] = Math.round((p.mode === 'slab' ? 1.4 + Math.random() * 0.3 : 1.3 + Math.random() * 0.35) * 100) / 100;
                         p.hideN = true;
-                        ['n', 'hideN'].forEach((k) => {
+                        [key, 'hideN'].forEach((k) => {
                             const el = api.host.querySelector(`[id$="parallax-${k}"]`);
-                            if (el) { if (k === 'hideN') el.checked = true; else el.value = p.n; }
+                            if (el) { if (k === 'hideN') el.checked = true; else el.value = p[key]; }
                         });
                         api.syncOutputs(); api.paint();
                     }
@@ -4654,8 +4660,20 @@
              * 參考針 B 在杯外後方，針身沿 y 方向（和眼睛左右搖擺的方向垂直）指向硬幣，針尖在 y = pinY；
              * 從上往下看時針尖正對著硬幣，有視差時針尖會左右偏離硬幣中心 */
             R: 5, bcY: -3.5, pinY: 1.6,
-            // 平面鏡模式：玻璃板高度、A 與 B 的針高；B 比玻璃板高，上半截露出來對齊 A′
-            plateTop: 5, pinA: 4, pinB: 8, nGlass: 1.5,
+            // 平面鏡模式：鏡子高度、A 與 B 的針高；B 比鏡子高，上半截露出鏡子上緣來對齊 A′
+            plateTop: 5, pinA: 4, pinB: 8,
+            // 厚壓克力模式：壓克力半寬、高度；A 貼在背面、針高 pinAS；B 從上方垂下，針尖高 bTip、針長 bLen
+            blockW: 6, blockTop: 5, pinAS: 4, bTip: 5.6, bLen: 3.4,
+            /* 隔著厚度 tk 的平行板看橫向距離 rho 的點：解 tanθ·H + tk·tanθ′ = rho（sinθ = n·sinθ′），回傳空氣中的角 θ */
+            slabTheta: (p, rho) => {
+                const tk = Number(p.tk), na = Number(p.na);
+                let lo = 0, hi = Math.PI / 2 - 1e-6;
+                for (let i = 0; i < 50; i++) {
+                    const th = (lo + hi) / 2;
+                    if (Math.tan(th) * p.H + tk * Math.tan(Math.asin(Math.sin(th) / na)) > rho) hi = th; else lo = th;
+                }
+                return (lo + hi) / 2;
+            },
             /* 眼睛在 (x, 0)，水面在 z = H，硬幣在 (0, H + h)。
              * 找水面上的折射點 s：水中 n·sinθw = 空氣中 sinθa。回傳折射點與「沿硬幣正上方鉛直線」的像深。 */
             coinRay: (p, x) => {
@@ -4678,11 +4696,12 @@
                 const raw = (xx) => {
                     const toB = Math.atan(-xx / (p.H + p.zb));
                     if (p.mode === 'mirror') return toB - Math.atan(-xx / (p.H + p.d));
+                    if (p.mode === 'slab') return toB + Math.sign(xx) * L.slabTheta(p, Math.abs(xx));
                     return toB - Math.atan((L.coinRay(p, xx).s - xx) / p.H);
                 };
                 return raw(x) - raw(0);
             },
-            imageDepth: (p) => p.mode === 'mirror' ? p.d : p.h / Number(p.n),
+            imageDepth: (p) => ({ mirror: p.d, slab: Number(p.tk) / Number(p.na) })[p.mode] ?? p.h / Number(p.n),
             verdict: (p) => {
                 const L = LABS.parallax;
                 if (p.amp === 0) return { ok: false, text: '眼睛不動就看不出視差，先把搖擺幅度調大' };
@@ -4690,8 +4709,8 @@
                 const shift = deg(Math.abs(L.offset(p, p.amp)));
                 if (shift < 0.12) return { ok: true, text: '無視差 ✓ B 就在像的位置' };
                 return dz < 0
-                    ? { ok: false, text: p.mode === 'mirror' ? 'B 比像近：眼睛往右時 B 相對往左 → 把 B 往後移' : 'B 比像高：眼睛往右時 B 相對往左 → 把 B 往下移' }
-                    : { ok: false, text: p.mode === 'mirror' ? 'B 比像遠：B 跟著眼睛同向跑 → 把 B 往前移' : 'B 比像深：B 跟著眼睛同向跑 → 把 B 往上移' };
+                    ? { ok: false, text: p.mode !== 'depth' ? 'B 比像近：眼睛往右時 B 相對往左 → 把 B 往後移' : 'B 比像高：眼睛往右時 B 相對往左 → 把 B 往下移' }
+                    : { ok: false, text: p.mode !== 'depth' ? 'B 比像遠：B 跟著眼睛同向跑 → 把 B 往前移' : 'B 比像深：B 跟著眼睛同向跑 → 把 B 往上移' };
             },
             readouts: (p) => {
                 const L = LABS.parallax, v = L.verdict(p);
@@ -4701,6 +4720,14 @@
                     { label: '參考針 B', value: `鏡後 ${p.zb.toFixed(1)} cm` },
                     { label: '眼睛移到最右時 B 與 A′ 錯開', value: shift },
                     { label: '判斷', value: v.text }
+                ];
+                if (p.mode === 'slab') return [
+                    { label: '壓克力厚度 t', value: `${p.tk} cm` },
+                    { label: '參考針 B（視深 h′）', value: `前表面後 ${p.zb.toFixed(1)} cm` },
+                    { label: '眼睛移到最右時 B 與像錯開', value: shift },
+                    { label: '判斷', value: v.text },
+                    { label: '由 B 推算 n = t ÷ h′', value: p.zb > 0.05 ? (p.tk / p.zb).toFixed(2) : '—' },
+                    { label: '實際折射率 n', value: p.hideN ? (v.ok ? `${Number(p.na).toFixed(2)}（對齊後揭曉）` : '？對齊後揭曉') : Number(p.na).toFixed(2) }
                 ];
                 return [
                     { label: '硬幣實深 h', value: `${p.h} cm` },
@@ -4713,7 +4740,7 @@
             },
             setup: ({ host, canvas, params, disposers, syncOutputs, paint }) => {
                 const liquidBtn = host.querySelector('[data-action="liquid"]');
-                const sync = () => { if (liquidBtn) liquidBtn.style.display = params.mode === 'depth' ? '' : 'none'; };
+                const sync = () => { if (liquidBtn) liquidBtn.style.display = params.mode === 'mirror' ? 'none' : ''; };
                 host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
                 sync();
                 canvas.style.touchAction = 'none';
@@ -4767,7 +4794,7 @@
                 const aw = wide ? Math.round(w * 0.58) : w, ah = wide ? h : Math.round(h * 0.56);
                 p._panel = { x0: 0, y0: 0, w: aw, h: ah };
                 L.draw3d(ctx, 0, 0, aw, ah, p, xe);
-                labelWrap(ctx, `橘實線：${mirror ? 'A' : '硬幣'}的光真正走的路　粉紅虛線：往回延長，交到的就是像　綠點線：眼睛直接看 B`,
+                labelWrap(ctx, `橘實線：${p.mode === 'depth' ? '硬幣' : 'A'}的光真正走的路　粉紅虛線：往回延長，交到的就是像　綠點線：眼睛直接看 B`,
                           10, ah - 26, C.muted, 10, 13, aw - 20);
 
                 // ── 眼睛看到的畫面：從眼睛位置做真正的透視，眼睛一直盯著 A 的像
@@ -4782,12 +4809,27 @@
              * 視線對準 A 的像，視野只涵蓋像附近約 ±6 cm，就像實驗時湊近盯著看；
              * 水中的點逐點解司乃耳定律，取它從水面射出、進入眼睛的方向。 */
             drawEye: (ctx, x0, y0, pw, ph, p, xe) => {
-                const L = LABS.parallax, mirror = p.mode === 'mirror', H = p.H, n = Number(p.n);
+                const L = LABS.parallax, mirror = p.mode === 'mirror', slab = p.mode === 'slab', flat = mirror || slab;
+                const H = p.H, n = Number(p.n);
                 const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
                 const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
                 const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
                 const unit = (a) => { const l = Math.hypot(...a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
-                const h = p.h, E = mirror ? [xe, 0, 3] : [xe, 0, H + h];
+                const h = p.h, E = flat ? [xe, 0, 3] : [xe, 0, H + h];
+                /* 隔著厚度 tk、折射率 na 的平行板（前表面 y = H）看板後一點 Q：
+                 * 在含法線（y 方向）的平面內解入射角 θ，回傳眼睛真正看到它的方向（出射光的反方向） */
+                const tk = Number(p.tk), na = Number(p.na);
+                const viaSlab = (Q) => {
+                    const dx = Q[0] - E[0], dz = Q[2] - E[2], rho = Math.hypot(dx, dz), Ly = Q[1] - E[1];
+                    if (rho < 1e-6) return [0, 1, 0];
+                    let lo = 0, hi = Math.PI / 2 - 1e-6;
+                    for (let i = 0; i < 40; i++) {
+                        const th = (lo + hi) / 2;
+                        if (Math.tan(th) * (Ly - tk) + tk * Math.tan(Math.asin(Math.sin(th) / na)) > rho) hi = th; else lo = th;
+                    }
+                    const th = (lo + hi) / 2;
+                    return [dx / rho * Math.sin(th), Math.cos(th), dz / rho * Math.sin(th)];
+                };
                 // 水中一點 Q：在「眼睛—Q」的鉛直面內找水面出射點 S，眼睛沿 S 的方向看到 Q
                 const viaWater = (Q) => {
                     const dx = Q[0] - E[0], dy = Q[1] - E[1], rho = Math.hypot(dx, dy), dw = h - Q[2];
@@ -4801,14 +4843,15 @@
                     return [E[0] + dx / rho * s, E[1] + dy / rho * s, h];
                 };
                 // 視線方向：燒杯模式對準硬幣的像（硬幣中心射出水面的方向），平面鏡模式對準鏡中 A′
-                const target = mirror ? [0, H + p.d, 3.5] : viaWater([0, 0, 0]);
+                const yA = H + tk + 0.1;
+                const target = mirror ? [0, H + p.d, 3.5] : slab ? (() => { const d = viaSlab([0, yA, 3.5]); return [E[0] + d[0], E[1] + d[1], E[2] + d[2]]; })() : viaWater([0, 0, 0]);
                 const f = unit(sub(target, E));
-                const upRef = mirror ? [0, 0, 1] : [0, 1, 0];
+                const upRef = flat ? [0, 0, 1] : [0, 1, 0];
                 const u = unit(sub(upRef, f.map((c) => c * dot(upRef, f))));
                 const r = cross(f, u);
-                const dist = mirror ? H + p.d : Math.hypot(...sub(target, E)) + h / n;
-                const F = Math.min(pw, ph) * 0.46 * dist / (mirror ? 9 : 6);
-                const cx = x0 + pw / 2, cy = y0 + (mirror ? ph / 2 : ph * 0.64);   // 燒杯模式把像放低，上方留給 B
+                const dist = mirror ? H + p.d : slab ? H + tk / na : Math.hypot(...sub(target, E)) + h / n;
+                const F = Math.min(pw, ph) * 0.46 * dist / (flat ? 9 : 6);
+                const cx = x0 + pw / 2, cy = y0 + (flat ? ph / 2 : ph * 0.64);   // 燒杯模式把像放低，上方留給 B
                 const proj = (dir) => { const z = dot(dir, f); return [cx + F * dot(dir, r) / z, cy - F * dot(dir, u) / z]; };
                 const air = (Q) => proj(sub(Q, E));
                 const wet = (Q) => proj(sub(viaWater(Q), E));
@@ -4840,7 +4883,7 @@
 
                 ctx.save();
                 ctx.beginPath(); ctx.rect(x0, y0, pw, ph); ctx.clip();
-                if (!mirror) {
+                if (!flat) {
                     const R = L.R, bcY = L.bcY, yb = L.pinY, zB = h - p.zb, rodY = yb + 5;
                     // 桌面（木紋色）
                     ctx.fillStyle = '#e6d5bb'; ctx.fillRect(x0, y0, pw, ph);
@@ -4874,73 +4917,73 @@
                     labelFit(ctx, 'A 的像', ca[0], ca[1] + Math.abs(coin[18][1] - ca[1]) + 18, C.rose, 11, 'center', { clampW: x0 + pw - 2, plate: 1 });
                     labelFit(ctx, 'B 的針尖', tb[0] + 10, tb[1] + 4, C.green, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
                 } else {
-                    const pt = L.plateTop, zA = L.pinA, zB = L.pinB;
                     ctx.fillStyle = '#f2f5f6'; ctx.fillRect(x0, y0, pw, ph);
-                    // 桌面
                     // 桌面只取眼前一段，太近或太寬的點投影後座標過大，canvas 會畫不出來
-                    const yNear = Math.max(4, H - p.d - 6), yFar = H + 40;
+                    const yNear = Math.max(4, H - (mirror ? p.d : 0) - 6), yFar = H + 40;
                     const tbl = [air([-25, yNear, 0]), air([25, yNear, 0]), air([25, yFar, 0]), air([-25, yFar, 0])];
                     path(tbl); ctx.fillStyle = '#e6d5bb'; ctx.fill();
                     ctx.strokeStyle = 'rgba(140,105,60,0.16)'; ctx.lineWidth = 1;
                     for (let k = -24; k <= 24; k += 3) { const a = air([k, yNear, 0]), b = air([k, yFar, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
                     for (let y = Math.ceil(yNear / 3) * 3; y <= yFar; y += 3) { const a = air([-25, y, 0]), b = air([25, y, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
-                    const gt = Number(p.gt), ng = L.nGlass, yB = H + Math.max(p.zb, gt + 0.05);
-                    const plate = [air([-9, H, 0]), air([9, H, 0]), air([9, H, pt]), air([-9, H, pt])];
-                    const plateBack = [air([-9, H + gt, 0]), air([9, H + gt, 0]), air([9, H + gt, pt]), air([-9, H + gt, pt])];
-                    // 視線（直線）在玻璃前表面的落點若在板內，這一點就是隔著玻璃看到的
-                    const behindGlass = (Q) => {
-                        const k = H / (Q[1] - E[1]), x = E[0] + (Q[0] - E[0]) * k, z = E[2] + (Q[2] - E[2]) * k;
-                        return Math.abs(x) <= 9 && z >= 0 && z <= pt;
-                    };
-                    // 隔著厚玻璃看：光在玻璃裡偏折，出來後和原方向平行但側移；
-                    // 在含玻璃法線（y 方向）的平面內解入射角 θ：tanθ·(空氣中走的 y) + tanθ′·厚度 = 橫向距離
-                    const viaGlass = (Q) => {
-                        const dx = Q[0] - E[0], dz = Q[2] - E[2], rho = Math.hypot(dx, dz), Ly = Q[1] - E[1];
-                        if (rho < 1e-6) return proj([0, 1, 0]);
-                        let lo = 0, hi = Math.PI / 2 - 1e-6;
-                        for (let i = 0; i < 40; i++) {
-                            const th = (lo + hi) / 2;
-                            if (Math.tan(th) * (Ly - gt) + gt * Math.tan(Math.asin(Math.sin(th) / ng)) > rho) hi = th; else lo = th;
-                        }
-                        const th = (lo + hi) / 2;
-                        return proj([dx / rho * Math.sin(th), Math.cos(th), dz / rho * Math.sin(th)]);
-                    };
-                    // 板後的參考針 B：露出玻璃板的上半截直接看到；被玻璃擋住的下半截被折射側移，看起來和上半截斷開
-                    const bPts = Array.from({ length: Math.round(zB / 0.05) + 1 }, (_, i) => {
-                        const Q = [0, yB, i * 0.05], g = behindGlass(Q);
-                        return { g, pt: g ? viaGlass(Q) : air(Q) };
-                    });
-                    const runs = [];
-                    bPts.forEach((q) => { const r = runs[runs.length - 1]; if (r && r.g === q.g) r.pts.push(q.pt); else runs.push({ g: q.g, pts: [q.pt] }); });
-                    runs.filter((r) => !r.g && r.pts.length > 1).forEach((r) => glow([r.pts[0], r.pts[r.pts.length - 1]], 14));
-                    const bw = Math.max(1.2, F * 0.12 / Math.hypot(...sub([0, yB, 2], E)));
-                    runs.forEach((r) => {
-                        ctx.strokeStyle = '#7d8c91'; ctx.lineWidth = bw; ctx.lineCap = 'butt';
-                        ctx.beginPath(); r.pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke();
-                    });
-                    ball([0, yB, zB], 0.45, C.green);
-                    // 鏡中的 A′：只在玻璃板範圍內看得到，顏色淡一些
-                    ctx.save(); path(plate); ctx.clip();
-                    glow([air([0, H + p.d, 0.2]), air([0, H + p.d, zA])], 14);
-                    ctx.globalAlpha = 0.6;
-                    rod([0, H + p.d, 0], [0, H + p.d, zA], 0.12, '#7d8c91');
-                    ball([0, H + p.d, zA], 0.45, C.orange);
-                    ctx.restore();
-                    // 厚玻璃板：背面、頂面（玻璃斷面帶點綠）、正面
-                    path(plateBack); ctx.strokeStyle = 'rgba(11,111,146,0.35)'; ctx.lineWidth = 1; ctx.stroke();
-                    path([plate[3], plate[2], plateBack[2], plateBack[3]]); ctx.fillStyle = 'rgba(110,175,160,0.55)'; ctx.fill();
-                    ctx.strokeStyle = 'rgba(11,111,146,0.6)'; ctx.stroke();
-                    path(plate); ctx.fillStyle = 'rgba(150,205,225,0.24)'; ctx.fill();
-                    ctx.strokeStyle = 'rgba(11,111,146,0.8)'; ctx.lineWidth = 2; ctx.stroke();
-                    // 板前的大頭針 A（離眼睛最近，畫最後）
-                    rod([0, H - p.d, 0], [0, H - p.d, zA], 0.12, '#7d8c91');
-                    ball([0, H - p.d, zA], 0.45, C.orange);
-                    const ia = air([0, H + p.d, zA]), ib = air([0, yB, zB]), ra = air([0, H - p.d, zA]);
-                    const low = runs.find((r) => r.g);
-                    if (low) { const m = low.pts[Math.floor(low.pts.length * 0.3)]; labelFit(ctx, '隔著玻璃：被折射偏移', m[0] - 10, m[1], C.muted, 10, 'right', { clampW: x0 + pw - 2, plate: 1 }); }
-                    labelFit(ctx, 'A′（鏡中）', ia[0] + 10, ia[1] + 18, C.rose, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
-                    labelFit(ctx, 'B（露出板上）', ib[0] + 10, ib[1] + 4, C.green, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
-                    labelFit(ctx, 'A（板前）', ra[0] - 12, ra[1] + 4, C.orange, 11, 'right', { clampW: x0 + pw - 2, plate: 1 });
+                    const opts = { clampW: x0 + pw - 2, plate: 1 };
+                    if (mirror) {
+                        const pt = L.plateTop, zA = L.pinA, zB = L.pinB, yB = H + p.zb;
+                        const mir = [air([-9, H, 0]), air([9, H, 0]), air([9, H, pt]), air([-9, H, pt])];
+                        // 鏡後的參考針 B：視線越過鏡子上緣的那一截才看得到（加光暈），其餘被不透明的鏡子擋住
+                        const zCut = Math.min(zB, E[2] + (pt - E[2]) * (yB - E[1]) / (H - E[1]));
+                        if (zCut < zB) glow([air([0, yB, zCut]), air([0, yB, zB])], 14);
+                        rod([0, yB, 0], [0, yB, zB], 0.12, '#7d8c91');
+                        ball([0, yB, zB], 0.45, C.green);
+                        // 不透明的鏡面（銀色）
+                        const gm = ctx.createLinearGradient(0, mir[3][1], 0, mir[0][1]);
+                        gm.addColorStop(0, '#eef2f4'); gm.addColorStop(0.55, '#c9d3d8'); gm.addColorStop(1, '#dfe5e8');
+                        path(mir); ctx.fillStyle = gm; ctx.fill();
+                        // 鏡中的 A′：只出現在鏡面上
+                        ctx.save(); path(mir); ctx.clip();
+                        glow([air([0, H + p.d, 0.2]), air([0, H + p.d, zA])], 14);
+                        rod([0, H + p.d, 0], [0, H + p.d, zA], 0.12, '#7d8c91');
+                        ball([0, H + p.d, zA], 0.45, C.orange);
+                        ctx.restore();
+                        path(mir); ctx.strokeStyle = '#4f5b60'; ctx.lineWidth = 2.5; ctx.stroke();
+                        // 鏡前的大頭針 A（離眼睛最近，畫最後）
+                        rod([0, H - p.d, 0], [0, H - p.d, zA], 0.12, '#7d8c91');
+                        ball([0, H - p.d, zA], 0.45, C.orange);
+                        const ia = air([0, H + p.d, zA]), ib = air([0, yB, zB]), ra = air([0, H - p.d, zA]);
+                        labelFit(ctx, 'A′（鏡中）', ia[0] + 10, ia[1] + 18, C.rose, 11, 'left', opts);
+                        labelFit(ctx, 'B（露出鏡子上緣）', ib[0] + 10, ib[1] + 4, C.green, 11, 'left', opts);
+                        labelFit(ctx, 'A（鏡前）', ra[0] - 12, ra[1] + 4, C.orange, 11, 'right', opts);
+                        labelFit(ctx, '平面鏡（不透明）', x0 + 10, Math.max(mir[2][1], mir[3][1]) + 16, C.muted, 10, 'left', opts);
+                    } else {
+                        const bw = L.blockW, bt = L.blockTop, zAh = L.pinAS, yB = H + p.zb, tip = L.bTip;
+                        const front = [air([-bw, H, 0]), air([bw, H, 0]), air([bw, H, bt]), air([-bw, H, bt])];
+                        const back = [air([-bw, H + tk, 0]), air([bw, H + tk, 0]), air([bw, H + tk, bt]), air([-bw, H + tk, bt])];
+                        const seen = (Q) => proj(viaSlab(Q));
+                        // 壓克力背面
+                        path(back); ctx.strokeStyle = 'rgba(11,111,146,0.35)'; ctx.lineWidth = 1; ctx.stroke();
+                        // 背面的大頭針 A：隔著壓克力看，逐點折射（看起來變近、變大）
+                        const aPts = Array.from({ length: 41 }, (_, i) => seen([0, yA, i * zAh / 40]));
+                        glow([aPts[28], aPts[40]], 14);
+                        ctx.strokeStyle = '#7d8c91'; ctx.lineWidth = Math.max(1.2, F * 0.12 / (H + tk / na)); ctx.lineCap = 'round';
+                        ctx.beginPath(); aPts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke(); ctx.lineCap = 'butt';
+                        const ah = aPts[40], ar = Math.max(2.5, F * 0.45 / (H + tk / na));
+                        const ga = ctx.createRadialGradient(ah[0] - ar * 0.35, ah[1] - ar * 0.35, ar * 0.1, ah[0], ah[1], ar);
+                        ga.addColorStop(0, '#ffffff'); ga.addColorStop(0.35, C.orange); ga.addColorStop(1, 'rgba(0,0,0,0.55)');
+                        ctx.fillStyle = ga; ctx.beginPath(); ctx.arc(ah[0], ah[1], ar, 0, Math.PI * 2); ctx.fill();
+                        // 壓克力：頂面（斷面帶點綠）、側面、正面
+                        path([front[3], front[2], back[2], back[3]]); ctx.fillStyle = 'rgba(110,175,160,0.5)'; ctx.fill();
+                        ctx.strokeStyle = 'rgba(11,111,146,0.6)'; ctx.stroke();
+                        path(front); ctx.fillStyle = 'rgba(150,205,225,0.22)'; ctx.fill();
+                        ctx.strokeStyle = 'rgba(11,111,146,0.8)'; ctx.lineWidth = 2; ctx.stroke();
+                        // 從上方垂下的參考針 B：針尖在壓克力上方，直接看到
+                        glow([air([0, yB, tip]), air([0, yB, tip + 1.2])], 12);
+                        rod([0, yB + 4, tip + L.bLen + 1.5], [0, yB, tip + L.bLen], 0.25, '#5f6b70');
+                        rod([0, yB, tip], [0, yB, tip + L.bLen], 0.1, '#8e9ca1');
+                        ball([0, yB, tip + L.bLen], 0.45, C.green);
+                        const tb = air([0, yB, tip]);
+                        labelFit(ctx, 'A 的像（隔著壓克力）', ah[0] + 12, ah[1] + 18, C.rose, 11, 'left', opts);
+                        labelFit(ctx, 'B 的針尖', tb[0] + 10, tb[1] + 4, C.green, 11, 'left', opts);
+                        labelFit(ctx, '厚壓克力', front[0][0] + 8, front[0][1] - 8, C.blue, 10, 'left', opts);
+                    }
                 }
                 labelFit(ctx, '眼睛看到的（盯著像，左右晃頭）', x0 + 10, y0 + 18, C.ink, 12, 'left', { plate: 1, clampW: x0 + pw - 2 });
                 labelFit(ctx, '黃色光暈：要互相比對的兩樣東西', x0 + 10, y0 + 38, '#9a6b00', 11, 'left', { plate: 1, clampW: x0 + pw - 2 });
@@ -4949,14 +4992,16 @@
             /* 3D 裝置圖：從斜上方看整套實驗，拖曳可旋轉。
              * 世界座標 x = 眼睛搖擺方向、y = 前後、z = 高度（桌面 z = 0）；光線都在 y = 0 的鉛直面上。 */
             draw3d: (ctx, x0, y0, pw, ph, p, xe) => {
-                const L = LABS.parallax, mirror = p.mode === 'mirror', H = p.H;
-                // 兩種模式各自記住視角；平面鏡模式預設從側面看，眼睛—玻璃板—B 才會左右攤開
-                const views = p._views || (p._views = { depth: { yaw: rad(-55), pitch: rad(24) }, mirror: { yaw: rad(-72), pitch: rad(30) } });
+                const L = LABS.parallax, mirror = p.mode === 'mirror', slab = p.mode === 'slab', flat = mirror || slab, H = p.H;
+                const tk = Number(p.tk), na = Number(p.na);
+                // 各模式各自記住視角；平面鏡模式預設從側面看，眼睛—鏡子—B 才會左右攤開
+                const views = p._views || (p._views = { depth: { yaw: rad(-55), pitch: rad(24) }, mirror: { yaw: rad(-72), pitch: rad(30) }, slab: { yaw: rad(-62), pitch: rad(28) } });
                 const view = p._view3d = views[p.mode];
                 const cyw = Math.cos(view.yaw), syw = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
                 // 場景中心與大小：燒杯模式是高的（眼睛在上方），平面鏡模式是長的（沿桌面往前看）
-                const T = mirror ? [0, (H + p.zb) / 2, 2] : [0, -1, (H + p.h) / 2];
-                const span = mirror ? H + Math.max(p.d, p.zb) + 8 : H + p.h + 8;
+                const far = mirror ? Math.max(p.d, p.zb) : Math.max(tk, p.zb);
+                const T = flat ? [0, (H + far) / 2, 3] : [0, -1, (H + p.h) / 2];
+                const span = flat ? H + far + 8 : H + p.h + 8;
                 const D = span * 2.4, F = Math.min(pw, ph - 50) * 0.92 * D / span;
                 const cx = x0 + pw / 2, cy = y0 + 22 + (ph - 62) / 2;
                 const P = (x, y, z) => {
@@ -5010,10 +5055,10 @@
                 ctx.save();
                 ctx.beginPath(); ctx.rect(x0, y0, pw, ph); ctx.clip();
                 ctx.fillStyle = '#f4f7f8'; ctx.fillRect(x0, y0, pw, ph);
-                const tx = mirror ? [-14, 14] : [-11, 11], ty = mirror ? [-4, H + Math.max(p.d, p.zb) + 6] : [-12, 12];
+                const tx = flat ? [-14, 14] : [-11, 11], ty = flat ? [-4, H + far + 6] : [-12, 12];
                 fillPoly([P(tx[0], ty[0], 0), P(tx[1], ty[0], 0), P(tx[1], ty[1], 0), P(tx[0], ty[1], 0)], '#eadcc6', 'rgba(120,90,50,0.25)');
 
-                if (!mirror) {
+                if (!flat) {
                     const R = L.R, bcY = L.bcY, h = p.h, yb = L.pinY, zB = h - p.zb;
                     const g = L.coinRay(p, xe), imgZ = h - g.img, eyeZ = H + h;
                     // 鐵架與參考針 B（杯外，夾在右側）
@@ -5054,29 +5099,27 @@
                     tag('參考針 B（拖曳針頭）', [0, yb + 3.5, zB], C.green, 14, -10);
                     tag('水面', [-R * 0.7, bcY - R * 0.7, h], C.cyan, 0, 0, 'center');
                     label(ctx, '3D 裝置圖（拖曳空白處旋轉）', x0 + 10, y0 + 18, C.ink, 12);
-                } else {
-                    const ez = 3, zA = L.pinA, zB = L.pinB, m = xe * p.d / (H + p.d);
+                } else if (mirror) {
+                    const ez = 3, zA = L.pinA, zB = L.pinB, m = xe * p.d / (H + p.d), pt3 = L.plateTop;
                     const pin = (y, top, color, alpha) => {
                         ctx.globalAlpha = alpha || 1;
                         line([0, y, 0], [0, y, top], '#7d8c91', 2);
                         ball([0, y, top], 4, color);
                         ctx.globalAlpha = 1;
                     };
-                    // 由遠到近：B、A′、玻璃板、光線、A、眼睛
+                    // 由遠到近：B、不透明的鏡子、鏡中的像 A′（虛像，只畫淡色示意）、光線、A、眼睛
                     pin(H + p.zb, zB, C.green);
                     ball([0, H + p.zb, zB], 5.5, C.green);
                     handle([0, H + p.zb, zB], [0, H + p.zb + 1, zB]);
-                    pin(H + p.d, zA, C.orange, 0.45);
+                    fillPoly([P(-9, H + 0.4, 0), P(9, H + 0.4, 0), P(9, H + 0.4, pt3), P(-9, H + 0.4, pt3)], '#7c868b', '#4f5b60', 1);
+                    fillPoly([P(-9, H, pt3), P(9, H, pt3), P(9, H + 0.4, pt3), P(-9, H + 0.4, pt3)], '#9aa4a9', '#4f5b60', 1);
+                    fillPoly([P(-9, H, 0), P(9, H, 0), P(9, H, pt3), P(-9, H, pt3)], 'rgba(214,224,229,0.96)', '#4f5b60', 1.6);
+                    pin(H + p.d, zA, C.orange, 0.4);
                     line([0, H + p.d, 0], [0, H + p.d, zA], C.rose, 1, [3, 3]);
-                    const gt = Number(p.gt), pt3 = L.plateTop;
-                    fillPoly([P(-9, H + gt, 0), P(9, H + gt, 0), P(9, H + gt, pt3), P(-9, H + gt, pt3)], 'rgba(150,205,225,0.18)', 'rgba(11,111,146,0.45)', 1);
-                    fillPoly([P(-9, H, pt3), P(9, H, pt3), P(9, H + gt, pt3), P(-9, H + gt, pt3)], 'rgba(110,175,160,0.55)', 'rgba(11,111,146,0.6)', 1);
-                    fillPoly([P(9, H, 0), P(9, H + gt, 0), P(9, H + gt, pt3), P(9, H, pt3)], 'rgba(110,175,160,0.45)', 'rgba(11,111,146,0.6)', 1);
-                    fillPoly([P(-9, H, 0), P(9, H, 0), P(9, H, pt3), P(-9, H, pt3)], 'rgba(150,205,225,0.28)', 'rgba(11,111,146,0.8)', 1.6);
                     line([0, H - p.d, ez], [m, H, ez], C.orange, 2);
                     line([m, H, ez], [xe, 0, ez], C.orange, 2);
                     line([m, H, ez], [0, H + p.d, ez], C.rose, 1.6, [5, 4]);
-                    line([0, H + p.zb, ez], [xe, 0, ez], C.green, 1.3, [2, 4]);
+                    line([0, H + p.zb, zB - 1], [xe, 0, ez], C.green, 1.3, [2, 4]);
                     pin(H - p.d, zA, C.orange);
                     if (p.amp > 0) line([-p.amp, 0, ez], [p.amp, 0, ez], C.muted, 1, [4, 4]);
                     eye([xe, 0, ez]);
@@ -5084,7 +5127,41 @@
                     tag('大頭針 A', [0, H - p.d, zA], C.orange, 8, -6);
                     tag('像 A′', [0, H + p.d, zA], C.rose, 8, -6);
                     tag('參考針 B（拖曳針頭）', [0, H + p.zb, zB], C.green, 14, -10);
-                    tag('玻璃板', [9, H, L.plateTop], C.blue, -4, -6, 'right');
+                    tag('平面鏡', [9, H, pt3], C.muted, -4, -6, 'right');
+                    label(ctx, '3D 裝置圖（拖曳空白處旋轉）', x0 + 10, y0 + 18, C.ink, 12);
+                } else {
+                    const ez = 3, bw = L.blockW, bt = L.blockTop, yA = H + tk + 0.1, zAh = L.pinAS, yB = H + p.zb, tip = L.bTip;
+                    const top = tip + L.bLen;
+                    // 光線在 z = ez 的水平面上：A → 壓克力內 → 前表面出射點 S → 眼睛；粉紅虛線把出射光往回延長到像
+                    const th = L.slabTheta(p, Math.abs(xe)), xs = xe - Math.sign(xe) * H * Math.tan(th);
+                    const img = Math.abs(xe - xs) < 1e-6 ? tk / na : H * xe / (xe - xs) - H;
+                    // 由遠到近：A、壓克力背面與側面、像、B 與支架、光線、正面、眼睛
+                    line([0, yA, 0], [0, yA, zAh], '#7d8c91', 2);
+                    ball([0, yA, zAh], 4, C.orange);
+                    fillPoly([P(-bw, H + tk, 0), P(bw, H + tk, 0), P(bw, H + tk, bt), P(-bw, H + tk, bt)], 'rgba(150,205,225,0.18)', 'rgba(11,111,146,0.45)', 1);
+                    fillPoly([P(bw, H, 0), P(bw, H + tk, 0), P(bw, H + tk, bt), P(bw, H, bt)], 'rgba(110,175,160,0.35)', 'rgba(11,111,146,0.6)', 1);
+                    fillPoly([P(-bw, H, bt), P(bw, H, bt), P(bw, H + tk, bt), P(-bw, H + tk, bt)], 'rgba(110,175,160,0.45)', 'rgba(11,111,146,0.6)', 1);
+                    line([0, H + img, 0], [0, H + img, zAh], C.rose, 1, [3, 3]);
+                    ball([0, H + img, zAh], 3.5, 'rgba(194,38,74,0.55)');
+                    line([0, yA, ez], [xs, H, ez], C.orange, 2);
+                    line([xs, H, ez], [xe, 0, ez], C.orange, 2);
+                    line([xs, H, ez], [0, H + img, ez], C.rose, 1.6, [5, 4]);
+                    fillPoly([P(-bw, H, 0), P(bw, H, 0), P(bw, H, bt), P(-bw, H, bt)], 'rgba(150,205,225,0.22)', 'rgba(11,111,146,0.8)', 1.6);
+                    // 支架與從上方垂下的參考針 B
+                    line([bw + 3, yB, 0], [bw + 3, yB, top + 1.5], '#6f7b80', 3);
+                    line([bw + 3, yB, top + 1.5], [0, yB, top + 1.5], '#6f7b80', 2.4);
+                    line([0, yB, top + 1.5], [0, yB, top], '#6f7b80', 2.4);
+                    line([0, yB, tip], [0, yB, top], '#7d8c91', 2.2);
+                    ball([0, yB, top], 5.5, C.green);
+                    handle([0, yB, top], [0, yB + 1, top]);
+                    line([0, yB, tip], [xe, 0, ez], C.green, 1.3, [2, 4]);
+                    if (p.amp > 0) line([-p.amp, 0, ez], [p.amp, 0, ez], C.muted, 1, [4, 4]);
+                    eye([xe, 0, ez]);
+                    tag('眼睛', [xe, 0, ez], C.ink, 14);
+                    tag('大頭針 A（貼背面）', [0, yA, zAh], C.orange, 8, -6);
+                    tag('A 的像', [0, H + img, zAh], C.rose, -8, -8, 'right');
+                    tag('參考針 B（拖曳針頭）', [0, yB, top], C.green, 14, -10);
+                    tag('厚壓克力', [-bw, H, bt], C.blue, 4, -6);
                     label(ctx, '3D 裝置圖（拖曳空白處旋轉）', x0 + 10, y0 + 18, C.ink, 12);
                 }
                 ctx.restore();
