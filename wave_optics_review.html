@@ -4519,7 +4519,7 @@
                 <h5>1. 什麼是視差</h5>
                 <p>伸出一根手指，對準遠處的電線桿，然後頭左右晃一晃：手指會在電線桿前面左右跳動。這種「頭一動，兩個東西就互相錯開」的現象叫做<b>視差</b>。把手指慢慢移近電線桿，跳動愈來愈小；如果兩者在同一個位置，不管頭怎麼晃都不會錯開。</p>
                 <figure class="teach-fig">
-                    <svg viewBox="0 0 520 210" role="img" aria-label="眼睛在左、右兩個位置看近物與遠物，近物相對遠物往反方向移動">
+                    <svg viewBox="0 0 520 300" role="img" aria-label="眼睛在左、右兩個位置看近物與遠物：近物的視線轉得多、在視野中移動得多，遠物轉得少、移動得少">
                         <line x1="180" y1="24" x2="180" y2="44" stroke="#5f6b70" stroke-width="6" stroke-linecap="round"/>
                         <text x="196" y="38" font-size="12" fill="#5f6b70">遠的物體</text>
                         <circle cx="180" cy="100" r="6" fill="#c9750f"/>
@@ -4530,6 +4530,11 @@
                             <line x1="230" y1="182" x2="180" y2="34" stroke="#5f6b70" stroke-dasharray="4 3"/>
                             <line x1="230" y1="182" x2="180" y2="100" stroke="#c9750f"/>
                         </g>
+                        <!-- 物體處的扇形：眼睛從左移到右，看這個物體的視線方向轉了多少（遠物約 37°、近物約 63°） -->
+                        <path d="M180 34 L171.04 60.53 A28 28 0 0 0 188.96 60.53 Z" fill="rgba(95,107,112,0.28)" stroke="#5f6b70" stroke-width="1"/>
+                        <path d="M180 100 L168.55 118.78 A22 22 0 0 0 191.45 118.78 Z" fill="rgba(201,117,15,0.32)" stroke="#c9750f" stroke-width="1"/>
+                        <text x="158" y="68" font-size="11" fill="#5f6b70" text-anchor="end">視線轉得少</text>
+                        <text x="158" y="128" font-size="11" fill="#c9750f" text-anchor="end">視線轉得多</text>
                         <g fill="#fff" stroke="#12313a" stroke-width="1.4">
                             <ellipse cx="130" cy="186" rx="11" ry="6.5"/><ellipse cx="230" cy="186" rx="11" ry="6.5"/>
                         </g>
@@ -4537,7 +4542,11 @@
                         <text x="130" y="206" font-size="12" text-anchor="middle" fill="#12313a">眼在左</text>
                         <text x="230" y="206" font-size="12" text-anchor="middle" fill="#12313a">眼在右</text>
                         <path d="M150 196 H210" stroke="#7d949c" stroke-width="1.2" marker-end="url(#teach-arrow)"/>
-                        <defs><marker id="teach-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7d949c"/></marker></defs>
+                        <defs>
+                            <marker id="teach-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7d949c"/></marker>
+                            <marker id="teach-arrow-far" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#5f6b70"/></marker>
+                            <marker id="teach-arrow-near" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#c9750f"/></marker>
+                        </defs>
                         <!-- 右側兩格：視線固定朝正前方（虛線）。兩個物體都會移動，只是近的移得多、遠的移得少。
                              位置依左圖幾何換算：遠物偏 50/148、近物偏 50/82，乘上同一比例 60 -->
                         <g font-size="12" fill="#12313a">
@@ -4557,9 +4566,16 @@
                             <text x="400" y="188" font-size="10" fill="#5f6b70" text-anchor="middle">遠</text>
                             <circle cx="383" cy="160" r="6" fill="#c9750f"/>
                             <text x="373" y="164" font-size="10" fill="#c9750f" text-anchor="end">近</text>
+                            <!-- 第三格：同一把尺比較兩者移動了多少，箭頭長度就是視角的改變量 -->
+                            <rect x="330" y="202" width="180" height="92" rx="8" fill="#fff8ee" stroke="#ecd3ad"/>
+                            <text x="342" y="220">從眼在左到眼在右</text>
+                            <text x="420" y="238" font-size="10" fill="#5f6b70" text-anchor="middle">遠的：移得少</text>
+                            <line x1="440" y1="246" x2="400" y2="246" stroke="#5f6b70" stroke-width="2.4" marker-end="url(#teach-arrow-far)"/>
+                            <text x="420" y="266" font-size="10" fill="#c9750f" text-anchor="middle">近的：移得多</text>
+                            <line x1="457" y1="276" x2="383" y2="276" stroke="#c9750f" stroke-width="2.4" marker-end="url(#teach-arrow-near)"/>
                         </g>
                     </svg>
-                    <figcaption>頭從左移到右，<b>兩個物體在視野裡都往左跑</b>（虛線是視野正前方），只是近的跑得多、遠的跑得少：近的離眼睛近，同樣移動一段距離，看它的視線方向轉得比較多。所以近的物體<b>相對於</b>遠的物體往左偏。視差看的就是兩者之間的相對錯開；上方實驗的「眼睛看到的」畫面一直盯著像，像固定在中間，看到的也正是這個相對錯開。</figcaption>
+                    <figcaption>頭從左移到右，<b>兩個物體在視野裡都往左跑</b>（虛線是視野正前方），只是近的跑得多、遠的跑得少：近的離眼睛近，同樣移動一段距離，看它的視線方向轉得比較多。所以近的物體<b>相對於</b>遠的物體往左偏。箭頭長度就是視角改變的量，近的箭頭比較長，兩者的差就是<b>視差</b>；上方實驗的「眼睛看到的」畫面一直盯著像，像固定在中間，看到的也正是這個相對錯開。</figcaption>
                 </figure>
                 <h5>2. 為什麼距離相同就不會錯開</h5>
                 <p>眼睛橫移 Δx，看距離 D 的物體，視線方向大約轉了 Δx ÷ D。兩個物體看起來的錯開量約為 <b>Δx × (1/D₁ − 1/D₂)</b>：</p>
