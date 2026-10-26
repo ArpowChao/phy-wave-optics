@@ -5777,15 +5777,13 @@
                 const q = noImage ? null : 1 / (1 / f - 1 / p.p);
                 const m = noImage ? null : -q / p.p;
 
-                // 依「需要顯示的最大距離」自動縮放，讓物、像與焦點都留在畫面內
-                const needCm = Math.max(p.p, Math.abs(q === null ? 0 : q), 2 * p.f) * 1.18 + 6;
+                // 比例尺固定（依滑桿最大的物距與焦距決定），拖動物距時只有物體在動，畫面不會跟著縮放；
+                // 像太遠或太大時超出畫面的部分直接裁掉，讀數仍顯示實際數值。
+                const lensLab = LABS.lens, maxOf = (k) => lensLab.controls.find((c) => c.key === k).max;
+                const needCm = Math.max(maxOf('p'), 2 * maxOf('f')) + 6;
                 const cx = w * 0.5;
                 const scale = (w * 0.5 - 14) / needCm;
-                // 物與像的箭頭、標籤須留在圖區內，底部另保留圖例空間。
-                const imageHeight = m === null ? 0 : m * p.ho;
-                const upHeight = Math.max(p.ho, imageHeight, 1);
-                const downHeight = Math.max(-imageHeight, 1);
-                const vScale = Math.min(7, (axisY - 42) / upHeight, (h - 92 - axisY) / downHeight);
+                const vScale = Math.min(7, (axisY - 42) / maxOf('ho'), (h - 92 - axisY) / maxOf('ho'));
                 const sx = (cm) => cx + cm * scale;
                 const sy = (cm) => axisY - cm * vScale;
 
@@ -5867,12 +5865,16 @@
                 if (noImage) {
                     label(ctx, 'p = f：折射光互相平行，無法成像', 14, 22, C.rose, 12);
                 } else {
-                    const Ix = sx(q), Iy = sy(m * p.ho);
-                    arrow(ctx, Ix, axisY, Ix, Iy, q > 0 ? C.blue : C.violet, 2.8);
-                    labelFit(ctx, q > 0 ? '實像' : '虛像', Ix + 8,
-                             Iy + (Iy < axisY ? -6 : 15),
-                             q > 0 ? C.blue : C.violet, 12, 'left',
-                             { clampW: w, plate: 1 });
+                    const Ix = sx(q), Iy = sy(m * p.ho), imgCol = q > 0 ? C.blue : C.violet;
+                    const top = 32, bottom = h - 76, inX = Ix > 8 && Ix < w - 8;
+                    ctx.save(); ctx.beginPath(); ctx.rect(6, top, w - 12, bottom - top); ctx.clip();
+                    arrow(ctx, Ix, axisY, Ix, Iy, imgCol, 2.8);
+                    ctx.restore();
+                    if (inX) labelFit(ctx, q > 0 ? '實像' : '虛像', Ix + 8,
+                             Math.max(top + 14, Math.min(bottom - 4, Iy + (Iy < axisY ? -6 : 15))),
+                             imgCol, 12, 'left', { clampW: w, plate: 1 });
+                    else labelFit(ctx, `${q > 0 ? '實像' : '虛像'}在畫面${Ix >= w - 8 ? '右' : '左'}方之外`, Ix >= w - 8 ? w - 10 : 10, axisY - 10,
+                             imgCol, 11, Ix >= w - 8 ? 'right' : 'left', { clampW: w, plate: 1 });
                     label(ctx, `p = ${p.p} cm　f = ${f} cm　q = ${q.toFixed(1)} cm　m = ${m.toFixed(2)}`, 14, 22, C.ink, 12);
                 }
                 labelFit(ctx, concave ? '凹透鏡：實物成正立縮小虛像' : '凸透鏡：焦外倒立實像；焦內正立放大虛像', 14, h - 12, C.muted, 11, 'left', { maxW: w - 28, min: 10, clampW: w });
