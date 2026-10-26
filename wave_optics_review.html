@@ -5743,37 +5743,51 @@
             name: '薄透鏡成像作圖',
             tag: 'N16 / N17',
             hint: '',
-            hintFor: (p) => p.mode === 'thick'
-                ? '真正的透鏡有厚度，兩面都是球面：光在前、後兩個表面各折射一次（不是在中間一次彎折），每一條都照司乃耳定律精確計算。勾「薄透鏡公式的光路」對照，觀察：離主軸愈遠的光，交點愈靠近透鏡（球面像差）；透鏡愈厚、表面愈彎，差異愈大。'
+            hintFor: (p) => p.mode === 'dof'
+                ? '相機鏡頭前有三個物體：近的花、中間的人、遠的樹。感光元件放在「對焦距離」成像的位置。改變光圈：大光圈（f 數小）光錐很粗，沒對焦的物體在感光元件上散成大模糊圈，照片只有對焦的地方清楚（景深淺）；縮小光圈，光錐變細，前後的物體都比較清楚（景深深）。右邊是依模糊圈大小算出來的照片。'
+                : p.mode === 'thick'
+                ? '可以選六種透鏡（雙凸、平凸、凹凸、雙凹、平凹、凸凹），分別調整前、後表面的曲率半徑，先用造鏡者公式 1/f = (n − 1)(1/R₁ − 1/R₂) 自己算焦距，再對答案。真正的透鏡有厚度，兩面都是球面：光在前、後兩個表面各折射一次（不是在中間一次彎折），每一條都照司乃耳定律精確計算。藍色是近軸光、紅色是遠軸光：用「看哪些光」分開看，比較兩者交在哪裡（球面像差）。「表面形狀」可以改成拋物面，或把球面和拋物面疊在一起比較。勾「薄透鏡公式的光路」對照理想情況。'
                 : p.mode === 'double'
                 ? '兩個透鏡排成一組：透鏡 1 成的像 I₁，再當作透鏡 2 的物體。先勾光線，看三條光線穿過兩個透鏡後交在哪裡；再勾「中間像 I₁」，看透鏡 1 單獨成的像在哪，想想它和最後的像有什麼關係。I₁ 跑到透鏡 2 後面時，透鏡 2 的物就成了「虛物」。'
                 : p.mode === 'conj'
                 ? '物體和屏幕固定不動，兩者相距 L。拖動透鏡的位置，看屏幕上的像什麼時候最清楚；清楚時按「記錄這個位置」。試著找出所有能成清晰像的位置，再比較它們的物距和像距。'
                 : '先自己作圖：勾選下方的光線，一條一條畫出來，找出它們（或它們的反向延長線）交在哪裡；想好了再勾「顯示像與讀數」對答案。拖動物距時，透鏡和焦點都不會動，只有物體在移動。',
-            noteFor: (p) => p.mode === 'thick'
-                ? '<b>薄透鏡是理想化</b>：薄透鏡公式假設透鏡無限薄、光只在中間彎折一次，而且只看靠近主軸的光（近軸近似）。<br><b>厚度的影響</b>：光在兩個表面各折射一次，等效的彎折位置（主平面）不在透鏡中心，焦距也和 (n − 1)(1/R₁ − 1/R₂) 算出來的不同：厚透鏡焦距 1/f = (n − 1)[1/R₁ − 1/R₂ + (n − 1)t ÷ (n R₁ R₂)]。<br><b>球面像差</b>：球面對離軸遠的光偏折太多，邊緣光線比近軸光線更早交會，所以平行光聚不成一個點。相機鏡頭用多片透鏡或非球面來修正。<br>這裡沒有考慮色散，所有光線都用同一個折射率。'
+            noteFor: (p) => p.mode === 'dof'
+                ? '<b>光圈在哪裡</b>：光圈是一片孔徑可以調整的擋板（由好幾片金屬葉片圍成），裝在鏡頭裡、透鏡的前面或後面，不是透鏡本身；它決定能進入透鏡的光錐有多粗。<br><b>模糊圈</b>：物體的像點不在感光元件上時，光錐在感光元件上截出一個圓；光圈在透鏡上時直徑 c = D·|v − s| ÷ v（D 為光圈孔徑、v 為像距、s 為感光元件到透鏡的距離），這裡依實際的光圈位置追跡光線計算。<br><b>f 數</b>：N = f ÷ D。f 數愈小，口徑愈大，光錐愈粗，模糊圈也愈大，所以<b>大光圈景深淺</b>，適合拍人像把背景拍糊；小光圈景深深，適合拍風景，但進光量少，要曝光比較久。<br><b>景深</b>：模糊圈小到看不出來（這裡取感光元件寬度的 1/150）的物距範圍。<br>光圈縮到非常小時，光的繞射會讓整張照片變糊，所以也不能無限縮小。'
+                : p.mode === 'thick'
+                ? '<b>造鏡者公式</b>：1/f = (n − 1)(1/R₁ − 1/R₂)。光由左往右，曲率中心在表面右邊時 R 取正、在左邊取負，平面 R = ∞。雙凸、平凸、凹凸（中央厚、邊緣薄）都是會聚的凸透鏡；雙凹、平凹、凸凹（中央薄、邊緣厚）都是發散的凹透鏡。<br><b>薄透鏡是理想化</b>：薄透鏡公式假設透鏡無限薄、光只在中間彎折一次，而且只看靠近主軸的光（近軸近似）。<br><b>厚度的影響</b>：光在兩個表面各折射一次，等效的彎折位置（主平面）不在透鏡中心，焦距也和 (n − 1)(1/R₁ − 1/R₂) 算出來的不同：厚透鏡焦距 1/f = (n − 1)[1/R₁ − 1/R₂ + (n − 1)t ÷ (n R₁ R₂)]。<br><b>球面像差</b>：球面對離軸遠的光偏折太多，遠軸光比近軸光更早交會，所以平行光聚不成一個點。<br><b>球面 vs 拋物面</b>：兩者在中心的彎曲程度（頂點曲率）相同，所以近軸光的焦點幾乎一樣；但球面愈往邊緣愈彎，拋物面比較平緩，遠軸光偏折得比較少，像差就變小。注意：雙凸的拋物面透鏡也不是完美的，要讓平行光精確聚成一點，透鏡表面要做成特定的非球面（例如雙曲面）；相機鏡頭就是用非球面或多片透鏡來修正。<br>這裡沒有考慮色散，所有光線都用同一個折射率。'
                 : p.mode === 'double'
                 ? '<b>逐次成像</b>：先用透鏡 1 求出中間像 I₁（1/p₁ + 1/q₁ = 1/f₁），I₁ 就是透鏡 2 的物，物距 p₂ = d − q₁；再由 1/p₂ + 1/q₂ = 1/f₂ 求出最後的像。<br><b>虛物</b>：若 I₁ 落在透鏡 2 後面（q₁ > d），p₂ 為負，光在還沒會聚成 I₁ 之前就被透鏡 2 攔下。<br><b>總放大率</b>：m = m₁ × m₂。<br>圖中的光線是真的光：每條光線在兩個透鏡各折射一次，最後交在（或反向延長交在）最終的像上。'
                 : p.mode === 'conj'
                 ? '<b>共軛成像</b>：物屏距離 L 固定時，透鏡在兩個位置都能在屏幕上成清晰的實像，一個放大、一個縮小。兩個位置的物距和像距正好互換（p₁ = q₂、q₁ = p₂），所以兩次的放大率互為倒數（m₁·m₂ = 1）。<br><b>什麼時候找得到</b>：L 要大於 4f 才有兩個位置；L = 4f 時兩個位置合成一個（p = q = 2f，等大倒立）；L 小於 4f 時怎麼移都不清楚。<br><b>測焦距（貝索法）</b>：量出兩個位置的距離 d，焦距 f = (L² − d²) ÷ 4L。'
                 : '本實驗採實物：凸透鏡物距大於焦距時成倒立實像、小於焦距時成正立放大虛像；物在焦點時出射平行光。凹透鏡成正立縮小虛像。<br><b>虛像怎麼找</b>：折射後的光不會真的交在一起，把每一條折射光往回延長（虛線），延長線交在同一點，就是虛像。<br><b>三條光線</b>：① 平行主軸入射 → 凸透鏡折射後通過另一側焦點；凹透鏡折射後好像從同側焦點發出。② 通過鏡心，方向不變。③ 凸透鏡：通過（或來自）同側焦點方向的光，折射後平行主軸；凹透鏡：瞄準另一側焦點的光，折射後平行主軸。<br>符號法則：凸透鏡 f 取正、凹透鏡 f 取負；q > 0 為鏡後實像、q < 0 為鏡前虛像；m = −q/p，m > 0 正立、m < 0 倒立。',
-            height: 420,
+            // 景深模式在窄螢幕上下排光路圖與照片，畫布要高一些
+            height: (p, w) => p.mode === 'dof' && w < 640 ? 760 : 420,
             modes: [
                 { key: 'convex', label: '凸透鏡（f > 0）' },
                 { key: 'concave', label: '凹透鏡（f < 0）' },
                 { key: 'conj', label: '共軛成像：移動透鏡找清晰的像' },
                 { key: 'double', label: '雙透鏡組' },
-                { key: 'thick', label: '厚透鏡：實際光路' }
+                { key: 'thick', label: '厚透鏡：實際光路' },
+                { key: 'dof', label: '光圈與景深' }
             ],
             controls: [
-                { key: 'p', label: '物距 p (cm)', min: 4, max: 60, step: 1, value: 30, only: ['convex', 'concave', 'double', 'thick'], showIf: (p) => p.mode !== 'thick' || p.src === 'point', fmt: (v, p) => `${v} cm${p.mode === 'double' ? '（到透鏡 1）' : p.mode === 'thick' ? '（到透鏡中心）' : ''}` },
-                { key: 'lt', label: '透鏡形狀', value: 'convex', only: ['thick'], fmt: () => '', options: [{ value: 'convex', label: '雙凸（會聚）' }, { value: 'concave', label: '雙凹（發散）' }] },
-                { key: 'src', label: '光源', value: 'parallel', only: ['thick'], fmt: () => '', options: [{ value: 'parallel', label: '遠處的平行光（看焦點）' }, { value: 'point', label: '主軸上的物點（看成像）' }] },
+                { key: 'p', label: '物距 p (cm)', min: 4, max: 60, step: 1, value: 30, only: ['convex', 'concave', 'double', 'thick'], showIf: (p) => p.mode !== 'thick' || p.src === 'object', fmt: (v, p) => `${v} cm${p.mode === 'double' ? '（到透鏡 1）' : p.mode === 'thick' ? '（到透鏡中心）' : ''}` },
+                { key: 'lt', label: '透鏡形狀', value: 'convex', only: ['thick'], fmt: () => '', options: [
+                    { value: 'convex', label: '雙凸（凸透鏡）' }, { value: 'pconvex', label: '平凸（凸透鏡）' }, { value: 'mconvex', label: '凹凸（凸透鏡，中央厚）' },
+                    { value: 'concave', label: '雙凹（凹透鏡）' }, { value: 'pconcave', label: '平凹（凹透鏡）' }, { value: 'mconcave', label: '凸凹（凹透鏡，邊緣厚）' }] },
+                { key: 'src', label: '光源', value: 'object', only: ['thick'], fmt: () => '', options: [{ value: 'object', label: '物體（看成像）' }, { value: 'parallel', label: '遠處的平行光（看焦點）' }] },
                 { key: 'tt', label: '中心厚度 t (cm)', min: 1, max: 10, step: 0.5, value: 4, only: ['thick'], fmt: (v) => `${v} cm` },
-                { key: 'rr', label: '表面曲率半徑 R (cm)', min: 8, max: 40, step: 1, value: 15, only: ['thick'], fmt: (v) => `${v} cm` },
+                { key: 'rr', label: '前表面曲率半徑 |R₁| (cm)', min: 8, max: 40, step: 1, value: 12, only: ['thick'], fmt: (v) => `${v} cm` },
+                { key: 'rr2', label: '後表面曲率半徑 |R₂| (cm)', min: 8, max: 40, step: 1, value: 24, only: ['thick'], showIf: (p) => p.lt !== 'pconvex' && p.lt !== 'pconcave', fmt: (v) => `${v} cm` },
                 { key: 'nl', label: '透鏡折射率 n', min: 1.3, max: 1.9, step: 0.01, value: 1.5, only: ['thick'], fmt: (v) => Number(v).toFixed(2) },
                 { key: 'nr', label: '光線數', min: 3, max: 21, step: 2, value: 11, only: ['thick'], fmt: (v) => `${v} 條` },
+                { key: 'surf', label: '表面形狀', value: 'sphere', only: ['thick'], fmt: () => '', options: [{ value: 'sphere', label: '球面（圓）' }, { value: 'parabola', label: '拋物面' }, { value: 'both', label: '球面 vs 拋物面（疊在一起比較）' }] },
+                { key: 'zone', label: '看哪些光', value: 'all', only: ['thick'], fmt: () => '', options: [{ value: 'all', label: '全部' }, { value: 'near', label: '只看近軸光（靠近主軸）' }, { value: 'far', label: '只看遠軸光（靠近邊緣）' }] },
                 { key: 'ideal', label: '薄透鏡公式的光路（對照）', type: 'checkbox', value: false, only: ['thick'] },
+                { key: 'fn', label: '光圈（f 數）', value: 2.8, only: ['dof'], fmt: () => '', options: [1.4, 2, 2.8, 4, 5.6, 8, 11, 16].map((v) => ({ value: v, label: `f/${v}${v <= 2 ? '（大光圈）' : v >= 11 ? '（小光圈）' : ''}` })) },
+                { key: 'fd', label: '對焦距離 (cm)', min: 15, max: 150, step: 1, value: 45, only: ['dof'], fmt: (v) => `${v} cm` },
+                { key: 'sp', label: '光圈位置', value: 'front', only: ['dof'], fmt: () => '', options: [{ value: 'front', label: '透鏡前' }, { value: 'back', label: '透鏡後' }] },
                 { key: 'l1', label: '透鏡 1', value: 'convex', only: ['double'], fmt: () => '', options: [{ value: 'convex', label: '凸透鏡' }, { value: 'concave', label: '凹透鏡' }] },
                 { key: 'l2', label: '透鏡 2', value: 'convex', only: ['double'], fmt: () => '', options: [{ value: 'convex', label: '凸透鏡' }, { value: 'concave', label: '凹透鏡' }] },
                 { key: 'f2', label: '透鏡 2 焦距 |f₂| (cm)', min: 5, max: 20, step: 1, value: 10, only: ['double'], fmt: (v) => `${v} cm` },
@@ -5781,13 +5795,13 @@
                 { key: 'L', label: '物體到屏幕的距離 L (cm)', min: 30, max: 100, step: 1, value: 70, only: ['conj'], fmt: (v) => `${v} cm` },
                 { key: 'x', label: '透鏡位置（離物體）(cm)', min: 2, max: 98, step: 0.5, value: 20, only: ['conj'], fmt: (v, p) => `${Math.min(Number(v), p.L - 2)} cm` },
                 { key: 'f', label: '焦距 |f| (cm)', min: 5, max: 20, step: 1, value: 12, only: ['convex', 'concave', 'conj', 'double'], fmt: (v, p) => `${v} cm${p.mode === 'double' ? '（透鏡 1）' : ''}` },
-                { key: 'ho', label: '物高 (cm)', min: 2, max: 10, step: 1, value: 6, only: ['convex', 'concave', 'conj', 'double'], fmt: (v) => `${v} cm` },
+                { key: 'ho', label: '物高 (cm)', min: 2, max: 10, step: 1, value: 6, only: ['convex', 'concave', 'conj', 'double', 'thick'], showIf: (p) => p.mode !== 'thick' || p.src === 'object', fmt: (v) => `${v} cm` },
                 { key: 'r1', label: '光線①：平行主軸入射', type: 'checkbox', value: false, only: ['convex', 'concave', 'conj', 'double'] },
                 { key: 'r2', label: '光線②：通過鏡心', type: 'checkbox', value: false, only: ['convex', 'concave', 'conj', 'double'] },
                 { key: 'r3', label: '光線③：通過焦點方向', type: 'checkbox', value: false, only: ['convex', 'concave', 'conj', 'double'] },
                 { key: 'mid', label: '中間像 I₁（透鏡 1 成的像）', type: 'checkbox', value: false, only: ['double'] },
                 { key: 'ext', label: '反向延長線（找虛像用）', type: 'checkbox', value: false, only: ['convex', 'concave', 'double'] },
-                { key: 'show', label: '顯示像與讀數（對答案）', type: 'checkbox', value: false }
+                { key: 'show', label: '顯示像與讀數（對答案）', type: 'checkbox', value: false, only: ['convex', 'concave', 'conj', 'double', 'thick'] }
             ],
             extraButtons: [
                 { action: 'record', label: '📍 記錄這個位置', onClick: (p, api) => { LABS.lens.record(p); api.syncOutputs(); api.paint(); } },
@@ -5834,22 +5848,47 @@
                     if (p._recMsg) out.push({ label: '記錄', value: p._recMsg });
                     return out;
                 }
-                if (p.mode === 'thick') {
-                    const L = LABS.lens, k = L.thickLens(p), n = Number(p.nl);
-                    const fThin = 1 / ((n - 1) * (1 / k.R1 - 1 / k.R2));
-                    const fThick = 1 / ((n - 1) * (1 / k.R1 - 1 / k.R2 + (n - 1) * k.t / (n * k.R1 * k.R2)));
-                    if (!show) return [{ label: '焦距與交點', value: '？先觀察光路，再勾「顯示像與讀數」' }];
-                    const par = L.thickCross(p, k, 0.002), mar = L.thickEdge(p, k);
-                    const fmtX = (c) => c === 'tir' ? '這條光在透鏡內全反射，射不出來' : c === null ? '射出後平行主軸' :
-                        `透鏡後表面${c.x - k.t / 2 >= 0 ? '後' : '前'} ${Math.abs(c.x - k.t / 2).toFixed(2)} cm${c.virtual ? '（反向延長線交會）' : ''}`;
-                    const out = [
-                        { label: '薄透鏡公式的焦距 (n−1)(1/R₁−1/R₂)', value: `${fThin.toFixed(2)} cm` },
-                        { label: '考慮厚度的焦距', value: `${fThick.toFixed(2)} cm` },
-                        { label: p.src === 'point' ? '近軸光線交點（像點）' : '近軸光線交點（焦點）', value: fmtX(par) },
-                        { label: '邊緣光線交點（最外側射得出來的光）', value: fmtX(mar) }
+                if (p.mode === 'dof') {
+                    const g = LABS.lens.dof(p), mm = (c) => `${(c * 10).toFixed(2)} mm`;
+                    const fmtU = (u) => isFinite(u) ? `${u.toFixed(0)} cm` : '無限遠';
+                    return [
+                        { label: '光圈', value: `f/${g.N}，口徑 D = ${g.D.toFixed(2)} cm（焦距 ${g.f} cm）` },
+                        ...g.objs.map((o) => ({ label: `${o.name}（${o.u} cm）的模糊圈`, value: `${mm(o.c)}${o.c <= g.c0 ? '（清楚）' : '（模糊）'}` })),
+                        { label: '景深（看起來清楚的範圍）', value: `${fmtU(g.near)} ～ ${fmtU(g.far)}` }
                     ];
-                    if (par && par.x !== undefined && mar && mar.x !== undefined) out.push({ label: '球面像差（兩交點相差）', value: `${Math.abs(par.x - mar.x).toFixed(2)} cm` });
-                    return out;
+                }
+                if (p.mode === 'thick') {
+                    const L = LABS.lens, n = Number(p.nl), k0 = L.thickLens(p, 'sphere');
+                    const fThin = 1 / ((n - 1) * (1 / k0.R1 - 1 / k0.R2));
+                    const fThick = 1 / ((n - 1) * (1 / k0.R1 - 1 / k0.R2 + (n - 1) * k0.t / (n * k0.R1 * k0.R2)));
+                    const rTxt = (R) => isFinite(R) ? `${R > 0 ? '+' : '−'}${Math.abs(R)}` : '∞';
+                    const inv = (R) => isFinite(R) ? `1/(${rTxt(R)})` : '1/∞';
+                    const head = [{ label: `${L.shapeName(p)}透鏡的曲率半徑`, value: `R₁ = ${rTxt(k0.R1)}${isFinite(k0.R1) ? ' cm' : '（平面）'}、R₂ = ${rTxt(k0.R2)}${isFinite(k0.R2) ? ' cm' : '（平面）'}（曲率中心在右邊為正）` }];
+                    if (!show) return head.concat([{ label: '造鏡者公式算出的焦距', value: '？自己代入 1/f = (n − 1)(1/R₁ − 1/R₂)，再勾「顯示像與讀數」' }]);
+                    head.push({ label: '造鏡者公式（薄透鏡）', value: `1/f = (${(n - 1).toFixed(2)})[${inv(k0.R1)} − ${inv(k0.R2)}] → f = ${isFinite(fThin) ? fThin.toFixed(2) + ' cm' : '∞'}（${fThin > 0 ? '會聚' : '發散'}）` });
+                    const shapes = p.surf === 'both' ? ['sphere', 'parabola'] : [p.surf === 'parabola' ? 'parabola' : 'sphere'];
+                    const name = { sphere: '球面', parabola: '拋物面' }, out = [];
+                    if (p.src === 'object') {
+                        const pp = Math.max(Number(p.p), k0.t / 2 + 1), ho = Number(p.ho), qT = 1 / (1 / fThin - 1 / pp), mT = -qT / pp;
+                        const where = (x) => `透鏡中心${x >= 0 ? '後' : '前'} ${Math.abs(x).toFixed(1)} cm`;
+                        out.push({ label: '薄透鏡公式的像', value: `${where(qT)}，像高 ${(mT * ho).toFixed(2)} cm` });
+                        shapes.forEach((sh) => {
+                            const S = L.thickSummary(p, sh), im = S.im;
+                            out.push({ label: `${name[sh]}：近軸光的像`, value: im ? `${where(im.x)}，像高 ${im.y.toFixed(2)} cm（${im.virtual ? '虛像' : '實像'}）` : '光線射不出透鏡' });
+                            out.push({ label: `${name[sh]}：遠軸光交在`, value: im && im.edge ? `近軸像${im.edge.x < im.x ? '之前' : '之後'} ${Math.abs(im.edge.x - im.x).toFixed(2)} cm` : '—' });
+                        });
+                    } else {
+                        const fmtX = (c) => c === 'tir' ? '在透鏡內全反射，射不出來' : c === null ? '射出後平行主軸' :
+                            `透鏡後表面${c.x - k0.t / 2 >= 0 ? '後' : '前'} ${Math.abs(c.x - k0.t / 2).toFixed(2)} cm${c.virtual ? '（反向延長）' : ''}`;
+                        shapes.forEach((sh) => {
+                            const S = L.thickSummary(p, sh);
+                            out.push({ label: `${name[sh]}：近軸焦點`, value: fmtX(S.par) });
+                            out.push({ label: `${name[sh]}：遠軸交點`, value: fmtX(S.mar) });
+                            out.push({ label: `${name[sh]}：球面像差（相差）`, value: S.sa != null ? `${S.sa.toFixed(2)} cm` : '—' });
+                        });
+                    }
+                    out.push({ label: '加上厚度修正項 (n−1)²t ÷ (n R₁R₂) 的焦距', value: `${fThick.toFixed(2)} cm` });
+                    return head.concat(out);
                 }
                 if (p.mode === 'double') {
                     const g = LABS.lens.double(p);
@@ -5903,51 +5942,86 @@
                 const q2 = 1 / (1 / f2 - 1 / p2), m2 = -q2 / p2;
                 return { ok: true, f1, f2, d, p1, q1, m1, p2, q2, m2, m: m1 * m2 };
             },
-            /* 厚透鏡：中心在 x = 0，前頂點 −t/2、後頂點 +t/2；R₁、R₂ 帶正負號（球心在頂點右邊為正）。
-             * 口徑 a 取「邊緣還留 0.3 cm 厚」的高度（凸透鏡），並限制在 0.85R 與畫面內。 */
-            thickLens: (p) => {
-                const t = Number(p.tt), R = Number(p.rr), convex = p.lt !== 'concave';
-                const R1 = convex ? R : -R, R2 = -R1;
-                let a = Math.min(0.85 * R, 11);
-                if (convex) { const sMax = Math.max(0.05, (t - 0.3) / 2); a = Math.min(a, Math.sqrt(Math.max(0, R * R - (R - sMax) ** 2))); }
-                return { t, R1, R2, a, v1: -t / 2, v2: t / 2, c1: -t / 2 + R1, c2: t / 2 + R2 };
+            /* 厚透鏡：中心在 x = 0，前頂點 −t/2、後頂點 +t/2；R₁、R₂ 帶正負號（曲率中心在頂點右邊為正）。
+             * 表面可以是球面，或「頂點曲率相同」的拋物面 x = v + y²/(2R)。
+             * 口徑 a 取「球面透鏡邊緣還留 0.3 cm 厚」的高度（兩種表面用同一個口徑，才好比較），並限制在 0.85R 與畫面內。 */
+            /* 六種透鏡的 R₁、R₂（光由左往右，曲率中心在表面右邊為正，平面為 ∞）：
+             * 雙凸 (+, −)、平凸 (+, ∞)、凹凸 (+, +，前面較彎)、雙凹 (−, +)、平凹 (−, ∞)、凸凹 (+, +，後面較彎) */
+            radii: (p) => {
+                const r1 = Number(p.rr), r2 = Number(p.rr2), lo = Math.min(r1, r2), hi = Math.max(r1, r2) + (r1 === r2 ? 4 : 0);
+                return ({
+                    convex: [r1, -r2], pconvex: [r1, Infinity], mconvex: [lo, hi],
+                    concave: [-r1, r2], pconcave: [-r1, Infinity], mconcave: [hi, lo]
+                })[p.lt] || [r1, -r2];
             },
-            // 球面頂點附近那一片上的 x 座標
-            capX: (v, c, R, y) => c - Math.sign(R) * Math.sqrt(Math.max(0, R * R - y * y)),
+            thickLens: (p, shape) => {
+                const L = LABS.lens, t = Number(p.tt), [R1, R2] = L.radii(p);
+                const k = { t, R1, R2, a: 0, v1: -t / 2, v2: t / 2, c1: -t / 2 + R1, c2: t / 2 + R2, shape: 'sphere' };
+                // 口徑：用球面算出「邊緣厚度還留 0.3 cm」的最大高度，並限制在 0.85 倍較小半徑、畫面內（兩種表面共用）
+                const finite = [R1, R2].filter(isFinite).map(Math.abs);
+                let a = Math.min(11, 0.85 * Math.min(...finite));
+                while (a > 0.3 && L.surfX({ ...k, a }, 2, a) - L.surfX({ ...k, a }, 1, a) < 0.3) a -= 0.05;
+                k.a = Math.max(0.3, a);
+                k.shape = shape || (p.surf === 'parabola' ? 'parabola' : 'sphere');
+                return k;
+            },
+            shapeName: (p) => ({ convex: '雙凸', pconvex: '平凸', mconvex: '凹凸', concave: '雙凹', pconcave: '平凹', mconcave: '凸凹' })[p.lt] || '雙凸',
+            // 第 i 面（1 前、2 後）在高度 y 的 x 座標
+            surfX: (k, i, y) => {
+                const v = i === 1 ? k.v1 : k.v2, R = i === 1 ? k.R1 : k.R2, c = i === 1 ? k.c1 : k.c2;
+                if (!isFinite(R)) return v;   // 平面
+                return k.shape === 'parabola' ? v + y * y / (2 * R) : c - Math.sign(R) * Math.sqrt(Math.max(0, R * R - y * y));
+            },
             /* 精確光線追跡：起點 P、方向 d，依序在前、後表面用司乃耳定律折射；回傳折點與出射方向（全反射或打不到則回傳 null） */
             thickTrace: (k, n, P, d) => {
                 const L = LABS.lens;
-                const hit = (P, d, v, c, R) => {
-                    const ox = P[0] - c, oy = P[1], b = ox * d[0] + oy * d[1], cc = ox * ox + oy * oy - R * R, disc = b * b - cc;
-                    if (disc < 0) return null;
-                    const cand = [-b - Math.sqrt(disc), -b + Math.sqrt(disc)].filter((s) => s > 1e-7)
+                const hit = (P, d, i) => {
+                    const v = i === 1 ? k.v1 : k.v2, R = i === 1 ? k.R1 : k.R2, c = i === 1 ? k.c1 : k.c2;
+                    let roots;
+                    if (!isFinite(R)) roots = [(v - P[0]) / d[0]];   // 平面 x = v
+                    else if (k.shape === 'parabola') {   // P.x + s·dx = v + (P.y + s·dy)² / (2R)
+                        const A = d[1] * d[1] / (2 * R), B = P[1] * d[1] / R - d[0], Cc = P[1] * P[1] / (2 * R) + v - P[0];
+                        if (Math.abs(A) < 1e-12) roots = [-Cc / B];
+                        else { const disc = B * B - 4 * A * Cc; if (disc < 0) return null; roots = [(-B - Math.sqrt(disc)) / (2 * A), (-B + Math.sqrt(disc)) / (2 * A)]; }
+                    } else {
+                        const ox = P[0] - c, oy = P[1], b = ox * d[0] + oy * d[1], cc = ox * ox + oy * oy - R * R, disc = b * b - cc;
+                        if (disc < 0) return null;
+                        roots = [-b - Math.sqrt(disc), -b + Math.sqrt(disc)];
+                    }
+                    const cand = roots.filter((s) => s > 1e-7).sort((x, y) => x - y)
                         .map((s) => [P[0] + s * d[0], P[1] + s * d[1]])
-                        .filter((q) => Math.abs(q[1]) <= k.a + 1e-6 && Math.abs(q[0] - L.capX(v, c, R, q[1])) < 1e-4 * (1 + Math.abs(R)));
+                        .filter((q) => Math.abs(q[1]) <= k.a + 1e-6 && Math.abs(q[0] - L.surfX(k, i, q[1])) < 1e-4 * (1 + (isFinite(R) ? Math.abs(R) : 0)));
                     return cand.length ? cand[0] : null;
                 };
-                const refract = (d, q, c, n1, n2) => {
-                    let N = [(q[0] - c), q[1]]; const ln = Math.hypot(N[0], N[1]); N = [N[0] / ln, N[1] / ln];
+                const normal = (q, i) => {
+                    const R = i === 1 ? k.R1 : k.R2, c = i === 1 ? k.c1 : k.c2;
+                    const N = !isFinite(R) ? [1, 0] : k.shape === 'parabola' ? [1, -q[1] / R] : [q[0] - c, q[1]];
+                    const l = Math.hypot(N[0], N[1]); return [N[0] / l, N[1] / l];
+                };
+                const refract = (d, N, n1, n2) => {
                     if (N[0] * d[0] + N[1] * d[1] > 0) N = [-N[0], -N[1]];
                     const eta = n1 / n2, ci = -(N[0] * d[0] + N[1] * d[1]), kk = 1 - eta * eta * (1 - ci * ci);
                     if (kk < 0) return null;
                     const tt = eta * ci - Math.sqrt(kk);
                     return [eta * d[0] + tt * N[0], eta * d[1] + tt * N[1]];
                 };
-                const q1 = hit(P, d, k.v1, k.c1, k.R1); if (!q1) return null;
-                const d1 = refract(d, q1, k.c1, 1, n); if (!d1) return null;
-                const q2 = hit(q1, d1, k.v2, k.c2, k.R2); if (!q2) return null;
-                const d2 = refract(d1, q2, k.c2, n, 1); if (!d2) return null;
+                const q1 = hit(P, d, 1); if (!q1) return null;
+                const d1 = refract(d, normal(q1, 1), 1, n); if (!d1) return null;
+                const q2 = hit(q1, d1, 2); if (!q2) return null;
+                const d2 = refract(d1, normal(q2, 2), n, 1); if (!d2) return null;
                 return { q1, q2, d2 };
             },
-            // 入射光：平行光從左邊、高度 y；物點光從主軸上的物點射向前表面高度 y 的地方
+            // 入射光：平行光從左邊、高度 y；物體模式從箭頭尖端射向前表面高度 y 的地方
             thickIncoming: (p, k, y) => {
-                if (p.src !== 'point') return { P: [-200, y], d: [1, 0] };
-                const ox = -Math.max(Number(p.p), k.t / 2 + 1), tx = LABS.lens.capX(k.v1, k.c1, k.R1, y);
-                const dx = tx - ox, dy = y, l = Math.hypot(dx, dy);
-                return { P: [ox, 0], d: [dx / l, dy / l] };
+                if (p.src !== 'object') return { P: [-200, y], d: [1, 0] };
+                const ox = -Math.max(Number(p.p), k.t / 2 + 1), oy = Number(p.ho), tx = LABS.lens.surfX(k, 1, y);
+                const dx = tx - ox, dy = y - oy, l = Math.hypot(dx, dy);
+                return { P: [ox, oy], d: [dx / l, dy / l] };
             },
-            /* 某高度的光線出射後和主軸的交點：{ x, virtual }；發散的光取反向延長線的交點（virtual = true）。
-             * 光在透鏡內全反射射不出來時回傳 'tir'，平行主軸射出時回傳 null */
+            // 近軸光、遠軸光的範圍（以口徑 a 的比例表示）
+            zoneNear: 0.25, zoneFar: 0.6,
+            /* 平行光模式：某高度的光線出射後和主軸的交點 { x, virtual }；發散時取反向延長線（virtual）。
+             * 全反射射不出來回傳 'tir'，平行主軸射出回傳 null */
             thickCross: (p, k, y) => {
                 const L = LABS.lens, inc = L.thickIncoming(p, k, y), tr = L.thickTrace(k, Number(p.nl), inc.P, inc.d);
                 if (!tr) return 'tir';
@@ -5955,31 +6029,73 @@
                 const s = -tr.q2[1] / tr.d2[1];
                 return { x: tr.q2[0] + s * tr.d2[0], virtual: s < 0 };
             },
-            // 「邊緣光線」：從 0.85 倍口徑往內找，第一條射得出來的光
+            // 「遠軸光」：從 0.85 倍口徑往內找，第一條射得出來的光
             thickEdge: (p, k) => {
                 for (let f = 0.85; f > 0.05; f -= 0.05) { const c = LABS.lens.thickCross(p, k, f * k.a); if (c !== 'tir') return c; }
                 return 'tir';
             },
+            /* 物體模式：尖端射出、打在前表面中心附近的兩條光線，出射後的交點就是近軸光形成的像；
+             * 遠軸光（最外側射得出來的光）和近軸光的交點，看光聚不成一點的程度 */
+            thickImage: (p, k) => {
+                const L = LABS.lens, n = Number(p.nl), pp = Math.max(Number(p.p), k.t / 2 + 1), ho = Number(p.ho);
+                const yc = ho * (k.t / 2) / pp, dy = 0.02 * k.a;
+                const exitOf = (y) => { const inc = L.thickIncoming(p, k, y); return L.thickTrace(k, n, inc.P, inc.d); };
+                const meet = (A, B) => {
+                    const den = A.d2[0] * B.d2[1] - A.d2[1] * B.d2[0];
+                    if (Math.abs(den) < 1e-12) return null;
+                    const s = ((B.q2[0] - A.q2[0]) * B.d2[1] - (B.q2[1] - A.q2[1]) * B.d2[0]) / den;
+                    return { x: A.q2[0] + s * A.d2[0], y: A.q2[1] + s * A.d2[1], virtual: s < 0 };
+                };
+                const a = exitOf(yc - dy), b = exitOf(yc + dy);
+                if (!a || !b) return null;
+                const img = meet(a, b);
+                if (!img) return null;
+                let edge = null;
+                for (let f = 0.85; f > 0.1 && !edge; f -= 0.05) { const e = exitOf(f * k.a); if (e) edge = meet(e, a); }
+                return { ...img, edge };
+            },
+            // 某種表面形狀的球面像差摘要（給讀數用）
+            thickSummary: (p, shape) => {
+                const L = LABS.lens, k = L.thickLens(p, shape);
+                if (p.src === 'object') {
+                    const im = L.thickImage(p, k);
+                    return { k, im, sa: im && im.edge ? Math.abs(im.edge.x - im.x) : null };
+                }
+                const par = L.thickCross(p, k, 0.002), mar = L.thickEdge(p, k);
+                return { k, par, mar, sa: par && par.x !== undefined && mar && mar.x !== undefined ? Math.abs(par.x - mar.x) : null };
+            },
             drawThick: (ctx, w, h, p) => {
-                const L = LABS.lens, k = L.thickLens(p), n = Number(p.nl);
+                const L = LABS.lens, n = Number(p.nl), both = p.surf === 'both';
+                const k = L.thickLens(p, both ? 'sphere' : undefined), kp = both ? L.thickLens(p, 'parabola') : null;
                 const axisY = h * 0.5, top = 32, bottom = h - 64;
                 // 等比例（x、y 同一個比例尺），透鏡形狀才不會變形；左右範圍固定
-                const left = p.src === 'point' ? 64 : 30, right = 60;
+                const left = p.src === 'object' ? 64 : 30, right = 60;
                 const scale = Math.min((w - 28) / (left + right), (bottom - top) / 26);
                 const sx = (x) => 14 + (x + left) * scale, sy = (y) => axisY - y * scale;
                 axis(ctx, 12, axisY, w - 12, axisY);
                 label(ctx, '主軸', w - 40, axisY - 8, C.muted, 10);
                 // 透鏡本體
-                const N = 40, front = [], back = [];
-                for (let i = 0; i <= N; i++) { const y = -k.a + 2 * k.a * i / N; front.push([L.capX(k.v1, k.c1, k.R1, y), y]); back.push([L.capX(k.v2, k.c2, k.R2, y), y]); }
-                ctx.beginPath();
-                front.forEach(([x, y], i) => (i ? ctx.lineTo(sx(x), sy(y)) : ctx.moveTo(sx(x), sy(y))));
-                back.slice().reverse().forEach(([x, y]) => ctx.lineTo(sx(x), sy(y)));
-                ctx.closePath(); ctx.fillStyle = 'rgba(150,205,225,0.35)'; ctx.fill();
-                ctx.strokeStyle = C.blue; ctx.lineWidth = 2; ctx.stroke();
+                const outline = (kk, fill, stroke, dash) => {
+                    const N = 60; ctx.beginPath();
+                    for (let i = 0; i <= N; i++) { const y = -kk.a + 2 * kk.a * i / N, x = L.surfX(kk, 1, y); if (i) ctx.lineTo(sx(x), sy(y)); else ctx.moveTo(sx(x), sy(y)); }
+                    for (let i = N; i >= 0; i--) { const y = -kk.a + 2 * kk.a * i / N; ctx.lineTo(sx(L.surfX(kk, 2, y)), sy(y)); }
+                    ctx.closePath();
+                    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+                    ctx.save(); if (dash) ctx.setLineDash(dash); ctx.strokeStyle = stroke; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+                };
+                outline(k, 'rgba(150,205,225,0.35)', C.blue);
+                if (both) outline(kp, null, C.green, [5, 3]);
                 const clip = (fn) => { ctx.save(); ctx.beginPath(); ctx.rect(6, top, w - 12, bottom - top); ctx.clip(); fn(); ctx.restore(); };
                 const fThin = 1 / ((n - 1) * (1 / k.R1 - 1 / k.R2));
-                const nr = Number(p.nr), ys = Array.from({ length: nr }, (_, i) => nr === 1 ? 0 : -0.9 * k.a + 1.8 * k.a * i / (nr - 1));
+                const nr = Number(p.nr), zNear = L.zoneNear * k.a, zFar = L.zoneFar * k.a;
+                const inZone = (y) => p.zone === 'near' ? Math.abs(y) <= zNear + 1e-9 : p.zone === 'far' ? Math.abs(y) >= zFar - 1e-9 : true;
+                // 光線高度：全部時均勻分布；只看近軸／遠軸時在該範圍內均勻分布
+                const ys = (() => {
+                    const lo = p.zone === 'far' ? zFar : 0, hi = p.zone === 'near' ? zNear : 0.9 * k.a, half = Math.max(1, Math.floor(nr / 2));
+                    const arr = p.zone === 'far' ? [] : [0];
+                    for (let i = 1; i <= half; i++) { const y = p.zone === 'far' ? lo + (hi - lo) * (i - 1) / Math.max(1, half - 1) : hi * i / half; arr.push(y, -y); }
+                    return arr.filter(inZone);
+                })();
                 const farX = right + 5, nearX = -left - 5;
                 // 對照：薄透鏡公式（光在中心 x = 0 一次彎折，u′ = u − y/f）
                 if (p.ideal) clip(() => {
@@ -5991,31 +6107,34 @@
                     });
                     ctx.setLineDash([]);
                 });
-                // 實際光路：顏色依入射高度由中心（橘）到邊緣（紅）
-                clip(() => ys.forEach((y) => {
-                    const inc = L.thickIncoming(p, k, y), tr = L.thickTrace(k, n, inc.P, inc.d);
-                    const frac = Math.abs(y) / (0.9 * k.a + 1e-9), col = `rgb(${Math.round(201 + 30 * frac)},${Math.round(117 - 80 * frac)},${Math.round(15 + 40 * frac)})`;
-                    ctx.strokeStyle = col; ctx.lineWidth = 1.6;
+                // 實際光路：近軸光藍色、遠軸光紅色、中間橘色；兩種表面比較時，拋物面的光用綠色虛線
+                const colorOf = (y) => Math.abs(y) <= zNear + 1e-9 ? '#1f6fd1' : Math.abs(y) >= zFar - 1e-9 ? '#d0312d' : '#c9750f';
+                const drawRays = (kk, colFn, dash, wd) => clip(() => ys.forEach((y) => {
+                    const inc = L.thickIncoming(p, kk, y), tr = L.thickTrace(kk, n, inc.P, inc.d);
+                    ctx.save(); if (dash) ctx.setLineDash(dash);
+                    ctx.strokeStyle = colFn(y); ctx.lineWidth = wd;
                     const start = inc.P[0] < nearX ? [nearX, inc.P[1] + inc.d[1] / inc.d[0] * (nearX - inc.P[0])] : inc.P;
-                    if (!tr) { ctx.globalAlpha = 0.3; ctx.beginPath(); ctx.moveTo(sx(start[0]), sy(start[1])); ctx.lineTo(sx(0), sy(start[1] + inc.d[1] / inc.d[0] * (0 - start[0]))); ctx.stroke(); ctx.globalAlpha = 1; return; }
+                    if (!tr) { ctx.globalAlpha = 0.25; ctx.beginPath(); ctx.moveTo(sx(start[0]), sy(start[1])); ctx.lineTo(sx(0), sy(start[1] + inc.d[1] / inc.d[0] * (0 - start[0]))); ctx.stroke(); ctx.restore(); return; }
                     ctx.beginPath(); ctx.moveTo(sx(start[0]), sy(start[1])); ctx.lineTo(sx(tr.q1[0]), sy(tr.q1[1]));
                     ctx.lineTo(sx(tr.q2[0]), sy(tr.q2[1]));
                     const sEnd = (farX - tr.q2[0]) / tr.d2[0];
                     ctx.lineTo(sx(farX), sy(tr.q2[1] + tr.d2[1] * sEnd)); ctx.stroke();
-                    // 發散時（凹透鏡）把出射光往回延長
-                    if (p.lt === 'concave') {
-                        ctx.save(); ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.6; ctx.lineWidth = 1;
+                    if (fThin < 0) {   // 發散的光往回延長
+                        ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.55; ctx.lineWidth = 1;
                         const sb = (nearX - tr.q2[0]) / tr.d2[0];
-                        ctx.beginPath(); ctx.moveTo(sx(tr.q2[0]), sy(tr.q2[1])); ctx.lineTo(sx(nearX), sy(tr.q2[1] + tr.d2[1] * sb)); ctx.stroke(); ctx.restore();
+                        ctx.beginPath(); ctx.moveTo(sx(tr.q2[0]), sy(tr.q2[1])); ctx.lineTo(sx(nearX), sy(tr.q2[1] + tr.d2[1] * sb)); ctx.stroke();
                     }
+                    ctx.restore();
                 }));
-                // 物點
-                if (p.src === 'point') {
+                drawRays(k, colorOf, null, 1.6);
+                if (both) drawRays(kp, () => C.green, [6, 4], 1.3);
+                // 物體或平行光標示
+                if (p.src === 'object') {
                     const ox = -Math.max(Number(p.p), k.t / 2 + 1);
-                    ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(sx(ox), axisY, 4.5, 0, Math.PI * 2); ctx.fill();
-                    labelFit(ctx, '物點', sx(ox), axisY + 18, C.green, 11, 'center', { clampW: w, plate: 1 });
+                    arrow(ctx, sx(ox), axisY, sx(ox), sy(Number(p.ho)), C.green, 2.8);
+                    label(ctx, '物', sx(ox) - 16, sy(Number(p.ho)) + 4, C.green, 12);
                 } else labelFit(ctx, '平行光 →', sx(-left) + 6, sy(k.a) - 8, '#b8860b', 11, 'left', { clampW: w, plate: 1 });
-                // 答案：近軸與邊緣光線的交點、薄透鏡公式的焦點
+                // 答案
                 if (p.show) {
                     const mark = (c, col, text, dy) => {
                         const x = c && typeof c === 'object' ? c.x : typeof c === 'number' ? c : null;
@@ -6024,15 +6143,208 @@
                         ctx.beginPath(); ctx.moveTo(sx(x), axisY - 7); ctx.lineTo(sx(x), axisY + 7); ctx.stroke();
                         labelFit(ctx, text, sx(x), axisY + dy, col, 10, 'center', { clampW: w, plate: 1 });
                     };
-                    mark(L.thickCross(p, k, 0.002), C.violet, '近軸交點', 20);
-                    mark(L.thickEdge(p, k), C.rose, '邊緣交點', -12);
-                    if (p.ideal) {
-                        const xi = p.src === 'point' ? (() => { const po = Math.max(Number(p.p), k.t / 2 + 1); return 1 / (1 / fThin - 1 / po); })() : fThin;
-                        mark(xi, C.muted, '薄透鏡公式', 34);
+                    if (p.src === 'object') {
+                        const pp = Math.max(Number(p.p), k.t / 2 + 1), ho = Number(p.ho), im = L.thickImage(p, k);
+                        const imgArrow = (x, y, col, text, dashed, dy, leftSide) => {
+                            if (sx(x) < 8 || sx(x) > w - 8) { labelFit(ctx, `${text}在畫面外`, x < 0 ? 10 : w - 10, axisY + dy, col, 11, x < 0 ? 'left' : 'right', { clampW: w, plate: 1 }); return; }
+                            clip(() => { if (dashed) { ctx.setLineDash([4, 3]); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(sx(x), axisY); ctx.lineTo(sx(x), sy(y)); ctx.stroke(); } else arrow(ctx, sx(x), axisY, sx(x), sy(y), col, 2.8); });
+                            labelFit(ctx, text, sx(x) + (leftSide ? -8 : 8), Math.max(top + 14, Math.min(bottom - 4, sy(y) + (y > 0 ? -6 : 15))), col, 11, leftSide ? 'right' : 'left', { clampW: w, plate: 1 });
+                        };
+                        if (p.ideal) { const qT = 1 / (1 / fThin - 1 / pp); imgArrow(qT, -qT / pp * ho, C.muted, '薄透鏡公式的像', true, -12, true); }
+                        if (im) {
+                            imgArrow(im.x, im.y, im.virtual ? C.violet : C.blue, im.virtual ? '近軸光的虛像' : '近軸光的像', im.virtual, 14);
+                            if (im.edge && sx(im.edge.x) > 8 && sx(im.edge.x) < w - 8) {
+                                ctx.fillStyle = '#d0312d'; ctx.beginPath(); ctx.arc(sx(im.edge.x), sy(im.edge.y), 4, 0, Math.PI * 2); ctx.fill();
+                                labelFit(ctx, '遠軸光交點', sx(im.edge.x), sy(im.edge.y) - 8, '#d0312d', 10, 'center', { clampW: w, plate: 1 });
+                            }
+                        }
+                    } else {
+                        mark(L.thickCross(p, k, 0.002), '#1f6fd1', '近軸焦點', 20);
+                        mark(L.thickEdge(p, k), '#d0312d', '遠軸交點', -12);
+                        if (both) { mark(L.thickCross(p, kp, 0.002), C.green, '拋物面近軸', 34); mark(L.thickEdge(p, kp), C.green, '拋物面遠軸', -26); }
+                        if (p.ideal) mark(fThin, C.muted, '薄透鏡公式', 48);
                     }
                 }
-                labelWrap(ctx, `實線：實際光路（前、後表面各折射一次；顏色愈紅愈靠近邊緣）${p.ideal ? '　灰虛線：薄透鏡公式的光路' : ''}`, 14, h - 30, C.muted, 10, 13, w - 28);
-                label(ctx, `t = ${k.t} cm　R = ${Math.abs(k.R1)} cm　n = ${n.toFixed(2)}`, 14, 22, C.ink, 12);
+                labelWrap(ctx, `藍：近軸光　紅：遠軸光　橘：中間${both ? '　綠虛線：拋物面透鏡（頂點曲率相同）的外形與光路' : ''}${p.ideal ? '　灰虛線：薄透鏡公式' : ''}`, 14, h - 30, C.muted, 10, 13, w - 28);
+                const rTxt = (R) => isFinite(R) ? `${R > 0 ? '+' : '−'}${Math.abs(R)} cm` : '∞（平面）';
+                label(ctx, `${L.shapeName(p)}　R₁ = ${rTxt(k.R1)}　R₂ = ${rTxt(k.R2)}　t = ${k.t} cm　n = ${n.toFixed(2)}　表面：${both ? '球面（實線）vs 拋物面（虛線）' : k.shape === 'parabola' ? '拋物面' : '球面'}`, 14, 22, C.ink, 12);
+            },
+            /* 光圈與景深：焦距 f = 10 cm 的相機鏡頭（示意比例），近、中、遠三個物體。
+             * 光圈（可變的圓孔）不在透鏡上，而是放在透鏡前或後 dofStop 公分處；口徑 D = f / N。
+             * 感光元件放在「對焦距離」成像的位置 s；其他物體的光錐在感光元件上截出模糊圈，
+             * 模糊圈大小用「穿過光圈上、下緣的兩條光」實際追跡（薄透鏡 u′ = u − y/f）求出。 */
+            dofF: 10, dofSensor: 12, dofStop: 2.5,
+            dofObjects: [
+                { key: 'near', name: '近：花', u: 22, h: 5, col: '#d9822b' },
+                { key: 'mid', name: '中：人', u: 45, h: 12, col: '#12805c' },
+                { key: 'far', name: '遠：樹', u: 140, h: 30, col: '#0b6f92' }
+            ],
+            /* 從物點 (−u, h) 出發、穿過光圈高度 a 的光：回傳 [透鏡處高度 yL, 透鏡後斜率 u1]（光圈在 xs，前為負、後為正） */
+            dofRay: (u, h, a, xs, f) => {
+                if (xs <= 0) {   // 光圈在透鏡前：先穿過光圈，再到透鏡
+                    const u0 = (a - h) / (xs + u), yL = a + u0 * (0 - xs);
+                    return [yL, u0 - yL / f];
+                }
+                // 光圈在透鏡後：找一條在透鏡折射後剛好穿過光圈高度 a 的光
+                const u0 = (a - h * (1 - xs / f)) / (u + xs - u * xs / f), yL = h + u0 * u;
+                return [yL, u0 - yL / f];
+            },
+            dof: (p) => {
+                const L = LABS.lens, f = L.dofF, N = Number(p.fn), D = f / N, fd = Number(p.fd);
+                const xs = (p.sp === 'back' ? 1 : -1) * L.dofStop;
+                const s = 1 / (1 / f - 1 / fd);
+                // 物點在感光元件上的模糊圈：上、下緣兩條光在 x = s 的高度差
+                const blur = (u, h) => {
+                    const [y1, k1] = L.dofRay(u, h, D / 2, xs, f), [y2, k2] = L.dofRay(u, h, -D / 2, xs, f);
+                    return Math.abs((y1 + k1 * s) - (y2 + k2 * s));
+                };
+                const objs = L.dofObjects.map((o) => ({ ...o, v: 1 / (1 / f - 1 / o.u), c: blur(o.u, o.h) }));
+                // 景深：模糊圈不超過 c0（感光元件寬度的 1/150）的物距範圍（主軸上的點，二分法求邊界）
+                const c0 = L.dofSensor / 150, bAxis = (u) => blur(u, 0);
+                const edge = (lo, hi) => { for (let i = 0; i < 60; i++) { const m = (lo + hi) / 2; if ((bAxis(m) > c0) === (bAxis(lo) > c0)) lo = m; else hi = m; } return (lo + hi) / 2; };
+                const near = bAxis(f * 1.02) > c0 ? edge(f * 1.02, fd) : f;
+                const far = bAxis(1e6) > c0 ? edge(fd, 1e6) : Infinity;
+                return { f, N, D, fd, s, xs, objs, c0, near, far };
+            },
+            // 實際光圈（虹膜光圈）示意：葉片圍成的多邊形開口，隨 f 數變大而縮小
+            drawIris: (ctx, cx, cy, R, N) => {
+                const blades = 7, open = R * 0.86 * Math.min(1, 1.4 / N), rot = (1 - open / R) * 1.2;
+                ctx.save();
+                ctx.fillStyle = '#1f2528'; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fill();
+                const poly = Array.from({ length: blades }, (_, i) => { const t = rot + i / blades * Math.PI * 2; return [cx + open * Math.cos(t), cy + open * Math.sin(t)]; });
+                // 葉片：從開口每個角沿著邊的方向延伸到外框，畫出一片片重疊的葉片邊緣
+                ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 1.5, 0, Math.PI * 2); ctx.clip();
+                poly.forEach((a, i) => {
+                    const b = poly[(i + 1) % blades], dx = a[0] - b[0], dy = a[1] - b[1], l = Math.hypot(dx, dy) || 1;
+                    ctx.fillStyle = i % 2 ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.12)';
+                    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(a[0] + dx / l * R * 2, a[1] + dy / l * R * 2);
+                    ctx.lineTo(b[0] + dx / l * R * 2, b[1] + dy / l * R * 2); ctx.lineTo(b[0], b[1]); ctx.closePath(); ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(a[0] + dx / l * R * 2, a[1] + dy / l * R * 2); ctx.stroke();
+                });
+                ctx.restore();
+                // 開口：透光的部分
+                const gl = ctx.createRadialGradient(cx - open * 0.3, cy - open * 0.3, 1, cx, cy, open);
+                gl.addColorStop(0, '#ffffff'); gl.addColorStop(1, '#cfe6f1');
+                ctx.fillStyle = gl; ctx.beginPath(); poly.forEach(([x, y], i) => (i ? ctx.lineTo(x, y) : ctx.moveTo(x, y))); ctx.closePath(); ctx.fill();
+                ctx.strokeStyle = '#5f6b70'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
+                ctx.restore();
+            },
+            drawDof: (ctx, w, h, p) => {
+                const L = LABS.lens, g = L.dof(p), wide = w >= 640;
+                const aw = wide ? Math.round(w * 0.58) : w, ah = wide ? h : Math.round(h * 0.55);
+                const bx = wide ? aw + 10 : 0, by = wide ? 0 : ah + 10, bw = wide ? w - aw - 10 : w, bh = wide ? h : h - ah - 10;
+                // ── 左：光路圖。物體那側的距離用對數壓縮，透鏡右側（像與感光元件）放大成線性比例，
+                //    光錐的會聚與模糊圈才看得清楚；光圈前後一小段也用線性比例。
+                const axisY = ah * 0.5, top = 34, lensX = aw * 0.44, rightCm = 30, k2 = (aw - 24 - lensX) / rightCm, ds = L.dofStop;
+                const vs = (axisY - top - 6) / 32;
+                const X = (x) => x >= -ds - 0.5 ? lensX + x * k2 : (lensX - (ds + 0.5) * k2) - (lensX - (ds + 0.5) * k2 - 22) * Math.log(1 + (-x - ds - 0.5) / 5) / Math.log(1 + 150 / 5);
+                const Y = (y) => axisY - y * vs;
+                ctx.fillStyle = '#f4f7f8'; ctx.fillRect(0, 0, aw, ah);
+                axis(ctx, 8, axisY, aw - 8, axisY);
+                // 透鏡（整片都讓光通過）
+                const lensH = 4.6, ap = g.D / 2, sxp = X(g.xs);
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2.2; ctx.beginPath();
+                ctx.moveTo(X(0), Y(lensH)); ctx.quadraticCurveTo(X(0) + 12, axisY, X(0), Y(-lensH));
+                ctx.moveTo(X(0), Y(lensH)); ctx.quadraticCurveTo(X(0) - 12, axisY, X(0), Y(-lensH)); ctx.stroke();
+                labelFit(ctx, '透鏡', X(0), Y(-lensH) + 16, C.blue, 10, 'center', { clampW: aw, plate: 1 });
+                // 光圈：透鏡前（或後）的一片有圓孔的擋板
+                ctx.fillStyle = '#3d474b';
+                ctx.fillRect(sxp - 3, Y(lensH + 1.2), 6, Y(ap) - Y(lensH + 1.2));
+                ctx.fillRect(sxp - 3, Y(-ap), 6, Y(-lensH - 1.2) - Y(-ap));
+                labelFit(ctx, `光圈 f/${g.N}（孔徑 ${g.D.toFixed(2)} cm，在透鏡${g.xs < 0 ? '前' : '後'} ${ds} cm）`, sxp, Y(-lensH - 1.2) + 30, C.ink, 11, 'center', { clampW: aw, plate: 1 });
+                // 感光元件
+                const sX = X(g.s);
+                ctx.fillStyle = '#9aa6aa'; ctx.fillRect(sX - 2, Y(6), 4, Y(-6) - Y(6));
+                labelFit(ctx, '感光元件', sX, Y(-6) + 16, C.muted, 10, 'center', { clampW: aw, plate: 1 });
+                ctx.save(); ctx.beginPath(); ctx.rect(4, top, aw - 8, ah - top - 40); ctx.clip();
+                g.objs.forEach((o) => {
+                    const ox = -o.u, iy = -o.h * o.v / o.u;
+                    arrow(ctx, X(ox), axisY, X(ox), Y(o.h), o.col, 2.6);
+                    // 穿過光圈上緣、中心、下緣的三條光：物 → 光圈 → 透鏡（光圈在後則 物 → 透鏡 → 光圈）→ 像點 → 感光元件
+                    const ends = [];
+                    [ap, 0, -ap].forEach((a) => {
+                        const [yL, k1] = L.dofRay(o.u, o.h, a, g.xs, g.f);
+                        const xEnd = Math.max(o.v, g.s), yEnd = yL + k1 * xEnd;
+                        ctx.strokeStyle = o.col; ctx.globalAlpha = a === 0 ? 0.45 : 0.85; ctx.lineWidth = a === 0 ? 1 : 1.4;
+                        ctx.beginPath(); ctx.moveTo(X(ox), Y(o.h));
+                        if (g.xs < 0) ctx.lineTo(X(g.xs), Y(a));
+                        ctx.lineTo(X(0), Y(yL));
+                        if (g.xs > 0) ctx.lineTo(X(g.xs), Y(a));
+                        ctx.lineTo(X(xEnd), Y(yEnd)); ctx.stroke();
+                        ends.push(yL + k1 * g.s);
+                        if (a === 0) ctx.globalAlpha = 1;
+                    });
+                    ctx.globalAlpha = 1;
+                    // 感光元件上的模糊圈
+                    ctx.strokeStyle = o.col; ctx.lineWidth = 5; ctx.lineCap = 'round';
+                    ctx.beginPath(); ctx.moveTo(sX, Y(ends[0])); ctx.lineTo(sX, Y(ends[2]) + (Math.abs(Y(ends[0]) - Y(ends[2])) < 1 ? 1 : 0)); ctx.stroke(); ctx.lineCap = 'butt';
+                    labelFit(ctx, o.name, X(ox) + 6, Y(o.h) - 6, o.col, 11, 'left', { clampW: aw, plate: 1 });
+                });
+                ctx.restore();
+                // 實際光圈的樣子（從正面看）
+                const ir = Math.min(46, ah * 0.11), icx = aw - ir - 14, icy = top + ir + 6;
+                L.drawIris(ctx, icx, icy, ir, g.N);
+                labelFit(ctx, `實際的光圈（正面看）f/${g.N}`, icx, icy + ir + 16, C.ink, 10, 'center', { clampW: aw, plate: 1 });
+                labelWrap(ctx, '光圈是透鏡前（或後）一片孔徑可變的擋板，只讓穿過圓孔的光進到透鏡；每個物體尖端發出的光形成一個光錐，像點剛好落在感光元件上才清楚，否則散成一段模糊圈（粗線）。　示意圖：左側距離已壓縮、右側放大', 12, ah - 26, C.muted, 10, 13, aw - 24);
+                label(ctx, `光路圖：對焦在 ${g.fd} cm`, 12, 20, C.ink, 12);
+
+                // ── 右：相機拍到的照片（依模糊圈大小把物體畫糊）
+                const key = `${g.N}|${g.fd}|${Math.round(bw)}x${Math.round(bh)}`;
+                if (L._dofKey !== key) {
+                    const W = Math.max(1, Math.round(bw)), Hh = Math.max(1, Math.round(bh));
+                    const out = L._dofCanvas || (L._dofCanvas = document.createElement('canvas'));
+                    out.width = W; out.height = Hh;
+                    const c2 = out.getContext('2d');
+                    const sky = c2.createLinearGradient(0, 0, 0, Hh);
+                    sky.addColorStop(0, '#bfe1f2'); sky.addColorStop(0.62, '#e6f3f8'); sky.addColorStop(0.62, '#b9cf9b'); sky.addColorStop(1, '#8fae6e');
+                    // 背景（天空、地面）本身也在遠處：用遠物的模糊程度
+                    const layer = (paint) => { const cv = document.createElement('canvas'); cv.width = W; cv.height = Hh; paint(cv.getContext('2d')); return cv; };
+                    const blurPx = (c) => c / L.dofSensor * W / 2;
+                    /* 模糊：瀏覽器支援 canvas filter 時用 blur()；不支援時把圖縮小再平滑放大。
+                     * （不用多次半透明疊加：8 位元色彩每次都會四捨五入，疊幾十次顏色就跑掉了） */
+                    c2.filter = 'blur(1px)';
+                    const canFilter = c2.filter === 'blur(1px)';
+                    c2.filter = 'none';
+                    const composite = (src, r) => {
+                        if (r < 0.6) { c2.drawImage(src, 0, 0); return; }
+                        if (canFilter) { c2.filter = `blur(${(r * 0.55).toFixed(2)}px)`; c2.drawImage(src, 0, 0); c2.filter = 'none'; return; }
+                        const k = Math.max(1, r / 1.5), sw = Math.max(1, Math.round(W / k)), sh = Math.max(1, Math.round(Hh / k));
+                        const small = document.createElement('canvas'); small.width = sw; small.height = sh;
+                        const s2 = small.getContext('2d'); s2.imageSmoothingEnabled = true; s2.imageSmoothingQuality = 'high'; s2.drawImage(src, 0, 0, sw, sh);
+                        c2.imageSmoothingEnabled = true; c2.imageSmoothingQuality = 'high';
+                        c2.drawImage(small, 0, 0, W, Hh);
+                    };
+                    const [nearO, midO, farO] = g.objs;
+                    c2.fillStyle = sky; c2.fillRect(0, 0, W, Hh);   // 先鋪一層，模糊後的邊緣才不會透出白底
+                    composite(layer((q) => { q.fillStyle = sky; q.fillRect(-40, -40, W + 80, Hh + 80); }), blurPx(farO.c));
+                    composite(layer((q) => {   // 遠：樹
+                        const x = W * 0.72, base = Hh * 0.64;
+                        q.fillStyle = '#6b4a2b'; q.fillRect(x - W * 0.012, base - Hh * 0.12, W * 0.024, Hh * 0.12);
+                        q.fillStyle = farO.col; q.beginPath(); q.ellipse(x, base - Hh * 0.2, W * 0.07, Hh * 0.12, 0, 0, Math.PI * 2); q.fill();
+                        q.fillStyle = '#1d8a6a'; q.beginPath(); q.ellipse(x - W * 0.03, base - Hh * 0.17, W * 0.045, Hh * 0.08, 0, 0, Math.PI * 2); q.fill();
+                    }), blurPx(farO.c));
+                    composite(layer((q) => {   // 中：人
+                        const x = W * 0.42, base = Hh * 0.78, s = Hh * 0.0042;
+                        q.fillStyle = '#2b3a42'; q.fillRect(x - 9 * s, base - 30 * s, 7 * s, 30 * s); q.fillRect(x + 2 * s, base - 30 * s, 7 * s, 30 * s);
+                        q.fillStyle = midO.col; q.fillRect(x - 13 * s, base - 70 * s, 26 * s, 42 * s);
+                        q.fillStyle = '#f0c9a0'; q.beginPath(); q.arc(x, base - 80 * s, 10 * s, 0, Math.PI * 2); q.fill();
+                        q.fillStyle = '#3b2a1e'; q.beginPath(); q.arc(x, base - 84 * s, 10 * s, Math.PI, 0); q.fill();
+                    }), blurPx(midO.c));
+                    composite(layer((q) => {   // 近：花
+                        const x = W * 0.16, base = Hh * 1.02, s = Hh * 0.006;
+                        q.strokeStyle = '#3e7d32'; q.lineWidth = 3 * s; q.beginPath(); q.moveTo(x, base); q.lineTo(x, base - 45 * s); q.stroke();
+                        q.fillStyle = '#4c9a3a'; q.beginPath(); q.ellipse(x + 8 * s, base - 22 * s, 9 * s, 4 * s, -0.5, 0, Math.PI * 2); q.fill();
+                        q.fillStyle = nearO.col;
+                        for (let i = 0; i < 6; i++) { const t = i / 6 * Math.PI * 2; q.beginPath(); q.ellipse(x + Math.cos(t) * 9 * s, base - 50 * s + Math.sin(t) * 9 * s, 7 * s, 4.5 * s, t, 0, Math.PI * 2); q.fill(); }
+                        q.fillStyle = '#f2c94c'; q.beginPath(); q.arc(x, base - 50 * s, 5 * s, 0, Math.PI * 2); q.fill();
+                    }), blurPx(nearO.c));
+                    L._dofKey = key;
+                }
+                ctx.drawImage(L._dofCanvas, bx, by, bw, bh);
+                ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
+                labelFit(ctx, '透鏡拍到的照片', bx + 10, by + 20, C.ink, 12, 'left', { plate: 'rgba(255,255,255,0.85)', clampW: bx + bw - 2 });
+                labelFit(ctx, `f/${g.N}　對焦 ${g.fd} cm`, bx + 10, by + 40, C.ink, 11, 'left', { plate: 'rgba(255,255,255,0.85)', clampW: bx + bw - 2 });
             },
             drawDouble: (ctx, w, h, p) => {
                 const L = LABS.lens, g = L.double(p), ho = Number(p.ho);
@@ -6100,6 +6412,7 @@
             draw: (ctx, w, h, p) => {
                 if (p.mode === 'double') { LABS.lens.drawDouble(ctx, w, h, p); return; }
                 if (p.mode === 'thick') { LABS.lens.drawThick(ctx, w, h, p); return; }
+                if (p.mode === 'dof') { LABS.lens.drawDof(ctx, w, h, p); return; }
                 const L = LABS.lens, conj = p.mode === 'conj', concave = p.mode === 'concave';
                 const fAbs = Number(p.f), f = concave ? -fAbs : fAbs, ho = Number(p.ho);
                 const axisY = h * 0.5, top = 32, bottom = h - 70;
