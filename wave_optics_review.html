@@ -1768,6 +1768,7 @@
                     </div>
                     <div class="lab-readout" id="${prefix}${id}-readout"></div>
                     ${lab.note ? `<div class="lab-note"><details><summary>觀察後的補充說明</summary>${lab.note}</details></div>` : ''}
+                    ${lab.teach ? `<section class="lab-teach">${lab.teach}</section>` : ''}
                 </div>`;
         }
 
@@ -4498,6 +4499,496 @@
                 if (steps) labelFit(ctx, '紫色：僅供逐面計算的中間像', 10, h - 40, glassColor, 10, 'left', { clampW: w });
                 if (!g.tir) L.animate(ctx, w, t, fwd, back, [10, h - 16, 'left',
                     '① 實線：光從魚往空氣側傳播 ←', '② 粉紅虛線：沿出射方向反推到虛像']);
+            }
+        };
+
+        /* 9c. 視差法找像：平面鏡成像、燒杯視深 ------------------------------ */
+        LABS.parallax = {
+            name: '視差法找虛像的位置',
+            tag: 'N13 / N14',
+            hint: '',
+            hintFor: (p) => p.mode === 'mirror'
+                ? '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。大頭針 A 立在玻璃板前，玻璃板當平面鏡。眼睛左右搖擺，透過玻璃看 A 的像 A′ 與板後的參考針 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）前後移動，直到眼睛怎麼晃，B 都和 A′ 黏在一起不錯開——這時 B 的位置就是像的位置。'
+                : '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。硬幣 A 在燒杯底，參考針 B 夾在燒杯外側。從上方往下看，眼睛左右搖擺，比較 A 的像與 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）上下移動，直到兩者沒有視差，量 B 到水面的距離就是視深 h′，再用 n = h ÷ h′ 求折射率。',
+            noteFor: (p) => p.mode === 'mirror'
+                ? '<b>判斷口訣</b>：兩個東西沒有重合時，比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 太近，往後移；B 跟著眼睛同向跑 → B 太遠，往前移。<br><b>平面鏡的像是精確的</b>：不論眼睛偏多少，B 放在鏡後 d 處都完全沒有視差，所以像距 = 物距。'
+                : '<b>判斷口訣</b>：比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 比像高（太靠近水面），往下移；B 跟著眼睛同向跑 → B 太深，往上移。<br><b>視深 h′ = h / n 只是近似</b>：把搖擺幅度調大，會發現 B 放在 h/n 也還有一點點視差，因為斜看時像會再變淺。實驗時眼睛要在正上方附近、小幅度搖擺。<br><b>求折射率</b>：n = 實深 ÷ 視深 = h ÷ h′。',
+            /* 實驗下方的教學：為什麼「沒有視差」就是找到像的位置 */
+            teach: `
+                <h4>教學：為什麼「沒有視差」就找到了像？</h4>
+                <h5>1. 什麼是視差</h5>
+                <p>伸出一根手指，對準遠處的電線桿，然後頭左右晃一晃：手指會在電線桿前面左右跳動。這種「頭一動，兩個東西就互相錯開」的現象叫做<b>視差</b>。把手指慢慢移近電線桿，跳動愈來愈小；如果兩者在同一個位置，不管頭怎麼晃都不會錯開。</p>
+                <figure class="teach-fig">
+                    <svg viewBox="0 0 520 210" role="img" aria-label="眼睛在左、右兩個位置看近物與遠物，近物相對遠物往反方向移動">
+                        <line x1="180" y1="24" x2="180" y2="44" stroke="#5f6b70" stroke-width="6" stroke-linecap="round"/>
+                        <text x="196" y="38" font-size="12" fill="#5f6b70">遠的物體</text>
+                        <circle cx="180" cy="100" r="6" fill="#c9750f"/>
+                        <text x="194" y="104" font-size="12" fill="#c9750f">近的物體</text>
+                        <g stroke-width="1.4" fill="none">
+                            <line x1="130" y1="182" x2="180" y2="34" stroke="#5f6b70" stroke-dasharray="4 3"/>
+                            <line x1="130" y1="182" x2="180" y2="100" stroke="#c9750f"/>
+                            <line x1="230" y1="182" x2="180" y2="34" stroke="#5f6b70" stroke-dasharray="4 3"/>
+                            <line x1="230" y1="182" x2="180" y2="100" stroke="#c9750f"/>
+                        </g>
+                        <g fill="#fff" stroke="#12313a" stroke-width="1.4">
+                            <ellipse cx="130" cy="186" rx="11" ry="6.5"/><ellipse cx="230" cy="186" rx="11" ry="6.5"/>
+                        </g>
+                        <circle cx="130" cy="187" r="3" fill="#12313a"/><circle cx="230" cy="187" r="3" fill="#12313a"/>
+                        <text x="130" y="206" font-size="12" text-anchor="middle" fill="#12313a">眼在左</text>
+                        <text x="230" y="206" font-size="12" text-anchor="middle" fill="#12313a">眼在右</text>
+                        <path d="M150 196 H210" stroke="#7d949c" stroke-width="1.2" marker-end="url(#teach-arrow)"/>
+                        <defs><marker id="teach-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0 L10 5 L0 10 z" fill="#7d949c"/></marker></defs>
+                        <g font-size="12" fill="#12313a">
+                            <rect x="330" y="18" width="180" height="78" rx="8" fill="#f4f7f8" stroke="#d5dfe2"/>
+                            <text x="342" y="36">眼在左時看到</text>
+                            <line x1="420" y1="48" x2="420" y2="88" stroke="#5f6b70" stroke-width="6" stroke-linecap="round"/>
+                            <circle cx="452" cy="72" r="6" fill="#c9750f"/>
+                            <text x="462" y="76" fill="#c9750f">在右邊</text>
+                            <rect x="330" y="112" width="180" height="78" rx="8" fill="#f4f7f8" stroke="#d5dfe2"/>
+                            <text x="342" y="130">眼在右時看到</text>
+                            <line x1="420" y1="142" x2="420" y2="182" stroke="#5f6b70" stroke-width="6" stroke-linecap="round"/>
+                            <circle cx="388" cy="166" r="6" fill="#c9750f"/>
+                            <text x="340" y="186" fill="#c9750f" font-size="11">跑到左邊</text>
+                        </g>
+                    </svg>
+                    <figcaption>頭往右移，近的物體看起來往<b>左</b>跑：近的物體離眼睛近，同樣移動一段距離，看它的視線方向轉得比較多。</figcaption>
+                </figure>
+                <h5>2. 為什麼距離相同就不會錯開</h5>
+                <p>眼睛橫移 Δx，看距離 D 的物體，視線方向大約轉了 Δx ÷ D。兩個物體看起來的錯開量約為 <b>Δx × (1/D₁ − 1/D₂)</b>：</p>
+                <ul>
+                    <li>D₁ 比 D₂ 小（第一個比較近）→ 錯開，而且近的往眼睛移動的<b>反方向</b>跑。</li>
+                    <li>D₁ = D₂ → 錯開量是 0，不管頭怎麼晃都對得齊，這就叫<b>沒有視差</b>。</li>
+                </ul>
+                <p>所以「沒有視差」等於「兩個東西離眼睛一樣遠」，這就是視差法量位置的原理。</p>
+                <h5>3. 虛像也能這樣找</h5>
+                <p>虛像不是真的有東西在那裡，屏幕也接不到。但從硬幣（或大頭針 A）出發、最後進入眼睛的光，<b>反向延長後都交在像點</b>（上方 3D 圖中的粉紅虛線）。對眼睛來說，這些光就像是從像點發出來的，所以頭左右晃時，像的表現和「真的有一個東西放在像點」完全一樣。</p>
+                <p>因此拿一個真的物體（參考針 B）去和像比：移到和像沒有視差時，B 和像離眼睛一樣遠，<b>B 所在的位置就是像的位置</b>，直接用尺量 B 就好。</p>
+                <h5>4. 怎麼判斷 B 要往哪裡移</h5>
+                <ul>
+                    <li>眼睛往右、B 相對往左 → B 比像<b>近</b>：燒杯實驗把 B 往下移，平面鏡實驗把 B 往後移。</li>
+                    <li>眼睛往右、B 也往右 → B 比像<b>遠</b>：燒杯實驗把 B 往上移，平面鏡實驗把 B 往前移。</li>
+                    <li>把 B 的針尖對準硬幣的對稱軸（或讓 B 露出的上半截對準 A′），比較好看出有沒有偏。</li>
+                </ul>
+                <h5>5. 用量到的位置算答案</h5>
+                <ul>
+                    <li><b>燒杯視深</b>：B 到水面的距離就是視深 h′，折射率 n = 實深 h ÷ 視深 h′。</li>
+                    <li><b>平面鏡</b>：B 到玻璃板的距離就是像距，會發現像距 = 物距。</li>
+                </ul>
+                <p class="teach-tip">注意：視深公式 h′ = h ÷ n 只在接近正上方觀看時成立。做實驗時眼睛要在正上方附近、小幅度左右晃；晃得太大，即使 B 在 h′ 也會留下一點視差。</p>`,
+            height: (p, w) => w >= 640 ? 420 : 680,
+            cycle: 4,
+            modes: [
+                { key: 'depth', label: '燒杯視深：測折射率' },
+                { key: 'mirror', label: '平面鏡成像：找像距' }
+            ],
+            controls: [
+                { key: 'h', label: '硬幣實深 h', min: 4, max: 20, step: 0.5, value: 12, only: ['depth'], fmt: (v) => `${v} cm` },
+                { key: 'n', label: '液體折射率 n', min: 1, max: 1.8, step: 0.01, value: 1.33, only: ['depth'], showIf: (p) => !p.hideN, fmt: (v) => Number(v).toFixed(2) },
+                { key: 'hideN', label: '隱藏折射率（自己測出來）', type: 'checkbox', value: false, only: ['depth'] },
+                { key: 'd', label: '大頭針 A 的物距 d', min: 3, max: 14, step: 0.5, value: 8, only: ['mirror'], fmt: (v) => `鏡前 ${v} cm` },
+                { key: 'zb', label: '參考針 B 的位置', min: 0, max: 25, step: 0.1, value: 4, fmt: (v, p) => p.mode === 'mirror' ? `鏡後 ${Number(v).toFixed(1)} cm` : `水面下 ${Number(v).toFixed(1)} cm` },
+                { key: 'amp', label: '眼睛左右搖擺幅度', min: 0, max: 8, step: 0.5, value: 4, fmt: (v) => `±${v} cm` },
+                { key: 'H', label: '眼睛到水面／玻璃板', min: 15, max: 40, step: 1, value: 20, fmt: (v) => `${v} cm` }
+            ],
+            extraButtons: [
+                {
+                    action: 'liquid', label: '🎲 換一種未知液體',
+                    onClick: (p, api) => {
+                        p.n = Math.round((1.3 + Math.random() * 0.35) * 100) / 100;
+                        p.hideN = true;
+                        ['n', 'hideN'].forEach((k) => {
+                            const el = api.host.querySelector(`[id$="parallax-${k}"]`);
+                            if (el) { if (k === 'hideN') el.checked = true; else el.value = p.n; }
+                        });
+                        api.syncOutputs(); api.paint();
+                    }
+                }
+            ],
+            eyeX: (p, t) => p.amp * Math.sin(2 * Math.PI * t / 4),
+            /* 燒杯半徑 R；硬幣放在靠後杯壁附近（原點），杯心在 y = bcY。
+             * 參考針 B 在杯外後方，針身沿 y 方向（和眼睛左右搖擺的方向垂直）指向硬幣，針尖在 y = pinY；
+             * 從上往下看時針尖正對著硬幣，有視差時針尖會左右偏離硬幣中心 */
+            R: 5, bcY: -3.5, pinY: 1.6,
+            // 平面鏡模式：玻璃板高度、A 與 B 的針高；B 比玻璃板高，上半截露出來對齊 A′
+            plateTop: 5, pinA: 4, pinB: 8,
+            /* 眼睛在 (x, 0)，水面在 z = H，硬幣在 (0, H + h)。
+             * 找水面上的折射點 s：水中 n·sinθw = 空氣中 sinθa。回傳折射點與「沿硬幣正上方鉛直線」的像深。 */
+            coinRay: (p, x) => {
+                const H = p.H, h = p.h, n = Number(p.n);
+                if (Math.abs(x) < 1e-6) return { s: 0, img: h / n };
+                // f(s) 對 s 單調遞增：s = 0 時為負、s = x 時為正（x 為負時兩端互換仍成立）
+                const f = (s) => n * Math.sin(Math.atan(s / h)) - Math.sin(Math.atan((x - s) / H));
+                let lo = Math.min(0, x), hi = Math.max(0, x);
+                for (let i = 0; i < 60; i++) {
+                    const mid = (lo + hi) / 2;
+                    if (f(mid) > 0) hi = mid; else lo = mid;
+                }
+                const s = (lo + hi) / 2;
+                return { s, img: H * s / (x - s) };
+            },
+            /* 眼睛看到 B 相對於 A 的像的方向變化（弧度，扣掉眼睛在正中時的差）；
+             * B 比像近時，眼睛往右 B 相對往左（負值） */
+            offset: (p, x) => {
+                const L = LABS.parallax;
+                const raw = (xx) => {
+                    const toB = Math.atan(-xx / (p.H + p.zb));
+                    if (p.mode === 'mirror') return toB - Math.atan(-xx / (p.H + p.d));
+                    return toB - Math.atan((L.coinRay(p, xx).s - xx) / p.H);
+                };
+                return raw(x) - raw(0);
+            },
+            imageDepth: (p) => p.mode === 'mirror' ? p.d : p.h / Number(p.n),
+            verdict: (p) => {
+                const L = LABS.parallax;
+                if (p.amp === 0) return { ok: false, text: '眼睛不動就看不出視差，先把搖擺幅度調大' };
+                const dz = p.zb - L.imageDepth(p);
+                const shift = deg(Math.abs(L.offset(p, p.amp)));
+                if (shift < 0.12) return { ok: true, text: '無視差 ✓ B 就在像的位置' };
+                return dz < 0
+                    ? { ok: false, text: p.mode === 'mirror' ? 'B 比像近：眼睛往右時 B 相對往左 → 把 B 往後移' : 'B 比像高：眼睛往右時 B 相對往左 → 把 B 往下移' }
+                    : { ok: false, text: p.mode === 'mirror' ? 'B 比像遠：B 跟著眼睛同向跑 → 把 B 往前移' : 'B 比像深：B 跟著眼睛同向跑 → 把 B 往上移' };
+            },
+            readouts: (p) => {
+                const L = LABS.parallax, v = L.verdict(p);
+                const shift = `${deg(Math.abs(L.offset(p, p.amp))).toFixed(2)}°`;
+                if (p.mode === 'mirror') return [
+                    { label: '物距 d', value: `鏡前 ${p.d} cm` },
+                    { label: '參考針 B', value: `鏡後 ${p.zb.toFixed(1)} cm` },
+                    { label: '眼睛移到最右時 B 與 A′ 錯開', value: shift },
+                    { label: '判斷', value: v.text }
+                ];
+                return [
+                    { label: '硬幣實深 h', value: `${p.h} cm` },
+                    { label: '參考針 B（視深 h′）', value: `水面下 ${p.zb.toFixed(1)} cm` },
+                    { label: '眼睛移到最右時 B 與像錯開', value: shift },
+                    { label: '判斷', value: v.text },
+                    { label: '由 B 推算 n = h ÷ h′', value: p.zb > 0.05 ? (p.h / p.zb).toFixed(2) : '—' },
+                    { label: '實際折射率 n', value: p.hideN ? (v.ok ? `${Number(p.n).toFixed(2)}（對齊後揭曉）` : '？對齊後揭曉') : Number(p.n).toFixed(2) }
+                ];
+            },
+            setup: ({ host, canvas, params, disposers, syncOutputs, paint }) => {
+                const liquidBtn = host.querySelector('[data-action="liquid"]');
+                const sync = () => { if (liquidBtn) liquidBtn.style.display = params.mode === 'depth' ? '' : 'none'; };
+                host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
+                sync();
+                canvas.style.touchAction = 'none';
+                const input = host.querySelector('[id$="parallax-zb"]');
+                // 3D 圖上兩種拖曳：抓住綠色針頭移動 B；拖其他地方旋轉視角
+                let dragging = null, last = null, zbRaw = 0;
+                const local = (e) => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+                const inPanel = ([x, y]) => { const b = params._panel; return b && x >= b.x0 && x <= b.x0 + b.w && y >= b.y0 && y <= b.y0 + b.h; };
+                const onPin = ([x, y]) => { const b = params._bHandle; return b && Math.hypot(x - b.u, y - b.v) < 16; };
+                const move = (e) => {
+                    const [x, y] = local(e), dx = x - last[0], dy = y - last[1];
+                    last = [x, y];
+                    if (dragging === 'rotate') {
+                        const v = params._view3d;
+                        if (v) {
+                            v.yaw += dx * 0.01;
+                            v.pitch = Math.max(rad(5), Math.min(rad(80), v.pitch + dy * 0.01));
+                        }
+                        paint(); return;
+                    }
+                    // 把滑鼠位移投影到「B 往後（往下）移 1 cm」在畫面上的方向
+                    const b = params._bHandle, len2 = b.du * b.du + b.dv * b.dv;
+                    if (len2 < 1e-6) return;
+                    zbRaw = Math.max(0, Math.min(25, zbRaw + (dx * b.du + dy * b.dv) / len2));
+                    params.zb = Math.round(zbRaw * 10) / 10;
+                    if (input) input.value = params.zb;
+                    syncOutputs(); paint();
+                };
+                disposers.addEventListener(canvas, 'pointerdown', (e) => {
+                    const pt = local(e);
+                    if (onPin(pt)) { dragging = 'pin'; zbRaw = params.zb; }
+                    else if (inPanel(pt)) dragging = 'rotate';
+                    else return;
+                    last = pt;
+                    canvas.style.cursor = 'grabbing';
+                    try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* 不支援時略過 */ }
+                });
+                disposers.addEventListener(canvas, 'pointermove', (e) => {
+                    if (dragging) { move(e); return; }
+                    const pt = local(e);
+                    canvas.style.cursor = onPin(pt) ? 'pointer' : inPanel(pt) ? 'grab' : '';
+                });
+                const end = () => { dragging = null; canvas.style.cursor = ''; };
+                disposers.addEventListener(canvas, 'pointerup', end);
+                disposers.addEventListener(canvas, 'pointercancel', end);
+            },
+            draw: (ctx, w, h, p, t) => {
+                const L = LABS.parallax, mirror = p.mode === 'mirror';
+                const wide = w >= 640, xe = L.eyeX(p, t), v = L.verdict(p);
+                // 左（窄螢幕在上）：3D 裝置圖；右（窄螢幕在下）：眼睛看到的畫面
+                const aw = wide ? Math.round(w * 0.58) : w, ah = wide ? h : Math.round(h * 0.56);
+                p._panel = { x0: 0, y0: 0, w: aw, h: ah };
+                L.draw3d(ctx, 0, 0, aw, ah, p, xe);
+                labelWrap(ctx, `橘實線：${mirror ? 'A' : '硬幣'}的光真正走的路　粉紅虛線：往回延長，交到的就是像　綠點線：眼睛直接看 B`,
+                          10, ah - 26, C.muted, 10, 13, aw - 20);
+
+                // ── 眼睛看到的畫面：從眼睛位置做真正的透視，眼睛一直盯著 A 的像
+                const px0 = wide ? aw + 10 : 0, py0 = wide ? 0 : ah + 10;
+                const pw = wide ? w - aw - 10 : w, ph = wide ? h : h - ah - 10;
+                L.drawEye(ctx, px0, py0, pw, ph - 44, p, xe);
+                ctx.fillStyle = '#fff'; ctx.fillRect(px0, py0 + ph - 44, pw, 44);
+                ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.strokeRect(px0, py0, pw, ph);
+                labelWrap(ctx, v.text, px0 + 10, py0 + ph - 26, v.ok ? C.green : C.rose, 11, 14, pw - 20, '：');
+            },
+            /* 眼睛真正看到的畫面。世界座標同 3D 裝置圖（x 搖擺方向、y 前後、z 高度，桌面 z = 0）。
+             * 視線對準 A 的像，視野只涵蓋像附近約 ±6 cm，就像實驗時湊近盯著看；
+             * 水中的點逐點解司乃耳定律，取它從水面射出、進入眼睛的方向。 */
+            drawEye: (ctx, x0, y0, pw, ph, p, xe) => {
+                const L = LABS.parallax, mirror = p.mode === 'mirror', H = p.H, n = Number(p.n);
+                const sub = (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]];
+                const dot = (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
+                const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+                const unit = (a) => { const l = Math.hypot(...a) || 1; return [a[0] / l, a[1] / l, a[2] / l]; };
+                const h = p.h, E = mirror ? [xe, 0, 3] : [xe, 0, H + h];
+                // 水中一點 Q：在「眼睛—Q」的鉛直面內找水面出射點 S，眼睛沿 S 的方向看到 Q
+                const viaWater = (Q) => {
+                    const dx = Q[0] - E[0], dy = Q[1] - E[1], rho = Math.hypot(dx, dy), dw = h - Q[2];
+                    if (rho < 1e-6) return [E[0], E[1], h];
+                    let lo = 0, hi = rho;
+                    for (let i = 0; i < 32; i++) {
+                        const s = (lo + hi) / 2;
+                        if (Math.sin(Math.atan(s / H)) > n * Math.sin(Math.atan((rho - s) / dw))) hi = s; else lo = s;
+                    }
+                    const s = (lo + hi) / 2;
+                    return [E[0] + dx / rho * s, E[1] + dy / rho * s, h];
+                };
+                // 視線方向：燒杯模式對準硬幣的像（硬幣中心射出水面的方向），平面鏡模式對準鏡中 A′
+                const target = mirror ? [0, H + p.d, 3.5] : viaWater([0, 0, 0]);
+                const f = unit(sub(target, E));
+                const upRef = mirror ? [0, 0, 1] : [0, 1, 0];
+                const u = unit(sub(upRef, f.map((c) => c * dot(upRef, f))));
+                const r = cross(f, u);
+                const dist = mirror ? H + p.d : Math.hypot(...sub(target, E)) + h / n;
+                const F = Math.min(pw, ph) * 0.46 * dist / (mirror ? 9 : 6);
+                const cx = x0 + pw / 2, cy = y0 + (mirror ? ph / 2 : ph * 0.64);   // 燒杯模式把像放低，上方留給 B
+                const proj = (dir) => { const z = dot(dir, f); return [cx + F * dot(dir, r) / z, cy - F * dot(dir, u) / z]; };
+                const air = (Q) => proj(sub(Q, E));
+                const wet = (Q) => proj(sub(viaWater(Q), E));
+                const path = (pts) => { ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.closePath(); };
+                const ring = (map, ox, oy, r0, z) => Array.from({ length: 72 }, (_, i) => {
+                    const a = i / 72 * Math.PI * 2;
+                    return map([ox + r0 * Math.cos(a), oy + r0 * Math.sin(a), z]);
+                });
+                const ball = (Q, rcm, color) => {
+                    const [a, b] = air(Q), rr = Math.max(2.5, F * rcm / Math.hypot(...sub(Q, E)));
+                    const g = ctx.createRadialGradient(a - rr * 0.35, b - rr * 0.35, rr * 0.1, a, b, rr);
+                    g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, color); g.addColorStop(1, 'rgba(0,0,0,0.55)');
+                    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(a, b, rr, 0, Math.PI * 2); ctx.fill();
+                };
+                const rod = (A, B, wcm, color) => {
+                    const a = air(A), b = air(B);
+                    ctx.strokeStyle = color; ctx.lineCap = 'round';
+                    ctx.lineWidth = Math.max(1.2, F * wcm / Math.hypot(...sub(A, E)));
+                    ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.lineCap = 'butt';
+                };
+
+                ctx.save();
+                ctx.beginPath(); ctx.rect(x0, y0, pw, ph); ctx.clip();
+                if (!mirror) {
+                    const R = L.R, bcY = L.bcY, yb = L.pinY, zB = h - p.zb, rodY = yb + 5;
+                    // 桌面（木紋色）
+                    ctx.fillStyle = '#e6d5bb'; ctx.fillRect(x0, y0, pw, ph);
+                    ctx.strokeStyle = 'rgba(140,105,60,0.10)'; ctx.lineWidth = 1;
+                    for (let k = -40; k <= 40; k += 1.5) { const a = air([k, -40, 0]), b = air([k, 40, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+                    // 杯底（透過水看）與硬幣
+                    path(ring(wet, 0, bcY, R, 0)); ctx.fillStyle = '#d3e6e8'; ctx.fill();
+                    const coin = ring(wet, 0, 0, 1.2, 0.05), c0 = wet([0, 0, 0.05]);
+                    const gc = ctx.createRadialGradient(c0[0] - 6, c0[1] - 6, 2, c0[0], c0[1], Math.abs(coin[0][0] - c0[0]) + 2);
+                    gc.addColorStop(0, '#f4d27a'); gc.addColorStop(0.7, '#d39b2f'); gc.addColorStop(1, '#9c6a17');
+                    path(coin); ctx.fillStyle = gc; ctx.fill(); ctx.strokeStyle = '#8a5a12'; ctx.lineWidth = 1.2; ctx.stroke();
+                    path(ring(wet, 0, 0, 0.85, 0.05)); ctx.strokeStyle = 'rgba(138,90,18,0.55)'; ctx.stroke();
+                    // 硬幣上刻一條對稱軸（朝向 B），對齊時 B 的針尖要落在這條線的延長線上；軸上各點同樣逐點折射
+                    const axisPts = Array.from({ length: 13 }, (_, i) => wet([0, -1.2 + i * 0.2, 0.06]));
+                    ctx.beginPath(); axisPts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b)));
+                    ctx.strokeStyle = '#6e4508'; ctx.lineWidth = 2; ctx.stroke();
+                    // 水面（淡藍）與玻璃杯壁：水面圈、杯口圈
+                    path(ring(air, 0, bcY, R, h)); ctx.fillStyle = 'rgba(90,170,185,0.22)'; ctx.fill();
+                    ctx.strokeStyle = 'rgba(14,139,147,0.55)'; ctx.lineWidth = 1.4; ctx.stroke();
+                    path(ring(air, 0, bcY, R + 0.15, h + 2)); ctx.strokeStyle = 'rgba(30,60,70,0.55)'; ctx.lineWidth = 3; ctx.stroke();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1; ctx.stroke();
+                    // 杯外的參考針 B 與鐵架（直接看到）
+                    rod([0, rodY, zB], [0, yb + 3.5, zB], 0.25, '#6f7b80');
+                    rod([0, yb, zB], [0, yb + 3.5, zB], 0.1, '#8e9ca1');
+                    ball([0, yb + 3.5, zB], 0.45, C.green);
+                    rod([0, rodY, 0], [0, rodY, h + 6], 0.4, '#5f6b70');
+                    const ca = wet([0, 0, 0.05]), tb = air([0, yb, zB]);
+                    labelFit(ctx, 'A 的像', ca[0], ca[1] + Math.abs(coin[18][1] - ca[1]) + 18, C.rose, 11, 'center', { clampW: x0 + pw - 2, plate: 1 });
+                    labelFit(ctx, 'B 的針尖', tb[0] + 10, tb[1] + 4, C.green, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
+                } else {
+                    const pt = L.plateTop, zA = L.pinA, zB = L.pinB;
+                    ctx.fillStyle = '#f2f5f6'; ctx.fillRect(x0, y0, pw, ph);
+                    // 桌面
+                    // 桌面只取眼前一段，太近或太寬的點投影後座標過大，canvas 會畫不出來
+                    const yNear = Math.max(4, H - p.d - 6), yFar = H + 40;
+                    const tbl = [air([-25, yNear, 0]), air([25, yNear, 0]), air([25, yFar, 0]), air([-25, yFar, 0])];
+                    path(tbl); ctx.fillStyle = '#e6d5bb'; ctx.fill();
+                    ctx.strokeStyle = 'rgba(140,105,60,0.16)'; ctx.lineWidth = 1;
+                    for (let k = -24; k <= 24; k += 3) { const a = air([k, yNear, 0]), b = air([k, yFar, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+                    for (let y = Math.ceil(yNear / 3) * 3; y <= yFar; y += 3) { const a = air([-25, y, 0]), b = air([25, y, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+                    const plate = [air([-9, H, 0]), air([9, H, 0]), air([9, H, pt]), air([-9, H, pt])];
+                    // 板後的參考針 B（透過玻璃，上半截露出玻璃板）
+                    rod([0, H + p.zb, 0], [0, H + p.zb, zB], 0.12, '#7d8c91');
+                    ball([0, H + p.zb, zB], 0.45, C.green);
+                    // 鏡中的 A′：只在玻璃板範圍內看得到，顏色淡一些
+                    ctx.save(); path(plate); ctx.clip(); ctx.globalAlpha = 0.6;
+                    rod([0, H + p.d, 0], [0, H + p.d, zA], 0.12, '#7d8c91');
+                    ball([0, H + p.d, zA], 0.45, C.orange);
+                    ctx.restore();
+                    // 玻璃板
+                    path(plate); ctx.fillStyle = 'rgba(150,205,225,0.22)'; ctx.fill();
+                    ctx.strokeStyle = 'rgba(11,111,146,0.8)'; ctx.lineWidth = 2; ctx.stroke();
+                    // 板前的大頭針 A（離眼睛最近，畫最後）
+                    rod([0, H - p.d, 0], [0, H - p.d, zA], 0.12, '#7d8c91');
+                    ball([0, H - p.d, zA], 0.45, C.orange);
+                    const ia = air([0, H + p.d, zA]), ib = air([0, H + p.zb, zB]), ra = air([0, H - p.d, zA]);
+                    labelFit(ctx, 'A′（鏡中）', ia[0] + 10, ia[1] + 18, C.rose, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
+                    labelFit(ctx, 'B（露出板上）', ib[0] + 10, ib[1] + 4, C.green, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
+                    labelFit(ctx, 'A（板前）', ra[0] - 12, ra[1] + 4, C.orange, 11, 'right', { clampW: x0 + pw - 2, plate: 1 });
+                }
+                labelFit(ctx, '眼睛看到的（盯著像，左右晃頭）', x0 + 10, y0 + 18, C.ink, 12, 'left', { plate: 1, clampW: x0 + pw - 2 });
+                ctx.restore();
+            },
+            /* 3D 裝置圖：從斜上方看整套實驗，拖曳可旋轉。
+             * 世界座標 x = 眼睛搖擺方向、y = 前後、z = 高度（桌面 z = 0）；光線都在 y = 0 的鉛直面上。 */
+            draw3d: (ctx, x0, y0, pw, ph, p, xe) => {
+                const L = LABS.parallax, mirror = p.mode === 'mirror', H = p.H;
+                // 兩種模式各自記住視角；平面鏡模式預設從側面看，眼睛—玻璃板—B 才會左右攤開
+                const views = p._views || (p._views = { depth: { yaw: rad(-55), pitch: rad(24) }, mirror: { yaw: rad(-72), pitch: rad(30) } });
+                const view = p._view3d = views[p.mode];
+                const cyw = Math.cos(view.yaw), syw = Math.sin(view.yaw), cp = Math.cos(view.pitch), sp = Math.sin(view.pitch);
+                // 場景中心與大小：燒杯模式是高的（眼睛在上方），平面鏡模式是長的（沿桌面往前看）
+                const T = mirror ? [0, (H + p.zb) / 2, 2] : [0, -1, (H + p.h) / 2];
+                const span = mirror ? H + Math.max(p.d, p.zb) + 8 : H + p.h + 8;
+                const D = span * 2.4, F = Math.min(pw, ph - 50) * 0.92 * D / span;
+                const cx = x0 + pw / 2, cy = y0 + 22 + (ph - 62) / 2;
+                const P = (x, y, z) => {
+                    const dx = x - T[0], dy = y - T[1], dz = z - T[2];
+                    const x1 = cyw * dx - syw * dy, y1 = syw * dx + cyw * dy;
+                    const depth = y1 * cp - dz * sp + D;
+                    return [cx + F * x1 / depth, cy - F * (y1 * sp + dz * cp) / depth];
+                };
+                const path = (pts, close) => {
+                    ctx.beginPath(); pts.forEach(([u, v], i) => (i ? ctx.lineTo(u, v) : ctx.moveTo(u, v)));
+                    if (close) ctx.closePath();
+                };
+                const fillPoly = (pts, fill, stroke, lw) => {
+                    path(pts, true);
+                    if (fill) { ctx.fillStyle = fill; ctx.fill(); }
+                    if (stroke) { ctx.strokeStyle = stroke; ctx.lineWidth = lw || 1; ctx.stroke(); }
+                };
+                const line = (a, b, color, w, dash) => {
+                    ctx.save(); if (dash) ctx.setLineDash(dash);
+                    ctx.strokeStyle = color; ctx.lineWidth = w || 1.6;
+                    path([P(...a), P(...b)]); ctx.stroke(); ctx.restore();
+                };
+                const ring = (cx0, cy0, r, z) => Array.from({ length: 48 }, (_, i) => {
+                    const a = i / 48 * Math.PI * 2;
+                    return P(cx0 + r * Math.cos(a), cy0 + r * Math.sin(a), z);
+                });
+                const ball = (pt, r, color) => {
+                    const [u, v] = P(...pt);
+                    const g = ctx.createRadialGradient(u - r * 0.35, v - r * 0.35, r * 0.1, u, v, r);
+                    g.addColorStop(0, '#ffffff'); g.addColorStop(0.35, color); g.addColorStop(1, 'rgba(0,0,0,0.5)');
+                    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(u, v, r, 0, Math.PI * 2); ctx.fill();
+                };
+                const tag = (text, pt, color, dx = 8, dy = 4, align) => {
+                    const [u, v] = P(...pt);
+                    labelFit(ctx, text, u + dx, v + dy, color, 11, align || 'left', { clampW: x0 + pw - 2, plate: 1 });
+                };
+                // 記下 B 針頭在畫面上的位置，以及「B 往後（往下）移 1 cm」時針頭在畫面上移動的方向，供拖曳使用
+                const handle = (at, next) => {
+                    const a = P(...at), b = P(...next);
+                    p._bHandle = { u: a[0], v: a[1], du: b[0] - a[0], dv: b[1] - a[1] };
+                    ctx.strokeStyle = 'rgba(18,128,92,0.45)'; ctx.lineWidth = 1.2; ctx.setLineDash([3, 3]);
+                    ctx.beginPath(); ctx.arc(a[0], a[1], 11, 0, Math.PI * 2); ctx.stroke(); ctx.setLineDash([]);
+                };
+                const eye = (pt) => {
+                    const [u, v] = P(...pt);
+                    ctx.fillStyle = '#fff'; ctx.strokeStyle = C.ink; ctx.lineWidth = 1.4;
+                    ctx.beginPath(); ctx.ellipse(u, v, 11, 6.5, 0, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    ctx.fillStyle = C.ink; ctx.beginPath(); ctx.arc(u, v + 1, 3, 0, Math.PI * 2); ctx.fill();
+                };
+
+                ctx.save();
+                ctx.beginPath(); ctx.rect(x0, y0, pw, ph); ctx.clip();
+                ctx.fillStyle = '#f4f7f8'; ctx.fillRect(x0, y0, pw, ph);
+                const tx = mirror ? [-14, 14] : [-11, 11], ty = mirror ? [-4, H + Math.max(p.d, p.zb) + 6] : [-12, 12];
+                fillPoly([P(tx[0], ty[0], 0), P(tx[1], ty[0], 0), P(tx[1], ty[1], 0), P(tx[0], ty[1], 0)], '#eadcc6', 'rgba(120,90,50,0.25)');
+
+                if (!mirror) {
+                    const R = L.R, bcY = L.bcY, h = p.h, yb = L.pinY, zB = h - p.zb;
+                    const g = L.coinRay(p, xe), imgZ = h - g.img, eyeZ = H + h;
+                    // 鐵架與參考針 B（杯外，夾在右側）
+                    const rodY = yb + 5;
+                    fillPoly([P(-2.5, rodY - 2, 0), P(2.5, rodY - 2, 0), P(2.5, rodY + 2, 0), P(-2.5, rodY + 2, 0)], '#9aa6aa', '#6f7b80');
+                    line([0, rodY, 0], [0, rodY, h + 6], '#6f7b80', 3);
+                    line([0, rodY, zB], [0, yb + 3.5, zB], '#6f7b80', 2.4);
+                    // 燒杯：水體、杯底、硬幣、水面、杯口、杯壁輪廓
+                    const rx = cyw, ry = -syw;   // 畫面右方在世界中的方向，用來找圓柱的左右輪廓
+                    const side = (z0, z1) => [P(-R * rx, bcY - R * ry, z0), P(-R * rx, bcY - R * ry, z1), P(R * rx, bcY + R * ry, z1), P(R * rx, bcY + R * ry, z0)];
+                    fillPoly(ring(0, bcY, R, 0), 'rgba(170,215,222,0.55)');
+                    fillPoly(side(0, h), 'rgba(170,215,222,0.55)');
+                    fillPoly(ring(0, 0, 1.2, 0.05), '#d9a441', '#9c6a17', 1.2);
+                    line([0, -1.2, 0.06], [0, 1.2, 0.06], '#6e4508', 1.6);   // 硬幣的對稱軸，朝向 B
+                    fillPoly(ring(0, bcY, R, h), 'rgba(120,195,205,0.45)', 'rgba(14,139,147,0.7)', 1.2);
+                    // 光線：硬幣 → 水面折射 → 眼睛；粉紅虛線往回延長到像；綠點線直接看 B
+                    line([0, 0, 0], [g.s, 0, h], C.orange, 2);
+                    line([g.s, 0, h], [xe, 0, eyeZ], C.orange, 2);
+                    line([g.s, 0, h], [0, 0, imgZ], C.rose, 1.6, [5, 4]);
+                    line([0, yb, zB], [xe, 0, eyeZ], C.green, 1.3, [2, 4]);
+                    const [iu, iv] = P(0, 0, imgZ);
+                    ctx.strokeStyle = C.rose; ctx.lineWidth = 1.8; ctx.beginPath(); ctx.arc(iu, iv, 5, 0, Math.PI * 2); ctx.stroke();
+                    path(ring(0, bcY, R, h + 2), true); ctx.strokeStyle = 'rgba(18,49,58,0.55)'; ctx.lineWidth = 1.6; ctx.stroke();
+                    const s0 = side(0, h + 2);
+                    ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1.4;
+                    path([s0[0], s0[1]]); ctx.stroke(); path([s0[3], s0[2]]); ctx.stroke();
+                    path(ring(0, bcY, R, 0), true); ctx.stroke();
+                    // 參考針 B 的針與針頭畫在杯子前面（它在杯外）
+                    line([0, yb, zB], [0, yb + 3.5, zB], '#7d8c91', 2.2);
+                    ball([0, yb + 3.5, zB], 5.5, C.green);
+                    handle([0, yb + 3.5, zB], [0, yb + 3.5, zB - 1]);
+                    // 眼睛與搖擺範圍
+                    if (p.amp > 0) line([-p.amp, 0, eyeZ], [p.amp, 0, eyeZ], C.muted, 1, [4, 4]);
+                    eye([xe, 0, eyeZ]);
+                    tag('眼睛', [xe, 0, eyeZ], C.ink, 14);
+                    tag('硬幣 A', [0, 0, 0], C.orange, -10, 16, 'right');
+                    tag('A 的像', [0, 0, imgZ], C.rose, 9);
+                    tag('參考針 B（拖曳針頭）', [0, yb + 3.5, zB], C.green, 14, -10);
+                    tag('水面', [-R * 0.7, bcY - R * 0.7, h], C.cyan, 0, 0, 'center');
+                    label(ctx, '3D 裝置圖（拖曳空白處旋轉）', x0 + 10, y0 + 18, C.ink, 12);
+                } else {
+                    const ez = 3, zA = L.pinA, zB = L.pinB, m = xe * p.d / (H + p.d);
+                    const pin = (y, top, color, alpha) => {
+                        ctx.globalAlpha = alpha || 1;
+                        line([0, y, 0], [0, y, top], '#7d8c91', 2);
+                        ball([0, y, top], 4, color);
+                        ctx.globalAlpha = 1;
+                    };
+                    // 由遠到近：B、A′、玻璃板、光線、A、眼睛
+                    pin(H + p.zb, zB, C.green);
+                    ball([0, H + p.zb, zB], 5.5, C.green);
+                    handle([0, H + p.zb, zB], [0, H + p.zb + 1, zB]);
+                    pin(H + p.d, zA, C.orange, 0.45);
+                    line([0, H + p.d, 0], [0, H + p.d, zA], C.rose, 1, [3, 3]);
+                    fillPoly([P(-9, H, 0), P(9, H, 0), P(9, H, L.plateTop), P(-9, H, L.plateTop)], 'rgba(150,205,225,0.28)', 'rgba(11,111,146,0.8)', 1.6);
+                    line([0, H - p.d, ez], [m, H, ez], C.orange, 2);
+                    line([m, H, ez], [xe, 0, ez], C.orange, 2);
+                    line([m, H, ez], [0, H + p.d, ez], C.rose, 1.6, [5, 4]);
+                    line([0, H + p.zb, ez], [xe, 0, ez], C.green, 1.3, [2, 4]);
+                    pin(H - p.d, zA, C.orange);
+                    if (p.amp > 0) line([-p.amp, 0, ez], [p.amp, 0, ez], C.muted, 1, [4, 4]);
+                    eye([xe, 0, ez]);
+                    tag('眼睛', [xe, 0, ez], C.ink, 14);
+                    tag('大頭針 A', [0, H - p.d, zA], C.orange, 8, -6);
+                    tag('像 A′', [0, H + p.d, zA], C.rose, 8, -6);
+                    tag('參考針 B（拖曳針頭）', [0, H + p.zb, zB], C.green, 14, -10);
+                    tag('玻璃板', [9, H, L.plateTop], C.blue, -4, -6, 'right');
+                    label(ctx, '3D 裝置圖（拖曳空白處旋轉）', x0 + 10, y0 + 18, C.ink, 12);
+                }
+                ctx.restore();
             }
         };
 

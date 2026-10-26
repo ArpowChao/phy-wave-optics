@@ -284,7 +284,7 @@ function renderSingleLabView(rawId) {
     const [id,initialMode,fromCode] = String(rawId).split(':');
     if (!LABS[id]) { renderLabIndex(); return; }
     const nodes = nodesOfLab(id).slice();
-    const modeCode = id === 'ripple' ? (initialMode === 'interfere' || initialMode === 'diffract' ? 'N07' : 'N06') : null;
+    const modeCode = id === 'ripple' ? (initialMode === 'interfere' || initialMode === 'diffract' ? 'N07' : 'N06') : id === 'parallax' ? 'N14' : null;
     const code = ALL_NODES.includes(fromCode) && LESSON_LABS[fromCode]?.id === id ? fromCode : modeCode || nodes[0];
     if (code && !nodes.includes(code)) nodes.unshift(code);
     const guide = lessonGuide(code);

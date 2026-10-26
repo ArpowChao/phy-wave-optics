@@ -174,6 +174,27 @@
     max-width: 74ch;
 }
 
+/* 實驗下方的教學段落（例：視差法找像） */
+.lab-teach {
+    margin-top: 1.4rem;
+    padding: 1.1rem 1.2rem 0.6rem;
+    border: 1px solid var(--border-color, rgba(15, 60, 80, 0.14));
+    border-radius: 12px;
+    background: #fff;
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text-main);
+}
+.lab-teach h4 { margin: 0 0 0.6rem; font-size: 1.05rem; }
+.lab-teach h5 { margin: 1.1rem 0 0.35rem; font-size: 0.95rem; color: #0b6f92; }
+.lab-teach p { margin: 0 0 0.6rem; max-width: 74ch; }
+.lab-teach ul { margin: 0 0 0.6rem; padding-left: 1.3rem; max-width: 74ch; }
+.lab-teach li { margin-bottom: 0.25rem; }
+.lab-teach .teach-fig { margin: 0.6rem 0 0.9rem; }
+.lab-teach .teach-fig svg { display: block; width: 100%; max-width: 560px; height: auto; }
+.lab-teach .teach-fig figcaption { margin-top: 0.3rem; font-size: 0.82rem; color: var(--text-muted, #5b7480); }
+.lab-teach .teach-tip { padding: 0.55rem 0.75rem; border-left: 3px solid var(--accent-orange); background: var(--accent-orange-light); border-radius: 0 8px 8px 0; font-size: 0.84rem; }
+
 @media (prefers-reduced-motion: reduce) {
     .lab-shell * { animation: none !important; transition: none !important; }
 }
