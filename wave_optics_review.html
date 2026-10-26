@@ -5743,28 +5743,38 @@
             name: '薄透鏡成像作圖',
             tag: 'N16 / N17',
             hint: '',
-            hintFor: (p) => p.mode === 'conj'
+            hintFor: (p) => p.mode === 'double'
+                ? '兩個透鏡排成一組：透鏡 1 成的像 I₁，再當作透鏡 2 的物體。先勾光線，看三條光線穿過兩個透鏡後交在哪裡；再勾「中間像 I₁」，看透鏡 1 單獨成的像在哪，想想它和最後的像有什麼關係。I₁ 跑到透鏡 2 後面時，透鏡 2 的物就成了「虛物」。'
+                : p.mode === 'conj'
                 ? '物體和屏幕固定不動，兩者相距 L。拖動透鏡的位置，看屏幕上的像什麼時候最清楚；清楚時按「記錄這個位置」。試著找出所有能成清晰像的位置，再比較它們的物距和像距。'
                 : '先自己作圖：勾選下方的光線，一條一條畫出來，找出它們（或它們的反向延長線）交在哪裡；想好了再勾「顯示像與讀數」對答案。拖動物距時，透鏡和焦點都不會動，只有物體在移動。',
-            noteFor: (p) => p.mode === 'conj'
+            noteFor: (p) => p.mode === 'double'
+                ? '<b>逐次成像</b>：先用透鏡 1 求出中間像 I₁（1/p₁ + 1/q₁ = 1/f₁），I₁ 就是透鏡 2 的物，物距 p₂ = d − q₁；再由 1/p₂ + 1/q₂ = 1/f₂ 求出最後的像。<br><b>虛物</b>：若 I₁ 落在透鏡 2 後面（q₁ > d），p₂ 為負，光在還沒會聚成 I₁ 之前就被透鏡 2 攔下。<br><b>總放大率</b>：m = m₁ × m₂。<br>圖中的光線是真的光：每條光線在兩個透鏡各折射一次，最後交在（或反向延長交在）最終的像上。'
+                : p.mode === 'conj'
                 ? '<b>共軛成像</b>：物屏距離 L 固定時，透鏡在兩個位置都能在屏幕上成清晰的實像，一個放大、一個縮小。兩個位置的物距和像距正好互換（p₁ = q₂、q₁ = p₂），所以兩次的放大率互為倒數（m₁·m₂ = 1）。<br><b>什麼時候找得到</b>：L 要大於 4f 才有兩個位置；L = 4f 時兩個位置合成一個（p = q = 2f，等大倒立）；L 小於 4f 時怎麼移都不清楚。<br><b>測焦距（貝索法）</b>：量出兩個位置的距離 d，焦距 f = (L² − d²) ÷ 4L。'
                 : '本實驗採實物：凸透鏡物距大於焦距時成倒立實像、小於焦距時成正立放大虛像；物在焦點時出射平行光。凹透鏡成正立縮小虛像。<br><b>虛像怎麼找</b>：折射後的光不會真的交在一起，把每一條折射光往回延長（虛線），延長線交在同一點，就是虛像。<br><b>三條光線</b>：① 平行主軸入射 → 凸透鏡折射後通過另一側焦點；凹透鏡折射後好像從同側焦點發出。② 通過鏡心，方向不變。③ 凸透鏡：通過（或來自）同側焦點方向的光，折射後平行主軸；凹透鏡：瞄準另一側焦點的光，折射後平行主軸。<br>符號法則：凸透鏡 f 取正、凹透鏡 f 取負；q > 0 為鏡後實像、q < 0 為鏡前虛像；m = −q/p，m > 0 正立、m < 0 倒立。',
             height: 420,
             modes: [
                 { key: 'convex', label: '凸透鏡（f > 0）' },
                 { key: 'concave', label: '凹透鏡（f < 0）' },
-                { key: 'conj', label: '共軛成像：移動透鏡找清晰的像' }
+                { key: 'conj', label: '共軛成像：移動透鏡找清晰的像' },
+                { key: 'double', label: '雙透鏡組' }
             ],
             controls: [
-                { key: 'p', label: '物距 p (cm)', min: 4, max: 60, step: 1, value: 30, only: ['convex', 'concave'], fmt: (v) => `${v} cm` },
+                { key: 'p', label: '物距 p (cm)', min: 4, max: 60, step: 1, value: 30, only: ['convex', 'concave', 'double'], fmt: (v, p) => `${v} cm${p.mode === 'double' ? '（到透鏡 1）' : ''}` },
+                { key: 'l1', label: '透鏡 1', value: 'convex', only: ['double'], fmt: () => '', options: [{ value: 'convex', label: '凸透鏡' }, { value: 'concave', label: '凹透鏡' }] },
+                { key: 'l2', label: '透鏡 2', value: 'convex', only: ['double'], fmt: () => '', options: [{ value: 'convex', label: '凸透鏡' }, { value: 'concave', label: '凹透鏡' }] },
+                { key: 'f2', label: '透鏡 2 焦距 |f₂| (cm)', min: 5, max: 20, step: 1, value: 10, only: ['double'], fmt: (v) => `${v} cm` },
+                { key: 'dd', label: '兩透鏡間距 d (cm)', min: 8, max: 50, step: 1, value: 40, only: ['double'], fmt: (v) => `${v} cm` },
                 { key: 'L', label: '物體到屏幕的距離 L (cm)', min: 30, max: 100, step: 1, value: 70, only: ['conj'], fmt: (v) => `${v} cm` },
                 { key: 'x', label: '透鏡位置（離物體）(cm)', min: 2, max: 98, step: 0.5, value: 20, only: ['conj'], fmt: (v, p) => `${Math.min(Number(v), p.L - 2)} cm` },
-                { key: 'f', label: '焦距 |f| (cm)', min: 5, max: 20, step: 1, value: 12, fmt: (v) => `${v} cm` },
+                { key: 'f', label: '焦距 |f| (cm)', min: 5, max: 20, step: 1, value: 12, fmt: (v, p) => `${v} cm${p.mode === 'double' ? '（透鏡 1）' : ''}` },
                 { key: 'ho', label: '物高 (cm)', min: 2, max: 10, step: 1, value: 6, fmt: (v) => `${v} cm` },
                 { key: 'r1', label: '光線①：平行主軸入射', type: 'checkbox', value: false },
                 { key: 'r2', label: '光線②：通過鏡心', type: 'checkbox', value: false },
                 { key: 'r3', label: '光線③：通過焦點方向', type: 'checkbox', value: false },
-                { key: 'ext', label: '反向延長線（找虛像用）', type: 'checkbox', value: false, only: ['convex', 'concave'] },
+                { key: 'mid', label: '中間像 I₁（透鏡 1 成的像）', type: 'checkbox', value: false, only: ['double'] },
+                { key: 'ext', label: '反向延長線（找虛像用）', type: 'checkbox', value: false, only: ['convex', 'concave', 'double'] },
                 { key: 'show', label: '顯示像與讀數（對答案）', type: 'checkbox', value: false }
             ],
             extraButtons: [
@@ -5812,6 +5822,17 @@
                     if (p._recMsg) out.push({ label: '記錄', value: p._recMsg });
                     return out;
                 }
+                if (p.mode === 'double') {
+                    const g = LABS.lens.double(p);
+                    if (!show) return [{ label: '中間像 I₁', value: '？' }, { label: '最後的像', value: '？' }, { label: '總放大率', value: '先作圖，再勾「顯示像與讀數」對答案' }];
+                    if (!g.ok) return [{ label: '成像', value: g.why }];
+                    return [
+                        { label: '中間像 I₁', value: `透鏡 1 ${g.q1 > 0 ? '後' : '前'} ${Math.abs(g.q1).toFixed(1)} cm（m₁ = ${g.m1.toFixed(2)}）` },
+                        { label: '透鏡 2 的物距 p₂ = d − q₁', value: `${g.p2.toFixed(1)} cm${g.p2 < 0 ? '（虛物）' : ''}` },
+                        { label: '最後的像', value: `透鏡 2 ${g.q2 > 0 ? '後' : '前'} ${Math.abs(g.q2).toFixed(1)} cm（${g.q2 > 0 ? '實像' : '虛像'}）` },
+                        { label: '總放大率 m = m₁ × m₂', value: `${g.m.toFixed(2)}（${g.m > 0 ? '正立' : '倒立'}${Math.abs(g.m) > 1 ? '放大' : '縮小'}）` }
+                    ];
+                }
                 const f = p.mode === 'concave' ? -p.f : p.f;
                 if (!show) return [{ label: '像距 q', value: '？' }, { label: '放大率 m', value: '？' }, { label: '成像性質', value: '先作圖，再勾「顯示像與讀數」對答案' }];
                 if (Math.abs(p.p - f) < 1e-6) return [
@@ -5827,7 +5848,97 @@
                     { label: '成像性質', value: kind }
                 ];
             },
+            vScaleOf: (axisY, top) => Math.min(8, (axisY - top - 10) / (LABS.lens.controls.find((c) => c.key === 'ho').max * 1.6)),
+            // 透鏡畫得比最大物高再高一些，平行主軸入射的光線才一定打在透鏡上
+            lensHalf: (axisY, top, vScale) => Math.min(axisY - top - 4, LABS.lens.controls.find((c) => c.key === 'ho').max * vScale * 1.35),
+            lensShape: (ctx, x, axisY, H, concave, alpha) => {
+                ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = C.blue; ctx.lineWidth = 2.4; ctx.beginPath();
+                if (!concave) {
+                    ctx.moveTo(x, axisY - H); ctx.quadraticCurveTo(x + 16, axisY, x, axisY + H);
+                    ctx.moveTo(x, axisY - H); ctx.quadraticCurveTo(x - 16, axisY, x, axisY + H);
+                } else {
+                    ctx.moveTo(x - 9, axisY - H); ctx.quadraticCurveTo(x + 5, axisY, x - 9, axisY + H);
+                    ctx.moveTo(x + 9, axisY - H); ctx.quadraticCurveTo(x - 5, axisY, x + 9, axisY + H);
+                    ctx.moveTo(x - 9, axisY - H); ctx.lineTo(x + 9, axisY - H);
+                    ctx.moveTo(x - 9, axisY + H); ctx.lineTo(x + 9, axisY + H);
+                }
+                ctx.stroke(); ctx.restore();
+            },
+            /* 雙透鏡：透鏡 1 在 0、透鏡 2 在 d；f 有正負號 */
+            double: (p) => {
+                const f1 = (p.l1 === 'concave' ? -1 : 1) * Number(p.f), f2 = (p.l2 === 'concave' ? -1 : 1) * Number(p.f2);
+                const p1 = Number(p.p), d = Number(p.dd);
+                if (Math.abs(p1 - f1) < 1e-6) return { ok: false, f1, f2, d, p1, why: '物在透鏡 1 的焦點上，透鏡 1 射出平行光' };
+                const q1 = 1 / (1 / f1 - 1 / p1), m1 = -q1 / p1, p2 = d - q1;
+                if (Math.abs(p2 - f2) < 1e-6) return { ok: false, f1, f2, d, p1, q1, m1, p2, why: '中間像在透鏡 2 的焦點上，最後射出平行光' };
+                const q2 = 1 / (1 / f2 - 1 / p2), m2 = -q2 / p2;
+                return { ok: true, f1, f2, d, p1, q1, m1, p2, q2, m2, m: m1 * m2 };
+            },
+            drawDouble: (ctx, w, h, p) => {
+                const L = LABS.lens, g = L.double(p), ho = Number(p.ho);
+                const axisY = h * 0.5, top = 32, bottom = h - 70, vScale = L.vScaleOf(axisY, top);
+                const maxOf = (k) => L.controls.find((c) => c.key === k).max;
+                // 比例尺固定：左邊放得下最大物距，右邊放得下最大間距再多一段
+                const left = maxOf('p') + 4, rightCm = maxOf('dd') + 46, scale = (w - 28) / (left + rightCm);
+                const sx = (cm) => 14 + (cm + left) * scale, sy = (cm) => axisY - cm * vScale;
+                const x1 = sx(0), x2 = sx(g.d), Ox = sx(-g.p1), Oy = sy(ho);
+                /* 近軸光線追跡：在透鏡處高度 y、斜率 u，折射後 u′ = u − y / f */
+                const rays = [];
+                if (p.r1) rays.push([0, C.orange]);
+                if (p.r2) rays.push([-ho / g.p1, C.rose]);
+                if (p.r3 && Math.abs(g.p1 - g.f1) > 0.3) rays.push([-ho / (g.p1 - g.f1), C.cyan]);
+                const traced = rays.map(([u0, col]) => {
+                    const y1 = ho + u0 * g.p1, u1 = u0 - y1 / g.f1, y2 = y1 + u1 * g.d, u2 = u1 - y2 / g.f2;
+                    return { col, y1, u1, y2, u2 };
+                });
+                // 透鏡要夠大，光線才一定打在透鏡上
+                const base = L.lensHalf(axisY, top, vScale), cap = axisY - top - 4;
+                const H1 = Math.min(cap, Math.max(base, ...traced.map((t) => Math.abs(t.y1) * vScale + 10)));
+                const H2 = Math.min(cap, Math.max(base, ...traced.map((t) => Math.abs(t.y2) * vScale + 10)));
+                axis(ctx, 12, axisY, w - 12, axisY);
+                L.lensShape(ctx, x1, axisY, H1, g.f1 < 0, 1);
+                L.lensShape(ctx, x2, axisY, H2, g.f2 < 0, 1);
+                labelFit(ctx, '透鏡 1', x1, Math.min(h - 50, axisY + H1 + 16), C.blue, 11, 'center', { clampW: w, plate: 1 });
+                labelFit(ctx, '透鏡 2', x2, Math.min(h - 50, axisY + H2 + 16), C.blue, 11, 'center', { clampW: w, plate: 1 });
+                const dot = (cm, name, col) => { const X = sx(cm); if (X < 8 || X > w - 8) return; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(X, axisY, 3.2, 0, Math.PI * 2); ctx.fill(); labelFit(ctx, name, X, axisY + 16, col, 10, 'center', { clampW: w, plate: 1 }); };
+                [[-1, 'F₁'], [1, 'F₁']].forEach(([s, n]) => dot(s * Math.abs(g.f1), n, C.violet));
+                [[-1, 'F₂'], [1, 'F₂']].forEach(([s, n]) => dot(g.d + s * Math.abs(g.f2), n, '#b4589a'));
+                const clip = (fn) => { ctx.save(); ctx.beginPath(); ctx.rect(6, top, w - 12, bottom - top); ctx.clip(); fn(); ctx.restore(); };
+                const seg = (a, b, col, dash, wd) => clip(() => { if (dash) ctx.setLineDash(dash); ctx.strokeStyle = col; ctx.lineWidth = wd || 1.7; ctx.beginPath(); ctx.moveTo(sx(a[0]), sy(a[1])); ctx.lineTo(sx(b[0]), sy(b[1])); ctx.stroke(); });
+                const far = rightCm + 10, near = -left - 10;
+                const fin = g.ok && g.q2 < 0, ext = p.ext && fin;
+                traced.forEach(({ col, y1, u1, y2, u2 }) => {
+                    seg([-g.p1, ho], [0, y1], col);
+                    seg([0, y1], [g.d, y2], col);
+                    seg([g.d, y2], [far, y2 + u2 * (far - g.d)], col);
+                    if (ext) seg([g.d, y2], [near, y2 + u2 * (near - g.d)], col, [5, 4], 1.2);
+                    // 中間像：透鏡 1 折射後的光線延伸到 I₁（不管透鏡 2），淡虛線
+                    if (p.mid && g.q1 !== undefined) {
+                        const xi = g.q1;
+                        if (xi > g.d || xi < 0) seg([0, y1], [xi, y1 + u1 * xi], col, [2, 4], 1);
+                    }
+                });
+                if (!p.r1 && !p.r2 && !p.r3) labelFit(ctx, '勾選下方的光線，一條一條作圖', w / 2, top + 14, C.muted, 12, 'center', { clampW: w, plate: 1 });
+                arrow(ctx, Ox, axisY, Ox, Oy, C.green, 2.8);
+                label(ctx, '物', Ox - 16, Oy + 4, C.green, 12);
+                const imgArrow = (xcm, hcm, col, text, dash) => {
+                    const X = sx(xcm), Y = sy(hcm);
+                    clip(() => { if (dash) { ctx.setLineDash([4, 3]); ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(X, axisY); ctx.lineTo(X, Y); ctx.stroke(); } else arrow(ctx, X, axisY, X, Y, col, 2.8); });
+                    if (X > 8 && X < w - 8) labelFit(ctx, text, X + 8, Math.max(top + 14, Math.min(bottom - 4, Y + (Y < axisY ? -6 : 15))), col, 11, 'left', { clampW: w, plate: 1 });
+                    else labelFit(ctx, `${text}在畫面${X >= w - 8 ? '右' : '左'}方之外`, X >= w - 8 ? w - 10 : 10, axisY - 10, col, 11, X >= w - 8 ? 'right' : 'left', { clampW: w, plate: 1 });
+                };
+                if (p.mid && g.q1 !== undefined) imgArrow(g.q1, g.m1 * ho, '#b4589a', `中間像 I₁${g.q1 > g.d ? '（透鏡 2 的虛物）' : ''}`, true);
+                if (p.show) {
+                    if (!g.ok) labelFit(ctx, g.why, 14, 22, C.rose, 12, 'left', { clampW: w });
+                    else {
+                        imgArrow(g.d + g.q2, g.m * ho, g.q2 > 0 ? C.blue : C.violet, g.q2 > 0 ? '最後的實像' : '最後的虛像');
+                        label(ctx, `q₁ = ${g.q1.toFixed(1)} cm　p₂ = ${g.p2.toFixed(1)} cm　q₂ = ${g.q2.toFixed(1)} cm　m = ${g.m.toFixed(2)}`, 14, 22, C.ink, 12);
+                    }
+                }
+                labelWrap(ctx, '光線為真實光路：在兩個透鏡各折射一次　粉紫虛線：透鏡 1 單獨成的中間像　虛線：反向延長線', 14, h - 30, C.muted, 10, 13, w - 28);
+            },
             draw: (ctx, w, h, p) => {
+                if (p.mode === 'double') { LABS.lens.drawDouble(ctx, w, h, p); return; }
                 const L = LABS.lens, conj = p.mode === 'conj', concave = p.mode === 'concave';
                 const fAbs = Number(p.f), f = concave ? -fAbs : fAbs, ho = Number(p.ho);
                 const axisY = h * 0.5, top = 32, bottom = h - 70;
@@ -5838,7 +5949,7 @@
                 const lensCm = conj ? g.x : 0, objCm = conj ? 0 : -Number(p.p);
                 const scale = conj ? (w - 70) / maxOf('L') : (w * 0.5 - 14) / (maxOf('p') + 6);
                 const ox = conj ? 40 : w * 0.5;
-                const vScale = Math.min(8, (axisY - top - 10) / (maxOf('ho') * 1.6));
+                const vScale = L.vScaleOf(axisY, top);
                 const sx = (cm) => ox + cm * scale, sy = (cm) => axisY - cm * vScale;
                 const po = lensCm - objCm;                             // 物距
                 const q = Math.abs(po - f) < 1e-6 ? null : 1 / (1 / f - 1 / po);
@@ -5848,19 +5959,7 @@
                 axis(ctx, 12, axisY, w - 12, axisY);
                 label(ctx, '主軸', w - 40, axisY - 8, C.muted, 10);
                 // 透鏡本體（共軛模式另畫記錄過的位置，淡色）
-                const lensShape = (x, alpha) => {
-                    ctx.save(); ctx.globalAlpha = alpha; ctx.strokeStyle = C.blue; ctx.lineWidth = 2.4; ctx.beginPath();
-                    if (!concave) {
-                        ctx.moveTo(x, axisY - 70); ctx.quadraticCurveTo(x + 14, axisY, x, axisY + 70);
-                        ctx.moveTo(x, axisY - 70); ctx.quadraticCurveTo(x - 14, axisY, x, axisY + 70);
-                    } else {
-                        ctx.moveTo(x - 9, axisY - 70); ctx.quadraticCurveTo(x + 5, axisY, x - 9, axisY + 70);
-                        ctx.moveTo(x + 9, axisY - 70); ctx.quadraticCurveTo(x - 5, axisY, x + 9, axisY + 70);
-                        ctx.moveTo(x - 9, axisY - 70); ctx.lineTo(x + 9, axisY - 70);
-                        ctx.moveTo(x - 9, axisY + 70); ctx.lineTo(x + 9, axisY + 70);
-                    }
-                    ctx.stroke(); ctx.restore();
-                };
+                const lensShape = (x, alpha) => L.lensShape(ctx, x, axisY, L.lensHalf(axisY, top, vScale), concave, alpha);
                 if (conj) (p._rec || []).filter((r) => r.L === g.L && r.f === g.f).forEach((r, i) => {
                     lensShape(sx(r.x), 0.3);
                     labelFit(ctx, `記錄 ${i + 1}`, sx(r.x), axisY + 88, C.blue, 10, 'center', { clampW: w, plate: 1 });
