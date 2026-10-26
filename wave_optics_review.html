@@ -4511,7 +4511,7 @@
                 ? '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。大頭針 A 立在玻璃板前，玻璃板當平面鏡。眼睛左右搖擺，透過玻璃看 A 的像 A′ 與板後的參考針 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）前後移動，直到眼睛怎麼晃，B 都和 A′ 黏在一起不錯開——這時 B 的位置就是像的位置。'
                 : '左邊是 3D 裝置圖（拖曳旋轉），右邊是眼睛看到的畫面。硬幣 A 在燒杯底，參考針 B 夾在燒杯外側。從上方往下看，眼睛左右搖擺，比較 A 的像與 B。拖曳 3D 圖中綠色的 B 針頭（或用滑桿）上下移動，直到兩者沒有視差，量 B 到水面的距離就是視深 h′，再用 n = h ÷ h′ 求折射率。',
             noteFor: (p) => p.mode === 'mirror'
-                ? '<b>判斷口訣</b>：兩個東西沒有重合時，比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 太近，往後移；B 跟著眼睛同向跑 → B 太遠，往前移。<br><b>平面鏡的像是精確的</b>：不論眼睛偏多少，B 放在鏡後 d 處都完全沒有視差，所以像距 = 物距。'
+                ? '<b>判斷口訣</b>：兩個東西沒有重合時，比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 太近，往後移；B 跟著眼睛同向跑 → B 太遠，往前移。<br><b>平面鏡的像是精確的</b>：不論眼睛偏多少，B 放在鏡後 d 處都完全沒有視差，所以像距 = 物距。<br><b>為什麼用露出的上半截對準</b>：玻璃有厚度，隔著玻璃看到的 B 下半截會被折射側移，看起來和露出的上半截斷開；只有露出玻璃板的上半截是直接看到的，所以要用它來對準 A′。把玻璃板調厚、搖擺調大，斷開會更明顯。'
                 : '<b>判斷口訣</b>：比較靠近眼睛的那個會往眼睛移動的反方向跑。眼睛往右、B 相對往左 → B 比像高（太靠近水面），往下移；B 跟著眼睛同向跑 → B 太深，往上移。<br><b>視深 h′ = h / n 只是近似</b>：把搖擺幅度調大，會發現 B 放在 h/n 也還有一點點視差，因為斜看時像會再變淺。實驗時眼睛要在正上方附近、小幅度搖擺。<br><b>求折射率</b>：n = 實深 ÷ 視深 = h ÷ h′。',
             /* 實驗下方的教學：為什麼「沒有視差」就是找到像的位置 */
             teach: `
@@ -4630,6 +4630,7 @@
                 { key: 'n', label: '液體折射率 n', min: 1, max: 1.8, step: 0.01, value: 1.33, only: ['depth'], showIf: (p) => !p.hideN, fmt: (v) => Number(v).toFixed(2) },
                 { key: 'hideN', label: '隱藏折射率（自己測出來）', type: 'checkbox', value: false, only: ['depth'] },
                 { key: 'd', label: '大頭針 A 的物距 d', min: 3, max: 14, step: 0.5, value: 8, only: ['mirror'], fmt: (v) => `鏡前 ${v} cm` },
+                { key: 'gt', label: '玻璃板厚度', min: 0.2, max: 3, step: 0.1, value: 1.2, only: ['mirror'], fmt: (v) => `${Number(v).toFixed(1)} cm` },
                 { key: 'zb', label: '參考針 B 的位置', min: 0, max: 25, step: 0.1, value: 4, fmt: (v, p) => p.mode === 'mirror' ? `鏡後 ${Number(v).toFixed(1)} cm` : `水面下 ${Number(v).toFixed(1)} cm` },
                 { key: 'amp', label: '眼睛左右搖擺幅度', min: 0, max: 8, step: 0.5, value: 4, fmt: (v) => `±${v} cm` },
                 { key: 'H', label: '眼睛到水面／玻璃板', min: 15, max: 40, step: 1, value: 20, fmt: (v) => `${v} cm` }
@@ -4654,7 +4655,7 @@
              * 從上往下看時針尖正對著硬幣，有視差時針尖會左右偏離硬幣中心 */
             R: 5, bcY: -3.5, pinY: 1.6,
             // 平面鏡模式：玻璃板高度、A 與 B 的針高；B 比玻璃板高，上半截露出來對齊 A′
-            plateTop: 5, pinA: 4, pinB: 8,
+            plateTop: 5, pinA: 4, pinB: 8, nGlass: 1.5,
             /* 眼睛在 (x, 0)，水面在 z = H，硬幣在 (0, H + h)。
              * 找水面上的折射點 s：水中 n·sinθw = 空氣中 sinθa。回傳折射點與「沿硬幣正上方鉛直線」的像深。 */
             coinRay: (p, x) => {
@@ -4883,11 +4884,41 @@
                     ctx.strokeStyle = 'rgba(140,105,60,0.16)'; ctx.lineWidth = 1;
                     for (let k = -24; k <= 24; k += 3) { const a = air([k, yNear, 0]), b = air([k, yFar, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
                     for (let y = Math.ceil(yNear / 3) * 3; y <= yFar; y += 3) { const a = air([-25, y, 0]), b = air([25, y, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
+                    const gt = Number(p.gt), ng = L.nGlass, yB = H + Math.max(p.zb, gt + 0.05);
                     const plate = [air([-9, H, 0]), air([9, H, 0]), air([9, H, pt]), air([-9, H, pt])];
-                    // 板後的參考針 B（透過玻璃，上半截露出玻璃板）；露出的上半截加光暈
-                    glow([air([0, H + p.zb, pt]), air([0, H + p.zb, zB])], 14);
-                    rod([0, H + p.zb, 0], [0, H + p.zb, zB], 0.12, '#7d8c91');
-                    ball([0, H + p.zb, zB], 0.45, C.green);
+                    const plateBack = [air([-9, H + gt, 0]), air([9, H + gt, 0]), air([9, H + gt, pt]), air([-9, H + gt, pt])];
+                    // 視線（直線）在玻璃前表面的落點若在板內，這一點就是隔著玻璃看到的
+                    const behindGlass = (Q) => {
+                        const k = H / (Q[1] - E[1]), x = E[0] + (Q[0] - E[0]) * k, z = E[2] + (Q[2] - E[2]) * k;
+                        return Math.abs(x) <= 9 && z >= 0 && z <= pt;
+                    };
+                    // 隔著厚玻璃看：光在玻璃裡偏折，出來後和原方向平行但側移；
+                    // 在含玻璃法線（y 方向）的平面內解入射角 θ：tanθ·(空氣中走的 y) + tanθ′·厚度 = 橫向距離
+                    const viaGlass = (Q) => {
+                        const dx = Q[0] - E[0], dz = Q[2] - E[2], rho = Math.hypot(dx, dz), Ly = Q[1] - E[1];
+                        if (rho < 1e-6) return proj([0, 1, 0]);
+                        let lo = 0, hi = Math.PI / 2 - 1e-6;
+                        for (let i = 0; i < 40; i++) {
+                            const th = (lo + hi) / 2;
+                            if (Math.tan(th) * (Ly - gt) + gt * Math.tan(Math.asin(Math.sin(th) / ng)) > rho) hi = th; else lo = th;
+                        }
+                        const th = (lo + hi) / 2;
+                        return proj([dx / rho * Math.sin(th), Math.cos(th), dz / rho * Math.sin(th)]);
+                    };
+                    // 板後的參考針 B：露出玻璃板的上半截直接看到；被玻璃擋住的下半截被折射側移，看起來和上半截斷開
+                    const bPts = Array.from({ length: Math.round(zB / 0.05) + 1 }, (_, i) => {
+                        const Q = [0, yB, i * 0.05], g = behindGlass(Q);
+                        return { g, pt: g ? viaGlass(Q) : air(Q) };
+                    });
+                    const runs = [];
+                    bPts.forEach((q) => { const r = runs[runs.length - 1]; if (r && r.g === q.g) r.pts.push(q.pt); else runs.push({ g: q.g, pts: [q.pt] }); });
+                    runs.filter((r) => !r.g && r.pts.length > 1).forEach((r) => glow([r.pts[0], r.pts[r.pts.length - 1]], 14));
+                    const bw = Math.max(1.2, F * 0.12 / Math.hypot(...sub([0, yB, 2], E)));
+                    runs.forEach((r) => {
+                        ctx.strokeStyle = '#7d8c91'; ctx.lineWidth = bw; ctx.lineCap = 'butt';
+                        ctx.beginPath(); r.pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke();
+                    });
+                    ball([0, yB, zB], 0.45, C.green);
                     // 鏡中的 A′：只在玻璃板範圍內看得到，顏色淡一些
                     ctx.save(); path(plate); ctx.clip();
                     glow([air([0, H + p.d, 0.2]), air([0, H + p.d, zA])], 14);
@@ -4895,13 +4926,18 @@
                     rod([0, H + p.d, 0], [0, H + p.d, zA], 0.12, '#7d8c91');
                     ball([0, H + p.d, zA], 0.45, C.orange);
                     ctx.restore();
-                    // 玻璃板
-                    path(plate); ctx.fillStyle = 'rgba(150,205,225,0.22)'; ctx.fill();
+                    // 厚玻璃板：背面、頂面（玻璃斷面帶點綠）、正面
+                    path(plateBack); ctx.strokeStyle = 'rgba(11,111,146,0.35)'; ctx.lineWidth = 1; ctx.stroke();
+                    path([plate[3], plate[2], plateBack[2], plateBack[3]]); ctx.fillStyle = 'rgba(110,175,160,0.55)'; ctx.fill();
+                    ctx.strokeStyle = 'rgba(11,111,146,0.6)'; ctx.stroke();
+                    path(plate); ctx.fillStyle = 'rgba(150,205,225,0.24)'; ctx.fill();
                     ctx.strokeStyle = 'rgba(11,111,146,0.8)'; ctx.lineWidth = 2; ctx.stroke();
                     // 板前的大頭針 A（離眼睛最近，畫最後）
                     rod([0, H - p.d, 0], [0, H - p.d, zA], 0.12, '#7d8c91');
                     ball([0, H - p.d, zA], 0.45, C.orange);
-                    const ia = air([0, H + p.d, zA]), ib = air([0, H + p.zb, zB]), ra = air([0, H - p.d, zA]);
+                    const ia = air([0, H + p.d, zA]), ib = air([0, yB, zB]), ra = air([0, H - p.d, zA]);
+                    const low = runs.find((r) => r.g);
+                    if (low) { const m = low.pts[Math.floor(low.pts.length * 0.3)]; labelFit(ctx, '隔著玻璃：被折射偏移', m[0] - 10, m[1], C.muted, 10, 'right', { clampW: x0 + pw - 2, plate: 1 }); }
                     labelFit(ctx, 'A′（鏡中）', ia[0] + 10, ia[1] + 18, C.rose, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
                     labelFit(ctx, 'B（露出板上）', ib[0] + 10, ib[1] + 4, C.green, 11, 'left', { clampW: x0 + pw - 2, plate: 1 });
                     labelFit(ctx, 'A（板前）', ra[0] - 12, ra[1] + 4, C.orange, 11, 'right', { clampW: x0 + pw - 2, plate: 1 });
@@ -5032,7 +5068,11 @@
                     handle([0, H + p.zb, zB], [0, H + p.zb + 1, zB]);
                     pin(H + p.d, zA, C.orange, 0.45);
                     line([0, H + p.d, 0], [0, H + p.d, zA], C.rose, 1, [3, 3]);
-                    fillPoly([P(-9, H, 0), P(9, H, 0), P(9, H, L.plateTop), P(-9, H, L.plateTop)], 'rgba(150,205,225,0.28)', 'rgba(11,111,146,0.8)', 1.6);
+                    const gt = Number(p.gt), pt3 = L.plateTop;
+                    fillPoly([P(-9, H + gt, 0), P(9, H + gt, 0), P(9, H + gt, pt3), P(-9, H + gt, pt3)], 'rgba(150,205,225,0.18)', 'rgba(11,111,146,0.45)', 1);
+                    fillPoly([P(-9, H, pt3), P(9, H, pt3), P(9, H + gt, pt3), P(-9, H + gt, pt3)], 'rgba(110,175,160,0.55)', 'rgba(11,111,146,0.6)', 1);
+                    fillPoly([P(9, H, 0), P(9, H + gt, 0), P(9, H + gt, pt3), P(9, H, pt3)], 'rgba(110,175,160,0.45)', 'rgba(11,111,146,0.6)', 1);
+                    fillPoly([P(-9, H, 0), P(9, H, 0), P(9, H, pt3), P(-9, H, pt3)], 'rgba(150,205,225,0.28)', 'rgba(11,111,146,0.8)', 1.6);
                     line([0, H - p.d, ez], [m, H, ez], C.orange, 2);
                     line([m, H, ez], [xe, 0, ez], C.orange, 2);
                     line([m, H, ez], [0, H + p.d, ez], C.rose, 1.6, [5, 4]);
