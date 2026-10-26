@@ -193,6 +193,11 @@
 .lab-teach .teach-fig { margin: 0.6rem 0 0.9rem; }
 .lab-teach .teach-fig svg { display: block; width: 100%; max-width: 560px; height: auto; }
 .lab-teach .teach-fig figcaption { margin-top: 0.3rem; font-size: 0.82rem; color: var(--text-muted, #5b7480); }
+.lab-teach .teach-photos { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr)); gap: 0.9rem; margin: 0.4rem 0 0.9rem; }
+.lab-teach .teach-photos figure { margin: 0; border: 1px solid rgba(15, 60, 80, 0.12); border-radius: 10px; overflow: hidden; background: #0b161c; }
+.lab-teach .teach-photos img { display: block; width: 100%; height: auto; }
+.lab-teach .teach-photos figcaption { padding: 0.55rem 0.7rem 0.7rem; background: #fff; font-size: 0.82rem; line-height: 1.6; }
+.lab-teach .teach-photos small { display: block; margin-top: 0.3rem; color: var(--text-muted, #6b8590); font-size: 0.72rem; }
 .lab-teach .teach-tip { padding: 0.55rem 0.75rem; border-left: 3px solid var(--accent-orange); background: var(--accent-orange-light); border-radius: 0 8px 8px 0; font-size: 0.84rem; }
 
 @media (prefers-reduced-motion: reduce) {

@@ -4603,7 +4603,22 @@
                     <li><b>燒杯視深</b>：B 到水面的距離就是視深 h′，折射率 n = 實深 h ÷ 視深 h′。</li>
                     <li><b>平面鏡</b>：B 到玻璃板的距離就是像距，會發現像距 = 物距。</li>
                 </ul>
-                <p class="teach-tip">注意：視深公式 h′ = h ÷ n 只在接近正上方觀看時成立。做實驗時眼睛要在正上方附近、小幅度左右晃；晃得太大，即使 B 在 h′ 也會留下一點視差。</p>`,
+                <p class="teach-tip">注意：視深公式 h′ = h ÷ n 只在接近正上方觀看時成立。做實驗時眼睛要在正上方附近、小幅度左右晃；晃得太大，即使 B 在 h′ 也會留下一點視差。</p>
+                <h5>6. 真實照片：天文學家用視差量恆星的距離（地科）</h5>
+                <p>同樣的原理放大到宇宙：地球繞太陽公轉，相隔半年從軌道兩端看同一顆近的恆星，它會相對遠處幾乎不動的背景星移動一點點。量出這個視差角 p（單位：角秒），距離 d（單位：秒差距）= 1 ÷ p。離我們最近的恆星比鄰星，視差也只有約 0.77 角秒，用肉眼完全看不出來。</p>
+                <p>2020 年，NASA 的新視野號探測器飛到離地球約 69 億公里遠的地方，和地球上的望遠鏡在同一時間拍同一片星空。兩個拍攝點相隔這麼遠，近的恆星跳動大到直接看得出來。下面兩張動畫在「從地球看」和「從新視野號看」之間切換：<b>正中央那顆近的恆星會跳，背景星幾乎不動</b>。這和實驗裡一樣：背景星像遠處的電線桿，近的恆星像手指。</p>
+                <div class="teach-photos">
+                    <figure>
+                        <img src="assets/images/real/proxima-parallax-new-horizons.gif" alt="比鄰星的視差：從地球與新視野號拍攝的影像交替切換，中央的比鄰星相對背景星跳動" loading="lazy">
+                        <figcaption><b>比鄰星（距離約 4.2 光年）</b>：畫面下方的字標示目前是從地球（Earth）還是新視野號（New Horizons）拍的。看正中央最亮的那顆星。
+                            <small>NASA／JHUAPL／SwRI／Brian May／Las Cumbres Observatory／Siding Spring Observatory，公有領域，<a href="https://commons.wikimedia.org/wiki/File:New_Horizons_Proxima_Centauri_Parallax_Animation.gif" target="_blank" rel="noopener">Wikimedia Commons</a></small></figcaption>
+                    </figure>
+                    <figure>
+                        <img src="assets/images/real/wolf359-parallax-new-horizons.gif" alt="沃夫 359 的視差：從地球與新視野號拍攝的影像交替切換，中央的沃夫 359 相對背景星跳動" loading="lazy">
+                        <figcaption><b>沃夫 359（距離約 7.9 光年）</b>：一樣是兩個位置交替，中央的恆星相對背景星跳動。
+                            <small>NASA／JHUAPL／SwRI／Brian May／Las Cumbres Observatory／Siding Spring Observatory，公有領域，<a href="https://commons.wikimedia.org/wiki/File:New_Horizons_Wolf_359_parallax_blinking_animation.gif" target="_blank" rel="noopener">Wikimedia Commons</a></small></figcaption>
+                    </figure>
+                </div>`,
             height: (p, w) => w >= 640 ? 420 : 680,
             cycle: 4,
             modes: [
@@ -4813,6 +4828,14 @@
                     ctx.lineWidth = Math.max(1.2, F * wcm / Math.hypot(...sub(A, E)));
                     ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); ctx.lineCap = 'butt';
                 };
+                // 強調外暈：要互相比對的兩樣東西（B 與像）包一圈黃色光暈，學生才知道要盯哪裡
+                const glow = (pts, widthPx) => {
+                    ctx.save();
+                    ctx.strokeStyle = 'rgba(255,200,40,0.55)'; ctx.lineWidth = widthPx; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+                    ctx.shadowColor = 'rgba(255,190,0,0.95)'; ctx.shadowBlur = 16;
+                    ctx.beginPath(); pts.forEach(([a, b], i) => (i ? ctx.lineTo(a, b) : ctx.moveTo(a, b))); ctx.stroke();
+                    ctx.restore();
+                };
 
                 ctx.save();
                 ctx.beginPath(); ctx.rect(x0, y0, pw, ph); ctx.clip();
@@ -4827,6 +4850,8 @@
                     const coin = ring(wet, 0, 0, 1.2, 0.05), c0 = wet([0, 0, 0.05]);
                     const gc = ctx.createRadialGradient(c0[0] - 6, c0[1] - 6, 2, c0[0], c0[1], Math.abs(coin[0][0] - c0[0]) + 2);
                     gc.addColorStop(0, '#f4d27a'); gc.addColorStop(0.7, '#d39b2f'); gc.addColorStop(1, '#9c6a17');
+                    const halo = ring(wet, 0, 0, 1.3, 0.05);
+                    glow(halo.concat([halo[0]]), 10);
                     path(coin); ctx.fillStyle = gc; ctx.fill(); ctx.strokeStyle = '#8a5a12'; ctx.lineWidth = 1.2; ctx.stroke();
                     path(ring(wet, 0, 0, 0.85, 0.05)); ctx.strokeStyle = 'rgba(138,90,18,0.55)'; ctx.stroke();
                     // 硬幣上刻一條對稱軸（朝向 B），對齊時 B 的針尖要落在這條線的延長線上；軸上各點同樣逐點折射
@@ -4838,7 +4863,8 @@
                     ctx.strokeStyle = 'rgba(14,139,147,0.55)'; ctx.lineWidth = 1.4; ctx.stroke();
                     path(ring(air, 0, bcY, R + 0.15, h + 2)); ctx.strokeStyle = 'rgba(30,60,70,0.55)'; ctx.lineWidth = 3; ctx.stroke();
                     ctx.strokeStyle = 'rgba(255,255,255,0.85)'; ctx.lineWidth = 1; ctx.stroke();
-                    // 杯外的參考針 B 與鐵架（直接看到）
+                    // 杯外的參考針 B 與鐵架（直接看到）；針尖那一段加光暈
+                    glow([air([0, yb, zB]), air([0, yb + 1.4, zB])], 12);
                     rod([0, rodY, zB], [0, yb + 3.5, zB], 0.25, '#6f7b80');
                     rod([0, yb, zB], [0, yb + 3.5, zB], 0.1, '#8e9ca1');
                     ball([0, yb + 3.5, zB], 0.45, C.green);
@@ -4858,11 +4884,14 @@
                     for (let k = -24; k <= 24; k += 3) { const a = air([k, yNear, 0]), b = air([k, yFar, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
                     for (let y = Math.ceil(yNear / 3) * 3; y <= yFar; y += 3) { const a = air([-25, y, 0]), b = air([25, y, 0]); ctx.beginPath(); ctx.moveTo(a[0], a[1]); ctx.lineTo(b[0], b[1]); ctx.stroke(); }
                     const plate = [air([-9, H, 0]), air([9, H, 0]), air([9, H, pt]), air([-9, H, pt])];
-                    // 板後的參考針 B（透過玻璃，上半截露出玻璃板）
+                    // 板後的參考針 B（透過玻璃，上半截露出玻璃板）；露出的上半截加光暈
+                    glow([air([0, H + p.zb, pt]), air([0, H + p.zb, zB])], 14);
                     rod([0, H + p.zb, 0], [0, H + p.zb, zB], 0.12, '#7d8c91');
                     ball([0, H + p.zb, zB], 0.45, C.green);
                     // 鏡中的 A′：只在玻璃板範圍內看得到，顏色淡一些
-                    ctx.save(); path(plate); ctx.clip(); ctx.globalAlpha = 0.6;
+                    ctx.save(); path(plate); ctx.clip();
+                    glow([air([0, H + p.d, 0.2]), air([0, H + p.d, zA])], 14);
+                    ctx.globalAlpha = 0.6;
                     rod([0, H + p.d, 0], [0, H + p.d, zA], 0.12, '#7d8c91');
                     ball([0, H + p.d, zA], 0.45, C.orange);
                     ctx.restore();
@@ -4878,6 +4907,7 @@
                     labelFit(ctx, 'A（板前）', ra[0] - 12, ra[1] + 4, C.orange, 11, 'right', { clampW: x0 + pw - 2, plate: 1 });
                 }
                 labelFit(ctx, '眼睛看到的（盯著像，左右晃頭）', x0 + 10, y0 + 18, C.ink, 12, 'left', { plate: 1, clampW: x0 + pw - 2 });
+                labelFit(ctx, '黃色光暈：要互相比對的兩樣東西', x0 + 10, y0 + 38, '#9a6b00', 11, 'left', { plate: 1, clampW: x0 + pw - 2 });
                 ctx.restore();
             },
             /* 3D 裝置圖：從斜上方看整套實驗，拖曳可旋轉。
