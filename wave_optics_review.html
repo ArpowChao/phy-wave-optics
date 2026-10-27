@@ -1330,6 +1330,7 @@
                 'N15-FIBER-1': { lab: 'fiber', mode: 'step', guide: '<b>接受角</b>：「射入的光」選「一條光線」，慢慢加大入射角：入射角越大，打到界面的入射角越小；超過紫色虛線（接受角）就小於臨界角而漏光。' },
                 'N15-FIBER-2': { lab: 'fiber', mode: 'bend', guide: '<b>讓光纖轉彎</b>：拖曳畫布或調小彎曲半徑，看光從彎曲外側漏出；再把包層折射率調小，比較是否比較不怕彎。' },
                 'N15-FIBER-3': { lab: 'fiber', mode: 'step', guide: '<b>脈衝被拉寬</b>：觀察白點同時出發、到達出口的先後，再看右上方的輸出脈衝。' },
+                'N15-HALFCYL-1': { lab: 'halfcyl', mode: 'five', guide: '<b>五條平行光</b>：看哪幾條光高於紫色的臨界高度 R/n；再拖曳丙、丁的高度，找出剛好開始全反射的位置。' },
                 'N15-MIRAGE-1': { lab: 'mirage', mode: 'road', guide: '<b>炎熱路面</b>：把「路面比上方空氣熱」調大，看光如何轉彎往上，右上角就出現「積水」和倒立的車。' },
                 'N08-NIGHT-1': { lab: 'mirage', mode: 'nightSound', guide: '<b>晚上與白天</b>：切換「時間」，比較聲音往下彎回地面（晚上）和往上彎、出現聲影區（白天）。' },
                 'DRTE-109-14': { lab: 'snell', mode: null, guide: '<b>逐一畫界面</b>：觀察高、低折射率之間的偏折方向。題目夾層的兩界面平行，且兩外側介質相同，因此出射方向與入射方向平行。' }
@@ -6446,6 +6447,215 @@
             }
         };
 
+        /* 13. 半圓柱玻璃：平行光由平面射入，在圓弧面折射或全反射 --------------------
+         * 平面在左（x = cx），圓心 (cx, cy)、半徑 R；光由左方水平射入，在平面上垂直入射不偏折，
+         * 打到圓弧面時入射角 θ 滿足 sinθ = h / R（h 為入射高度）。h > R / n 時全反射。 */
+        const HC_NAMES = ['甲', '乙', '丙', '丁', '戊', '己', '庚'];
+        /* 在半圓柱內追蹤：回傳線段 [{a, b, kind}]，kind = 'in' | 'tir' | 'refl' | 'out' */
+        function halfCylTrace(cx, cy, R, n, h, xStart, xEnd) {
+            const segs = [];
+            let p = [cx, cy - h], d = [1, 0];
+            segs.push({ a: [xStart, cy - h], b: p.slice(), kind: 'in' });
+            let kind = 'in', events = [];
+            for (let k = 0; k < 14; k++) {
+                // 圓弧（由內往外的交點，取較遠的根）
+                const ox = p[0] - cx, oy = p[1] - cy, bq = ox * d[0] + oy * d[1], cq = ox * ox + oy * oy - R * R;
+                const disc = bq * bq - cq;
+                let tC = Infinity;
+                if (disc >= 0) { const t = -bq + Math.sqrt(disc); if (t > 1e-6 && p[0] + d[0] * t >= cx - 1e-6) tC = t; }
+                let tF = Infinity;
+                if (d[0] < -1e-9) { const t = (cx - p[0]) / d[0]; const yy = p[1] + d[1] * t; if (t > 1e-6 && Math.abs(yy - cy) <= R) tF = t; }
+                const t = Math.min(tC, tF);
+                if (!Number.isFinite(t)) break;
+                const q = [p[0] + d[0] * t, p[1] + d[1] * t];
+                segs.push({ a: p.slice(), b: q.slice(), kind });
+                // 法線（指向玻璃外）
+                const nOut = tC <= tF ? [(q[0] - cx) / R, (q[1] - cy) / R] : [-1, 0];
+                const cosi = d[0] * nOut[0] + d[1] * nOut[1];
+                const sini = Math.sqrt(Math.max(0, 1 - cosi * cosi)), sint = n * sini;
+                events.push({ p: q.slice(), nOut, inc: deg(Math.asin(Math.min(1, sini))), tir: sint >= 1, curved: tC <= tF, dIn: d.slice() });
+                if (sint < 1) {                                        // 折射穿出
+                    const cost = Math.sqrt(1 - sint * sint), eta = n;
+                    const od = depthNorm([eta * d[0] + (cost - eta * cosi) * nOut[0], eta * d[1] + (cost - eta * cosi) * nOut[1]]);
+                    const L = Math.max(10, (od[0] > 0 ? (xEnd - q[0]) / od[0] : (q[0] - 4) / -od[0]));
+                    segs.push({ a: q.slice(), b: [q[0] + od[0] * Math.min(L, 4000), q[1] + od[1] * Math.min(L, 4000)], kind: 'out', R: fresnelR(n, 1, cosi) });
+                    events[events.length - 1].refl = { d: [d[0] - 2 * cosi * nOut[0], d[1] - 2 * cosi * nOut[1]], R: fresnelR(n, 1, cosi) };
+                    break;
+                }
+                d = [d[0] - 2 * cosi * nOut[0], d[1] - 2 * cosi * nOut[1]];
+                p = q; kind = 'tir';
+            }
+            return { segs, events };
+        }
+
+        LABS.halfcyl = {
+            name: '半圓柱玻璃：平行光的折射與全反射',
+            tag: 'N15',
+            wide: true,
+            hint: '平行光由左方垂直射入半圓柱玻璃的平面，打到圓弧面時，入射角由光的高度決定。',
+            hintFor: (p) => ({
+                one: '上下拖曳左邊的光源（或用滑桿）改變光射入的高度 h。光在平面上垂直入射不偏折；打到圓弧面時，法線是半徑方向，入射角 θ 滿足 sin θ = h / R。h 越高，入射角越大；超過臨界角就全反射。',
+                five: '五條平行光甲～戊（和題目的圖相同）。可以上下拖曳每一條光的起點，改變它射入的高度；紫色虛線是臨界高度 h = R / n，高於這條線的光在圓弧面全反射。',
+                many: '整片平行光：只有中間 |h| < R / n 的光能從圓弧面射出，並且大致會聚（越靠外的光會聚點越近，這是球面像差）；外側的光全反射，在玻璃裡繞行後從平面或圓弧另一側射出。'
+            })[p.mode] || '',
+            note: '圓弧面上的入射角：法線通過圓心，所以 sin θ = h / R。',
+            noteFor: () => '全反射條件：sin θ ≥ 1 / n，也就是入射高度 h ≥ R / n（臨界高度）。n = 1.80 時 R / n ≈ 0.56 R，所以高度 0.6R 以上的光（丁、戊）全反射，0.4R 以下的光（甲、乙、丙）折射穿出。<br>折射穿出的光：sin r = n sin θ。靠近中心軸的光（近軸光）大約會聚在圓弧頂點右方 R / (n − 1) 處（圖中的 F）；越靠外的光偏折越多、會聚點越近，所以不會剛好會聚在一點（球面像差）。<br>全反射後的光在圓弧上每一次反射，入射角都相同（圓的弦與半徑的夾角不變），直到打到平面；在平面上若入射角小於臨界角，就從平面射出。<br>圖中只畫主要光線：折射時仍有一小部分光被反射（可勾選顯示）。',
+            modes: [
+                { key: 'one', label: '一條光線：調整入射高度' },
+                { key: 'five', label: '五條平行光（甲～戊）' },
+                { key: 'many', label: '整片平行光' }
+            ],
+            height: (p, cw) => cw < 640 ? 420 : 470,
+            controls: [
+                { key: 'n', label: '玻璃折射率 n', min: 1.30, max: 2.40, step: 0.01, value: 1.80, fmt: (v) => v.toFixed(2) },
+                { key: 'h', label: '入射高度 h（半徑 R 的倍數，也可拖曳光源）', min: -0.98, max: 0.98, step: 0.01, value: 0.40, fmt: (v) => `${v.toFixed(2)} R`, only: ['one'] },
+                { key: 'gap', label: '五條光的間隔（可再個別拖曳）', min: 0.10, max: 0.24, step: 0.01, value: 0.20, fmt: (v) => `${v.toFixed(2)} R`, only: ['five'],
+                  onChange: (v, p) => { p._hs = [0, 1, 2, 3, 4].map((i) => +(i * v).toFixed(3)); } },
+                { key: 'weak', label: '顯示折射時的部分反射（較弱）', type: 'checkbox', value: false },
+                { key: 'crit', label: '顯示臨界高度 R / n', type: 'checkbox', value: true }
+            ],
+            onReset: (p) => { p._hs = null; },
+            hsOf: (p) => { if (!p._hs) p._hs = [0, 1, 2, 3, 4].map((i) => +(i * p.gap).toFixed(3)); return p._hs; },
+            geom: (w, h) => {
+                const R = Math.min(h * 0.43, w * (w < 640 ? 0.36 : 0.30)), cx = Math.max(w < 640 ? 70 : 150, w * (w < 640 ? 0.2 : 0.28));
+                return { R, cx, cy: h / 2 + 8, xStart: w < 640 ? 26 : 50 };
+            },
+            heights: (p) => p.mode === 'one' ? [p.h] : p.mode === 'five' ? LABS.halfcyl.hsOf(p) : Array.from({ length: 19 }, (_, i) => -0.9 + 0.1 * i),
+            readouts: (p) => {
+                const thc = deg(Math.asin(Math.min(1, 1 / p.n)));
+                const base = [{ label: '臨界角 θc（sin θc = 1/n）', value: `${thc.toFixed(1)}°` }, { label: '臨界高度 R / n', value: `${(1 / p.n).toFixed(2)} R` }];
+                const desc = (h) => {
+                    const th = deg(Math.asin(Math.min(1, Math.abs(h))));
+                    if (th >= thc - 1e-9) return `入射角 ${th.toFixed(1)}° ≥ θc → 全反射`;
+                    const r = deg(Math.asin(Math.min(1, p.n * Math.sin(rad(th)))));
+                    return `入射角 ${th.toFixed(1)}° → 折射角 ${r.toFixed(1)}°，穿出`;
+                };
+                if (p.mode === 'one') return [{ label: `h = ${p.h.toFixed(2)} R：圓弧面上`, value: desc(p.h) }].concat(base);
+                if (p.mode === 'five') return LABS.halfcyl.hsOf(p).map((h, i) => ({ label: `${HC_NAMES[i]}（h = ${h.toFixed(2)} R）`, value: desc(h) })).concat(base);
+                const out = Math.min(1, 1 / p.n);
+                return base.concat([
+                    { label: '能從圓弧面直接射出的光', value: `|h| < ${out.toFixed(2)} R，約佔 ${Math.round(out * 100)}%` },
+                    { label: '近軸光會聚點 F', value: `圓弧頂點右方 R/(n−1) = ${(1 / (p.n - 1)).toFixed(2)} R` }
+                ]);
+            },
+            setup: ({ canvas, params, disposers, syncOutputs, paint, host }) => {
+                let drag = null;
+                const pos = (e) => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+                const apply = (y) => {
+                    const g = params._hcGeom; if (!g || drag === null) return;
+                    const h = Math.max(-0.98, Math.min(0.98, Math.round((g.cy - y) / g.R * 100) / 100));
+                    if (params.mode === 'one') { params.h = h; const el = host.querySelector('[id$="halfcyl-h"]'); if (el) el.value = h; }
+                    else if (params.mode === 'five') LABS.halfcyl.hsOf(params)[drag] = h;
+                    syncOutputs(); paint();
+                };
+                disposers.addEventListener(canvas, 'pointerdown', (e) => {
+                    const g = params._hcGeom; if (!g || params.mode === 'many') return;
+                    const [x, y] = pos(e);
+                    if (x > g.cx) return;
+                    const hs = LABS.halfcyl.heights(params);
+                    let best = 0; hs.forEach((h, i) => { if (Math.abs(g.cy - h * g.R - y) < Math.abs(g.cy - hs[best] * g.R - y)) best = i; });
+                    if (Math.abs(g.cy - hs[best] * g.R - y) > 40) return;
+                    drag = best;
+                    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 不支援時忽略 */ }
+                    e.preventDefault(); apply(y);
+                });
+                disposers.addEventListener(canvas, 'pointermove', (e) => {
+                    const g = params._hcGeom;
+                    if (drag !== null) { apply(pos(e)[1]); return; }
+                    if (!g || params.mode === 'many') { canvas.style.cursor = ''; return; }
+                    canvas.style.cursor = pos(e)[0] < g.cx ? 'ns-resize' : '';
+                });
+                const stop = () => { drag = null; };
+                disposers.addEventListener(canvas, 'pointerup', stop);
+                disposers.addEventListener(canvas, 'pointercancel', stop);
+                canvas.style.touchAction = 'none';
+            },
+            draw: (ctx, w, h, p, t) => {
+                const L = LABS.halfcyl, g = L.geom(w, h), { R, cx, cy } = g;
+                p._hcGeom = g;
+                const xEnd = w - 6;
+                // 方格（每格 R/5，方便讀高度）
+                ctx.strokeStyle = 'rgba(18,49,58,0.07)'; ctx.lineWidth = 1;
+                const st = R / 5;
+                for (let x = cx % st; x < w; x += st) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, h); ctx.stroke(); }
+                for (let y = cy % st; y < h; y += st) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(w, y); ctx.stroke(); }
+                // 玻璃
+                ctx.fillStyle = 'rgba(150,215,245,0.55)'; ctx.strokeStyle = '#3fa9d6'; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.moveTo(cx, cy - R); ctx.arc(cx, cy, R, -Math.PI / 2, Math.PI / 2); ctx.closePath(); ctx.fill(); ctx.stroke();
+                dashed(ctx, cx - 30, cy, xEnd, cy, 'rgba(18,49,58,0.35)');
+                ctx.fillStyle = '#12313a'; ctx.beginPath(); ctx.arc(cx, cy, 3, 0, Math.PI * 2); ctx.fill();
+                const placed = []; placed.hMax = h;
+                depthLabel(ctx, placed, `玻璃 n = ${p.n.toFixed(2)}`, cx + R * 0.12, cy + R * 0.8, '#12313a', w, 'left');
+                depthLabel(ctx, placed, '圓心', cx + 5, cy + 16, C.muted, w, 'left');
+                // 臨界高度
+                const hc = 1 / p.n;
+                if (p.crit && hc < 1) [-1, 1].forEach((sg) => {
+                    const y = cy - sg * hc * R, xA = cx + R * Math.sqrt(1 - hc * hc);
+                    dashed(ctx, g.xStart - 10, y, xA, y, C.violet);
+                    if (sg > 0) depthLabel(ctx, placed, `臨界高度 R/n = ${hc.toFixed(2)}R：高於此線全反射`, g.xStart + 10, y + 15, C.violet, w, 'left');
+                });
+                // 近軸會聚點
+                const xF = cx + R + R / (p.n - 1);
+                if (p.mode !== 'one' && xF < xEnd - 10) {
+                    ctx.fillStyle = C.green; ctx.beginPath(); ctx.arc(xF, cy, 4, 0, Math.PI * 2); ctx.fill();
+                    depthLabel(ctx, placed, 'F（近軸會聚點）', xF, cy + 18, C.green, w, 'center');
+                }
+                // 光線
+                const hs = L.heights(p), thin = p.mode === 'many';
+                const segPath = (s, color, width, alpha, dash) => {
+                    ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = width; ctx.globalAlpha = alpha; if (dash) ctx.setLineDash(dash);
+                    ctx.beginPath(); ctx.moveTo(...s.a); ctx.lineTo(...s.b); ctx.stroke(); ctx.restore();
+                };
+                const traces = hs.map((hh) => halfCylTrace(cx, cy, R, p.n, hh * R, g.xStart, xEnd));
+                traces.forEach((tr) => {
+                    tr.segs.forEach((s) => {
+                        const col = s.kind === 'tir' ? C.rose : FIBER_RAY;
+                        segPath(s, col, thin ? 1.3 : 2.2, thin ? 0.85 : 1);
+                        if (!thin && s.kind === 'in') {             // 方向箭頭
+                            const mx = (s.a[0] + s.b[0]) / 2;
+                            if (s.b[0] - s.a[0] > 60) arrow(ctx, mx - 12, s.a[1], mx + 10, s.a[1], FIBER_RAY, 2.2);
+                        }
+                    });
+                    if (p.weak) tr.events.filter((e) => e.refl).forEach((e) => {
+                        segPath({ a: e.p, b: [e.p[0] + e.refl.d[0] * R * 0.6, e.p[1] + e.refl.d[1] * R * 0.6] }, FIBER_RAY, 1.4, Math.min(0.9, 0.2 + e.refl.R * 3), [4, 3]);
+                    });
+                });
+                // 名稱與拖曳把手
+                if (p.mode !== 'many') hs.forEach((hh, i) => {
+                    const y = cy - hh * R;
+                    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(g.xStart, y, 6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                    if (p.mode === 'five') labelFit(ctx, HC_NAMES[i], g.xStart - 10, y + 5, C.ink, 14, 'right', { clampW: w });
+                });
+                // 一條光線：在圓弧面標出法線與入射角
+                if (p.mode === 'one') {
+                    const ev = traces[0].events[0];
+                    if (ev && ev.curved) {
+                        const nIn = [-ev.nOut[0], -ev.nOut[1]];
+                        dashed(ctx, cx, cy, ev.p[0] + ev.nOut[0] * 50, ev.p[1] + ev.nOut[1] * 50, 'rgba(18,49,58,0.7)');
+                        const a1 = Math.atan2(nIn[1], nIn[0]), back = [-ev.dIn[0], -ev.dIn[1]];
+                        let dA = Math.atan2(back[1], back[0]) - a1;
+                        while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+                        const col = ev.tir ? C.rose : C.green;
+                        ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(ev.p[0], ev.p[1], 26, a1, a1 + dA, dA < 0); ctx.stroke();
+                        if (Math.abs(p.h) > 0.02) {
+                            // h 的標示：從軸到光線的鉛直距離
+                            ctx.strokeStyle = C.ink; ctx.lineWidth = 1.2;
+                            const xh = cx + 14;
+                            ctx.beginPath(); ctx.moveTo(xh, cy); ctx.lineTo(xh, ev.p[1]); ctx.stroke();
+                            depthLabel(ctx, placed, `h = ${Math.abs(p.h).toFixed(2)} R`, xh + 6, (cy + ev.p[1]) / 2 + 4, C.ink, w, 'left');
+                            depthLabel(ctx, placed, 'R', (cx + ev.p[0]) / 2 + 6, (cy + ev.p[1]) / 2 + (p.h > 0 ? 14 : -4), C.ink, w, 'left');
+                        }
+                        const txt = ev.tir ? `入射角 ${ev.inc.toFixed(1)}° ≥ 臨界角 ${deg(Math.asin(1 / p.n)).toFixed(1)}°：全反射`
+                            : `入射角 ${ev.inc.toFixed(1)}° < 臨界角 ${deg(Math.asin(Math.min(1, 1 / p.n))).toFixed(1)}°：折射穿出`;
+                        depthLabel(ctx, placed, txt, Math.min(w - 8, ev.p[0] + 30), ev.p[1] + (p.h >= 0 ? -34 : 44), col, w, 'left');
+                    }
+                }
+                if (p.mode !== 'many') depthLabel(ctx, placed, p.mode === 'five' ? '上下拖曳左邊的圓點，改變每條光的高度' : '上下拖曳左邊的圓點，改變光的高度', 8, 18, C.muted, w, 'left');
+                depthLabel(ctx, placed, '紅線：全反射後的光', w - 8, 18, C.rose, w, 'right');
+            }
+        };
+
         /* 12. 折射率連續變化：海市蜃樓、夜間聲音、深海聲道 ------------------------
          * 介質只隨高度 y 變化：n = n(y)。光線（或聲線）以弧長 s 為參數積分
          *   dx/ds = cosθ，dy/ds = sinθ，dθ/ds = cosθ · (dn/dy) / n
@@ -6828,6 +7038,33 @@
                 return { rays, trapped };
             },
 
+            /* 下方參考資料：依模式顯示（目前只有深海聲道） */
+            teach: `
+                <div data-teach="sofar">
+                    <h4>深海聲道：真實資料與鯨魚的長距離通訊</h4>
+                    <figure class="teach-fig">
+                        <img src="assets/images/real/sofar-sound-speed-profile.jpg" alt="海洋中聲速、溫度、鹽度隨深度的變化：(a) 聲速在約 1000 m 深處最小；(b) 溫度在上層快速下降、深處幾乎不變，鹽度變化很小" loading="lazy">
+                        <figcaption>(a) 聲速隨深度的變化：表層約 1500 m/s，往下先變慢，約 1000 m 深處最小（約 1480 m/s），再往下又變快。(b) 溫度與鹽度：上層溫度隨深度快速下降（溫躍層），所以聲速變小；約 1000 m 以下溫度幾乎不變，但壓力隨深度持續增加，聲速又變大。鹽度的變化很小，影響不大。<small>參考圖：海洋學教科書（出處待補）。上方模擬使用 Munk 標準聲速剖面，聲速最小處約在 1300 m，與此圖的海域略有不同；實際深度依海域與季節而異。</small></figcaption>
+                    </figure>
+                    <h5>鯨魚：遠距離交流專家</h5>
+                    <p>利用深海聲道把聲音傳得很遠，海軍不是第一個。鬚鯨（例如藍鯨、長鬚鯨）會發出頻率很低的叫聲，長鬚鯨的叫聲約 20 Hz，低頻聲音在海水中被吸收得少；如果聲音進入深海聲道，往上、往下都會被「彎回來」，不必碰到海面和海底，能量損失很小，可以傳到很遠的地方。據報導，長鬚鯨的叫聲在海面附近只能傳約 250 公里，透過深海聲道卻可能傳到數千公里外。</p>
+                    <p>美國海軍在冷戰時期沿著海底布設水下聽音器陣列（SOSUS），原本是為了追蹤潛艇。冷戰後，康乃爾大學的克拉克（Christopher Clark）教授用這套系統追蹤北大西洋的藍鯨、長鬚鯨、座頭鯨與小鬚鯨。他說，從同一個地點，他可以同時聽到百慕達外海與紐芬蘭外海的鯨魚。</p>
+                    <h5>海洋裡最響的動物</h5>
+                    <p>金氏世界紀錄中，最響的動物聲音是抹香鯨的「喀答」聲，可達 236 分貝。不過水中的分貝和空氣中的分貝不能直接比較：水中以 1 μPa 為參考壓力（空氣是 20 μPa），而且水和空氣的聲阻抗不同；換算成相同的聲強，水中的分貝數約要減去 62 才能和空氣中的數字比較。即使如此，約 174 分貝仍然非常驚人。</p>
+                    <p>人類製造的噪音（船隻、探勘）也在深海聲道裡傳得很遠，壓縮了鯨魚能夠彼此聽見的範圍，這是海洋保育關心的問題。</p>
+                    <p class="teach-src">資料來源：<a href="https://news.cornell.edu/node/282662" target="_blank" rel="noopener">Cornell Chronicle（2005）</a>、<a href="https://www.guinnessworldrecords.com/world-records/70669-loudest-animal-sound" target="_blank" rel="noopener">Guinness World Records：Loudest animal sound</a>、<a href="https://oceanexplorer.noaa.gov/explorations/lewis_clark01/background/hydroacoustics/media/sup2_finwhale_sound.html" target="_blank" rel="noopener">NOAA Ocean Explorer：長鬚鯨叫聲</a>、<a href="https://dosits.org/science/movement/sofar-channel/sound-speed-minimum" target="_blank" rel="noopener">DOSITS：SOFAR channel</a>。</p>
+                </div>`,
+            setup: ({ host, params, disposers }) => {
+                const sec = host.querySelector('.lab-teach');
+                const sync = () => {
+                    if (!sec) return;
+                    let any = false;
+                    sec.querySelectorAll('[data-teach]').forEach((el) => { const on = el.dataset.teach === params.mode; el.style.display = on ? '' : 'none'; any = any || on; });
+                    sec.style.display = any ? '' : 'none';
+                };
+                host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', sync));
+                sync();
+            },
             draw: (ctx, w, h, p, t) => LABS.mirage['draw_' + p.mode](ctx, w, h, p, t || 0),
             /* 動畫：光點沿光線前進（依光程或聲音傳播時間） */
             dots: (ctx, rays, map, u, color, byTime) => {

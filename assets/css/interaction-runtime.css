@@ -405,3 +405,6 @@
 .lab-teach .fiber-table th, .lab-teach .fiber-table td { border: 1px solid rgba(15, 60, 80, 0.14); padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
 .lab-teach .fiber-table thead th { background: rgba(11, 111, 146, 0.08); }
 .lab-teach .fiber-table tbody th { background: rgba(15, 60, 80, 0.04); white-space: nowrap; }
+.lab-teach .teach-fig img { display: block; width: 100%; max-width: 560px; height: auto; border: 1px solid rgba(15, 60, 80, 0.12); border-radius: 8px; background: #fff; }
+.lab-teach .teach-fig small { display: block; margin-top: 0.3rem; font-size: 0.74rem; color: var(--text-muted, #6b8590); }
+.lab-teach .teach-src { font-size: 0.78rem; color: var(--text-muted, #5b7480); }
