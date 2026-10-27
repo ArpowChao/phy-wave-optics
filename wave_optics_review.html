@@ -1327,6 +1327,9 @@
                 'N14-LAKE-2': { lab: 'apparent_depth', mode: 'practice', guide: '<b>同一個湖、不同身高</b>：在「評估練習」模式作答後，比較實際水位與「以為的水位」。' },
                 'N14-LAKE-4': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來一張課桌深？</b>在「評估練習」模式用生活物品出題，揭曉後同一個物品會放到實際湖底，看出還差多少。' },
                 'N14-LAKE-3': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來只到膝蓋？</b>在「評估練習」模式揭曉後，對照膝、胯、肚臍的高度。' },
+                'N15-FIBER-1': { lab: 'fiber', mode: 'step', guide: '<b>接受角</b>：在「階射率光纖」模式調整射入角度，超過紫色虛線（接受角）的光會在側面漏出。' },
+                'N15-FIBER-2': { lab: 'fiber', mode: 'bend', guide: '<b>讓光纖轉彎</b>：拖曳畫布或調小彎曲半徑，看光從彎曲外側漏出；再把包層折射率調小，比較是否比較不怕彎。' },
+                'N15-FIBER-3': { lab: 'fiber', mode: 'step', guide: '<b>脈衝被拉寬</b>：觀察白點同時出發、到達出口的先後，再看右上方的輸出脈衝。' },
                 'DRTE-109-14': { lab: 'snell', mode: null, guide: '<b>逐一畫界面</b>：觀察高、低折射率之間的偏折方向。題目夾層的兩界面平行，且兩外側介質相同，因此出射方向與入射方向平行。' }
             };
 
@@ -5735,6 +5738,587 @@
                 labelFit(ctx, '眼睛看到的天空（依物理計算）', x0 + 10, y0 + 18, C.ink, 12, 'left', opts);
                 if (!plane && 42.3 - e <= 0) labelWrap(ctx, '太陽高於約 42°：主虹在地平線下，看不到', x0 + 10, y0 + 40, C.rose, 11, 14, pw - 20);
                 ctx.strokeStyle = C.grid; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, pw, ph);
+            }
+        };
+
+        /* 11. 光纖：全反射導光、彎曲損耗、模態色散 ------------------------------
+         * 只追蹤子午光線（在含軸線的平面內）。牆面一律用折線表示（彎曲處以細小線段逼近圓弧），
+         * 光線碰到芯層／包層界面時：入射角 ≥ 臨界角 → 全反射；否則依菲涅耳反射率分成漏光與反射。
+         * 每條光線記錄沿途的「時間」（光程 n·s／c），輸出脈衝與動畫都由這個時間決定。 */
+        const FIBER_RAY = '#e8590c';                               // 單一波長的光（例如雷射），所有光線同一顏色，避免誤以為是色散
+        /* 中心線：直線 L1 → 半徑 R、轉角 phi（逆時針為正）的圓弧 → 直線 L2；回傳取樣點與切向量 */
+        function fiberCenterline(x0, y0, L1, R, phi, L2) {
+            const pts = [];
+            pts.push({ c: [x0, y0], t: [1, 0] });
+            pts.push({ c: [x0 + L1, y0], t: [1, 0] });
+            if (Math.abs(phi) > 1e-4 && R > 0) {
+                const sg = phi > 0 ? 1 : -1;                         // 逆時針：圓心在上方（畫布 y 向下，所以圓心 y 較小）
+                const cx = x0 + L1, cy = y0 - sg * R;
+                const n = Math.max(6, Math.ceil(Math.abs(phi) / rad(1.5)));
+                for (let i = 1; i <= n; i++) {
+                    const a = sg * phi * i / n;                      // 已轉角度（正值）
+                    const ang = Math.PI / 2 * sg + (sg > 0 ? -a : a); // 由圓心指向中心線的角度（畫布座標）
+                    const px = cx + R * Math.cos(ang), py = cy + R * Math.sin(ang);
+                    pts.push({ c: [px, py], t: [Math.cos(a), -sg * Math.sin(a)] });
+                }
+            }
+            const last = pts[pts.length - 1];
+            pts.push({ c: [last.c[0] + last.t[0] * L2, last.c[1] + last.t[1] * L2], t: last.t });
+            return pts;
+        }
+        /* 由中心線偏移出上、下牆（半徑 off），組成線段 */
+        function fiberWalls(center, off) {
+            const side = (sg) => center.map((p) => [p.c[0] - sg * p.t[1] * off, p.c[1] + sg * p.t[0] * off]);
+            const up = side(-1), lo = side(1);
+            const segs = [];
+            for (let i = 1; i < center.length; i++) { segs.push([up[i - 1], up[i]]); segs.push([lo[i - 1], lo[i]]); }
+            return { up, lo, segs, end: [up[up.length - 1], lo[lo.length - 1]] };
+        }
+        function segHit(o, d, a, b) {
+            const ex = b[0] - a[0], ey = b[1] - a[1];
+            const den = d[0] * ey - d[1] * ex;
+            if (Math.abs(den) < 1e-12) return null;
+            const t = ((a[0] - o[0]) * ey - (a[1] - o[1]) * ex) / den;
+            const u = ((a[0] - o[0]) * d[1] - (a[1] - o[1]) * d[0]) / den;
+            if (t <= 1e-7 || u < -1e-9 || u > 1 + 1e-9) return null;
+            return { t, n: depthNorm([-ey, ex]) };
+        }
+        /* 在階射率光纖內追蹤一條光線：o 入口點、d 方向；回傳光路（含時間）、漏光段與出口功率 */
+        function fiberTrace(walls, o, d, n1, n2, maxLen) {
+            const path = [{ p: o.slice(), time: 0, pw: 1 }];
+            const leaks = [];
+            let pos = o.slice(), dir = depthNorm(d), pw = 1, time = 0, len = 0, exited = false;
+            for (let k = 0; k < 600 && pw > 0.02 && len < maxLen; k++) {
+                let best = null;
+                for (const [a, b] of walls.segs) { const h = segHit(pos, dir, a, b); if (h && (!best || h.t < best.t)) best = h; }
+                const he = segHit(pos, dir, walls.end[0], walls.end[1]);
+                if (he && (!best || he.t <= best.t)) {
+                    pos = [pos[0] + dir[0] * he.t, pos[1] + dir[1] * he.t];
+                    time += he.t * n1; len += he.t;
+                    path.push({ p: pos.slice(), time, pw }); exited = true; break;
+                }
+                if (!best) break;
+                pos = [pos[0] + dir[0] * best.t, pos[1] + dir[1] * best.t];
+                time += best.t * n1; len += best.t;
+                path.push({ p: pos.slice(), time, pw });
+                let nOut = best.n;
+                let cosi = dir[0] * nOut[0] + dir[1] * nOut[1];
+                if (cosi < 0) { nOut = [-nOut[0], -nOut[1]]; cosi = -cosi; }
+                const sint = n1 / n2 * Math.sqrt(Math.max(0, 1 - cosi * cosi));
+                if (sint < 1) {                                       // 未達臨界角：部分漏出
+                    const R = fresnelR(n1, n2, cosi), eta = n1 / n2;
+                    const cost = Math.sqrt(1 - sint * sint);
+                    const tdir = depthNorm([eta * dir[0] + (cost - eta * cosi) * nOut[0], eta * dir[1] + (cost - eta * cosi) * nOut[1]]);
+                    leaks.push({ p: pos.slice(), d: tdir, pw: pw * (1 - R) });
+                    pw *= R;
+                }
+                dir = [dir[0] - 2 * cosi * nOut[0], dir[1] - 2 * cosi * nOut[1]];
+            }
+            return { path, leaks, exited, pwOut: exited ? pw : 0, time };
+        }
+        /* 由入口外的空氣入射角 thAir 求進入芯層後的方向（以 t 為軸向） */
+        const fiberLaunchDir = (t, thAir, n1) => {
+            const a = Math.asin(Math.sin(thAir) / n1);
+            return [t[0] * Math.cos(a) + t[1] * Math.sin(a), t[1] * Math.cos(a) - t[0] * Math.sin(a)];
+        };
+        /* 漸變折射率（拋物線分布）：n² = n1²(1 − 2Δ(y/a)²)；以 RK4 積分 y(x)，β = n cosθ 守恆 */
+        function gradedTrace(n1, n2, a, alpha0, L, steps) {
+            const D = (n1 * n1 - n2 * n2) / (2 * n1 * n1);
+            const beta = n1 * Math.cos(alpha0);
+            const n2y = (y) => Math.abs(y) <= a ? n1 * n1 * (1 - 2 * D * (y / a) * (y / a)) : n2 * n2;
+            const acc = (y) => Math.abs(y) <= a ? -2 * D * n1 * n1 * y / (a * a) / (beta * beta) : 0;
+            let y = 0, v = Math.tan(alpha0), t = 0;
+            const h = L / steps, pts = [{ p: [0, 0], time: 0 }];
+            let escaped = false;
+            for (let i = 0; i < steps; i++) {
+                const f = (yy, vv) => [vv, acc(yy)];
+                const k1 = f(y, v), k2 = f(y + h / 2 * k1[0], v + h / 2 * k1[1]);
+                const k3 = f(y + h / 2 * k2[0], v + h / 2 * k2[1]), k4 = f(y + h * k3[0], v + h * k3[1]);
+                const yN = y + h / 6 * (k1[0] + 2 * k2[0] + 2 * k3[0] + k4[0]);
+                const vN = v + h / 6 * (k1[1] + 2 * k2[1] + 2 * k3[1] + k4[1]);
+                t += (n2y((y + yN) / 2) / beta) * h;                 // dt ∝ n ds = n²/β dx
+                y = yN; v = vN;
+                pts.push({ p: [h * (i + 1), y], time: t });
+                if (Math.abs(y) > a * 1.0001) { escaped = true; break; }
+            }
+            return { pts, escaped, time: t, beta };
+        }
+        /* 由一組（到達時間, 功率）畫出輸出脈衝的形狀；tScale 把時間差換成圖上的寬度 */
+        function pulseCurve(arrivals, sigma, xs) {
+            return xs.map((x) => arrivals.reduce((s, a) => s + a.pw * Math.exp(-((x - a.t) ** 2) / (2 * sigma * sigma)), 0));
+        }
+
+        LABS.fiber = {
+            name: '光纖：全反射導光、彎曲與傳輸優劣',
+            tag: 'N15',
+            wide: true,
+            hint: '光從左端射入芯層，在芯層與包層的界面全反射而前進。',
+            hintFor: (p) => ({
+                step: '光從左端射入芯層（n₁），在芯層與包層（n₂ < n₁）的界面全反射，被侷限在芯層中前進。入射角超過「接受角」的光，打到界面時入射角小於臨界角，會漏進包層。白點是同時出發的光脈衝：走鋸齒路徑的光比較晚到，輸出脈衝被拉寬（模態色散）。',
+                bend: '在畫布上拖曳，或調整滑桿讓光纖轉彎。轉彎時，光打到外側界面的入射角變小；彎得太急，入射角小於臨界角，光就從彎曲處漏出去。讀數會比較「同一組光在直光纖」與「彎曲後」到達出口的光量。',
+                graded: '漸變折射率光纖的芯層中央折射率最高、往外遞減。光不再鋸齒反射，而是平滑地彎回中央；走得遠的光在外圍低折射率處跑得較快，幾乎和中央的光同時到達，脈衝展寬大幅減少。',
+                single: '單模光纖的芯徑只有約 9 μm，接近光的波長，只允許一種傳播方式（模態），沒有「不同路徑的時間差」。光的能量有一小部分延伸到包層中一起前進。長距離與海底電纜都用單模光纖。',
+                compare: '三種光纖並排：同時出發的光脈衝，到出口時寬度不同。下方整理光纖和銅線的優缺點。'
+            })[p.mode] || '',
+            note: '光纖靠全反射導光：芯層折射率必須大於包層。',
+            noteFor: (p) => ({
+                step: '臨界角 sinθc = n₂/n₁；從空氣射入端面時，最大接受角 sinθa = n₁·cosθc = √(n₁² − n₂²)，稱為數值孔徑 NA。<br>圖中的光都是同一個波長（例如雷射），只是從不同角度射入，所以畫成同一種顏色。<br>預設 n₁ = 1.50、n₂ = 1.40 是為了方便觀察而誇大；真實通訊光纖約 n₁ ≈ 1.48、n₂ ≈ 1.46，接受角只有約 14°（可用上方「預設組合」切換）。<br>模態色散：最斜的導光光線比軸向光線多花的時間 Δt ≈ (L·n₁/c)(n₁/n₂ − 1)。脈衝被拉寬後，相鄰脈衝會重疊，限制了每秒可傳的位元數，所以長距離通訊不用階射率多模光纖。<br>簡化：只追蹤在含軸平面內的光線（子午光線），未計入吸收、散射與材料色散；光纖粗細已放大。',
+                bend: '彎曲損耗是光纖的主要缺點之一：施工時若彎得太急，光會從彎曲處漏掉，嚴重時訊號中斷，因此光纜都有「最小彎曲半徑」規格；現在也有抗彎光纖（如 ITU-T G.657），可承受較小的彎曲。<br>彎曲漏光也有用途：「光纖識別器」把光纖輕輕彎一下，偵測漏出的光，就能判斷裡面有沒有訊號。<br>沿光纖中心前進的光，在彎曲外側界面的入射角滿足 sinθ = R/(R + a)；要不漏光需 R/(R + a) ≥ n₂/n₁，即 R ≥ a·n₂/(n₁ − n₂)。所以 n₁、n₂ 差越大（NA 越大），越不怕彎。<br>真實光纖 n₁、n₂ 只差約 1%，需要 R 達數十 a 以上；但芯半徑只有數微米，幾公分的彎曲半徑已是數千 a，所以只有「彎太急」（半徑小於約一兩公分）才會明顯漏光。',
+                graded: '拋物線分布 n² = n₁²[1 − 2Δ(r/a)²]，Δ = (n₁² − n₂²)/(2n₁²)。光線路徑近似正弦曲線，週期幾乎與入射角無關；理想分布下時間差 Δt 約為階射率的 Δ/8 倍（Δ ≈ (n₁ − n₂)/n₁），頻寬大很多。常用於大樓、資料中心內的短距離多模光纖（芯徑 50 或 62.5 μm）。',
+                single: '單模光纖：芯徑約 8–10 μm、包層外徑 125 μm；在 1550 nm 波長的衰減約 0.2 dB/km，大約每 15 km 功率才減半。雖然沒有模態色散，但不同波長的光速度略有不同（色散），長距離仍要補償。缺點是芯徑很小，熔接與對準要非常精密，光源要用雷射。<br>圖中的波紋只是示意「整個芯層以單一模態前進」；在這麼細的芯中，光線（直線反射）的畫法已不適用。',
+                compare: '模態色散只發生在多模光纖：階射率最嚴重、漸變折射率大幅改善、單模光纖則沒有。真實通訊系統再加上衰減（dB/km）與材料色散一起決定可傳的距離與速率。'
+            })[p.mode] || '',
+            modes: [
+                { key: 'step', label: '階射率光纖（多模）' },
+                { key: 'bend', label: '彎曲光纖' },
+                { key: 'graded', label: '漸變折射率光纖' },
+                { key: 'single', label: '單模光纖' },
+                { key: 'compare', label: '三種比較與優劣' }
+            ],
+            height: (p) => p.mode === 'compare' ? 540 : p.mode === 'bend' ? 540 : 400,
+            cycle: 4.5,
+            controls: [
+                { key: 'preset', label: '預設組合', value: 'demo', only: ['step', 'bend', 'graded', 'compare'],
+                  options: [{ value: 'demo', label: '誇大以便觀察（n₁ 1.50、n₂ 1.40）' }, { value: 'real', label: '接近真實（n₁ 1.48、n₂ 1.46）' }, { value: 'custom', label: '自訂' }],
+                  fmt: () => '' },
+                { key: 'n1', label: '芯層折射率 n₁', min: 1.40, max: 1.60, step: 0.01, value: 1.50, fmt: (v) => v.toFixed(2), only: ['step', 'bend', 'graded', 'compare'] },
+                { key: 'n2', label: '包層折射率 n₂', min: 1.30, max: 1.59, step: 0.01, value: 1.40, fmt: (v) => v.toFixed(2), only: ['step', 'bend', 'graded', 'compare'] },
+                { key: 'launch', label: '射入光束的最大入射角（空氣中）', min: 0, max: 80, step: 1, value: 40, fmt: (v) => `±${v}°`, only: ['step', 'bend', 'graded', 'compare'] },
+                { key: 'bendR', label: '彎曲半徑 R（芯半徑 a 的倍數）', min: 4, max: 28, step: 1, value: 14, fmt: (v) => `${v} a`, only: ['bend'] },
+                { key: 'bendA', label: '彎曲角度（也可拖曳畫布）', min: 0, max: 180, step: 1, value: 90, fmt: (v) => `${v}°`, only: ['bend'] }
+            ],
+            onReset: (p) => { p._bend = p._step = p._bendSig = p._stepSig = null; },
+            teach: `
+                <h4>光纖的優點與缺點</h4>
+                <div class="fiber-pc">
+                    <div class="fiber-pc-col is-pro">
+                        <h5>優點（和銅線相比）</h5>
+                        <ul>
+                            <li><b>頻寬大、速率高</b>：光的頻率約 2×10¹⁴ Hz，一條單模光纖可傳每秒數兆位元（Tbps）等級的資料。</li>
+                            <li><b>衰減小、傳得遠</b>：約 0.2 dB/km，數十公里才需要放大；銅線傳高頻訊號幾百公尺就衰減嚴重。</li>
+                            <li><b>不受電磁干擾</b>：傳的是光、材料是玻璃（絕緣體），旁邊有馬達、高壓電、雷擊也不受影響，也不會干擾別人。</li>
+                            <li><b>細、輕、原料便宜</b>：主要成分是二氧化矽（砂）；同樣容量的光纜比銅纜細輕很多。</li>
+                            <li><b>不易被竊聽</b>：光被侷限在芯層，外面幾乎沒有訊號可截取，要竊聽必須彎折或切開光纖。</li>
+                        </ul>
+                    </div>
+                    <div class="fiber-pc-col is-con">
+                        <h5>缺點與限制</h5>
+                        <ul>
+                            <li><b>怕彎折</b>：彎得太急，全反射條件被破壞而漏光（上面「彎曲光纖」模式）；玻璃也容易折斷。</li>
+                            <li><b>連接、熔接要精密</b>：單模芯徑只有約 9 μm，接頭稍微沒對準就大量損失，施工需要專用設備。</li>
+                            <li><b>需要光電轉換</b>：電腦處理的是電訊號，兩端都要雷射（電→光）與光偵測器（光→電）。</li>
+                            <li><b>不能順便供電</b>：銅線可同時送電（如網路線供電 PoE），光纖本身不導電。</li>
+                            <li><b>多模光纖有模態色散</b>：不同路徑的光到達時間不同，脈衝被拉寬，限制了距離與速率。</li>
+                        </ul>
+                    </div>
+                </div>
+                <h5>三種光纖比較</h5>
+                <div class="fiber-table-wrap">
+                    <table class="fiber-table">
+                        <thead><tr><th></th><th>階射率多模</th><th>漸變折射率多模</th><th>單模</th></tr></thead>
+                        <tbody>
+                            <tr><th>芯徑</th><td>50–100 μm 以上</td><td>50 或 62.5 μm</td><td>約 9 μm</td></tr>
+                            <tr><th>光在芯中的走法</th><td>鋸齒狀全反射</td><td>平滑彎回中央</td><td>單一模態（不能用光線描述）</td></tr>
+                            <tr><th>脈衝展寬</th><td>大</td><td>小</td><td>極小（只有材料色散）</td></tr>
+                            <tr><th>光源、接續</th><td>LED 即可，容易對準</td><td>LED 或雷射</td><td>需要雷射，對準要精密</td></tr>
+                            <tr><th>典型用途</th><td>短距離照明、感測、塑膠光纖</td><td>大樓、資料中心內部</td><td>長途幹線、海底電纜、光纖到府</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p>光纖的關鍵在「芯層折射率比包層大」：光從芯層射向包層、入射角大於臨界角時發生全反射。包層把光和外界隔開，表面刮傷、手指碰觸都不會破壞全反射，這也是光纖不能只用一根裸玻璃絲的原因。</p>`,
+            setup: ({ host, canvas, params, disposers, syncOutputs, paint, getGeom }) => {
+                params._sync = syncOutputs;
+                const inp = (k) => host.querySelector(`[id$="fiber-${k}"]`);
+                const PRE = { demo: [1.50, 1.40], real: [1.48, 1.46] };
+                const presetSel = inp('preset');
+                if (presetSel) disposers.addEventListener(presetSel, 'change', () => {
+                    const v = PRE[params.preset];
+                    if (!v) return;
+                    params.n1 = v[0]; params.n2 = v[1];
+                    if (inp('n1')) inp('n1').value = v[0];
+                    if (inp('n2')) inp('n2').value = v[1];
+                    syncOutputs(); paint();
+                });
+                ['n1', 'n2'].forEach((k) => {
+                    const el = inp(k);
+                    if (el) disposers.addEventListener(el, 'input', () => {
+                        const v = PRE[params.preset];
+                        if (v && Math.abs(v[0] - params.n1) + Math.abs(v[1] - params.n2) > 1e-6) {
+                            params.preset = 'custom';
+                            if (presetSel) presetSel.value = 'custom';
+                            syncOutputs();
+                        }
+                    });
+                });
+                /* 彎曲模式：拖曳畫布改變彎曲角度（以圓弧圓心為準量角度） */
+                let dragging = false;
+                const setFromPointer = (e) => {
+                    const g = params._bendGeom; if (!g) return;
+                    const r = canvas.getBoundingClientRect();
+                    const x = e.clientX - r.left, y = e.clientY - r.top;
+                    let a = deg(Math.atan2(x - g.arcC[0], y - g.arcC[1]));   // 0° = 正下方（彎曲起點），逆時針轉為正
+                    if (a < -90) a = 180; else if (a < 0) a = 0;
+                    a = Math.round(Math.min(180, a));
+                    if (a === params.bendA) return;
+                    params.bendA = a;
+                    const el = inp('bendA'); if (el) el.value = a;
+                    syncOutputs(); paint();
+                };
+                disposers.addEventListener(canvas, 'pointerdown', (e) => {
+                    if (params.mode !== 'bend') return;
+                    dragging = true;
+                    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* 不支援時忽略 */ }
+                    setFromPointer(e); e.preventDefault();
+                });
+                disposers.addEventListener(canvas, 'pointermove', (e) => { if (dragging) setFromPointer(e); });
+                const stop = () => { dragging = false; };
+                disposers.addEventListener(canvas, 'pointerup', stop);
+                disposers.addEventListener(canvas, 'pointercancel', stop);
+                const syncCursor = () => { canvas.style.cursor = params.mode === 'bend' ? 'grab' : ''; canvas.style.touchAction = params.mode === 'bend' ? 'none' : ''; };
+                host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', syncCursor));
+                syncCursor();
+            },
+            /* draw 算出的結果改變時，更新下方讀數（讀數需要畫布尺寸才算得出來） */
+            publish: (p, key, val) => {
+                const s = JSON.stringify(val);
+                if (p['_' + key + 'Sig'] === s) return;
+                p['_' + key + 'Sig'] = s; p['_' + key] = val;
+                if (typeof p._sync === 'function') queueMicrotask(p._sync);
+            },
+
+            /* ---- 共用：光線組、光纖外觀、脈衝圖 ---- */
+            rayAngles: (p) => {
+                const m = rad(p.launch), N = 9;
+                return Array.from({ length: N }, (_, i) => m === 0 ? 0 : -m + 2 * m * i / (N - 1));
+            },
+            drawBody: (ctx, center, a, cladK, coreFill) => {
+                const clad = fiberWalls(center, a * cladK), core = fiberWalls(center, a);
+                const poly = (wl, fill) => {
+                    ctx.beginPath(); ctx.moveTo(...wl.up[0]);
+                    wl.up.forEach((q) => ctx.lineTo(...q)); [...wl.lo].reverse().forEach((q) => ctx.lineTo(...q));
+                    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+                };
+                poly(clad, 'rgba(70,160,200,0.28)');
+                poly(core, coreFill || 'rgba(255,248,225,0.95)');
+                ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1.1;
+                [core.up, core.lo, clad.up, clad.lo].forEach((ln) => { ctx.beginPath(); ctx.moveTo(...ln[0]); ln.forEach((q) => ctx.lineTo(...q)); ctx.stroke(); });
+                return core;
+            },
+            /* 光從左邊空氣射入端面：畫入射段與接受角 */
+            drawLaunch: (ctx, entry, angles, n1, n2, len) => {
+                const NA = Math.sqrt(Math.max(0, n1 * n1 - n2 * n2));
+                if (NA < 1) {
+                    const ta = Math.asin(NA);
+                    [-1, 1].forEach((sg) => dashed(ctx, entry[0], entry[1], entry[0] - Math.cos(ta) * len, entry[1] + sg * Math.sin(ta) * len, 'rgba(107,70,193,0.7)'));
+                }
+                angles.forEach((th, i) => {
+                    ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.8;
+                    ctx.beginPath(); ctx.moveTo(entry[0] - Math.cos(th) * len, entry[1] + Math.sin(th) * len); ctx.lineTo(entry[0], entry[1]); ctx.stroke();
+                    ctx.globalAlpha = 1;
+                });
+            },
+            drawRays: (ctx, results, show) => {
+                results.forEach((r, i) => {
+                    const col = FIBER_RAY;
+                    for (let k = 1; k < r.path.length; k++) {
+                        const A = r.path[k - 1], B = r.path[k];
+                        ctx.strokeStyle = col; ctx.globalAlpha = Math.max(0.15, A.pw); ctx.lineWidth = 1.7;
+                        ctx.beginPath(); ctx.moveTo(...A.p); ctx.lineTo(...B.p); ctx.stroke();
+                    }
+                    ctx.globalAlpha = 1;
+                    if (show !== false) r.leaks.forEach((lk) => {
+                        if (lk.pw < 0.03) return;
+                        ctx.save(); ctx.setLineDash([5, 4]);
+                        ctx.strokeStyle = FIBER_RAY; ctx.globalAlpha = Math.min(0.9, 0.2 + lk.pw); ctx.lineWidth = 1.6;
+                        ctx.beginPath(); ctx.moveTo(...lk.p); ctx.lineTo(lk.p[0] + lk.d[0] * 60, lk.p[1] + lk.d[1] * 60); ctx.stroke();
+                        ctx.restore();
+                    });
+                });
+            },
+            /* 動畫光點：依沿途時間內插位置 */
+            drawDots: (ctx, paths, tNow) => {
+                paths.forEach((pts, i) => {
+                    if (!pts || pts.length < 2 || tNow < 0 || tNow > pts[pts.length - 1].time) return;
+                    let k = 1; while (k < pts.length && pts[k].time < tNow) k++;
+                    if (k >= pts.length) return;
+                    const A = pts[k - 1], B = pts[k], f = (tNow - A.time) / Math.max(1e-9, B.time - A.time);
+                    ctx.fillStyle = '#ffffff'; ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 2;
+                    ctx.beginPath(); ctx.arc(A.p[0] + (B.p[0] - A.p[0]) * f, A.p[1] + (B.p[1] - A.p[1]) * f, 4, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                });
+            },
+            /* 脈衝小圖：box = {x,y,w,h}；arrivals = [{t, pw}]；t0、t1 為時間軸範圍 */
+            drawPulse: (ctx, box, arrivals, sigma, t0, t1, color, title, cursor, w) => {
+                ctx.fillStyle = 'rgba(255,255,255,0.88)'; ctx.fillRect(box.x, box.y, box.w, box.h);
+                ctx.strokeStyle = 'rgba(18,49,58,0.35)'; ctx.lineWidth = 1;
+                ctx.beginPath(); ctx.moveTo(box.x + 6, box.y + box.h - 14); ctx.lineTo(box.x + box.w - 6, box.y + box.h - 14); ctx.stroke();
+                const xs = Array.from({ length: 120 }, (_, i) => t0 + (t1 - t0) * i / 119);
+                const ys = pulseCurve(arrivals, sigma, xs), mx = Math.max(1e-9, ...pulseCurve([{ t: 0, pw: arrivals.reduce((s, a) => s + a.pw, 0) }], sigma, [0]));
+                const X = (t) => box.x + 6 + (t - t0) / (t1 - t0) * (box.w - 12), Y = (v) => box.y + box.h - 14 - v / mx * (box.h - 34);
+                ctx.strokeStyle = color; ctx.lineWidth = 2; ctx.beginPath();
+                xs.forEach((t, i) => (i ? ctx.lineTo(X(t), Y(ys[i])) : ctx.moveTo(X(t), Y(ys[i])))); ctx.stroke();
+                if (cursor !== null && cursor >= t0 && cursor <= t1) dashed(ctx, X(cursor), box.y + 18, X(cursor), box.y + box.h - 14, 'rgba(18,49,58,0.45)');
+                labelFit(ctx, title, box.x + 6, box.y + 13, C.ink, 10, 'left', { maxW: box.w - 12, clampW: w });
+                labelFit(ctx, '時間 →', box.x + box.w - 6, box.y + box.h - 3, C.muted, 9, 'right', { clampW: w });
+            },
+
+            /* ---- 計算 ---- */
+            straightRun: (p, x0, y0, Lf, a) => {
+                const center = fiberCenterline(x0, y0, Lf, 0, 0, 0);
+                const walls = fiberWalls(center, a);
+                const res = LABS.fiber.rayAngles(p).map((th) => fiberTrace(walls, [x0, y0], fiberLaunchDir([1, 0], th, p.n1), p.n1, p.n2, Lf * 40));
+                return { center, walls, res };
+            },
+            stepStats: (p) => {
+                const n1 = p.n1, n2 = p.n2, ok = n1 > n2;
+                const thc = ok ? Math.asin(n2 / n1) : null;
+                const NA = ok ? Math.sqrt(n1 * n1 - n2 * n2) : 0;
+                const dtKm = ok ? 1000 * n1 / 3e8 * (n1 / n2 - 1) * 1e9 : 0;          // ns / km
+                const D = ok ? (n1 - n2) / n1 : 0;
+                const dtGraded = ok ? 1000 * n1 / 3e8 * D * D / 8 * 1e9 : 0;          // ns / km（理想拋物線）
+                return { ok, thc, NA, thA: NA >= 1 ? 90 : deg(Math.asin(NA)), dtKm, dtGraded };
+            },
+            readouts: (p) => {
+                const L = LABS.fiber, st = L.stepStats(p);
+                if (p.mode === 'single') return [
+                    { label: '芯徑／包層外徑', value: '約 9 μm／125 μm' },
+                    { label: '模態色散', value: '沒有（只有一種模態）' },
+                    { label: '衰減（1550 nm）', value: '約 0.2 dB/km' },
+                    { label: '用途', value: '長途幹線、海底電纜、光纖到府' }
+                ];
+                if (!st.ok) return [{ label: '注意', value: '芯層 n₁ 必須大於包層 n₂，才能全反射導光' }];
+                const base = [
+                    { label: '臨界角 θc', value: `${deg(st.thc).toFixed(1)}°` },
+                    { label: '接受角 θa（NA = sin θa）', value: `${st.thA.toFixed(1)}°（NA ${Math.min(1, st.NA).toFixed(2)}）` }
+                ];
+                if (p.mode === 'bend') {
+                    const b = p._bend || {};
+                    return base.concat([
+                        { label: '直光纖時到達出口', value: b.ref != null ? `${Math.round(b.ref * 100)}%` : '—' },
+                        { label: `彎曲 ${p.bendA}°、R = ${p.bendR} a 時到達出口`, value: b.out != null ? `${Math.round(b.out * 100)}%（${b.leakRays} 條光在彎曲處漏光）` : '—' },
+                        { label: '沿中心前進的光不漏出，需要', value: `R ≥ ${Math.ceil(p.n2 / (p.n1 - p.n2))} a` }
+                    ]);
+                }
+                const kmTxt = (ns) => ns >= 1 ? `${ns.toFixed(1)} ns` : `${(ns * 1000).toFixed(1)} ps`;
+                if (p.mode === 'graded') return base.concat([
+                    { label: '每公里脈衝展寬（理想漸變）', value: kmTxt(st.dtGraded) },
+                    { label: '同樣 n 的階射率光纖', value: kmTxt(st.dtKm) }
+                ]);
+                if (p.mode === 'compare') return base.concat([
+                    { label: '每公里展寬：階射率', value: kmTxt(st.dtKm) },
+                    { label: '漸變折射率', value: kmTxt(st.dtGraded) },
+                    { label: '單模', value: '幾乎沒有模態色散' }
+                ]);
+                const guided = (p._step || {}).guided;
+                return base.concat([
+                    { label: '被導引到出口的光線', value: guided != null ? `${guided} / 9 條` : '—' },
+                    { label: '每公里脈衝展寬 Δt', value: kmTxt(st.dtKm) },
+                    { label: '可傳位元率約', value: st.dtKm > 0 ? `${(1 / (2 * st.dtKm * 1e-9) / 1e6).toFixed(st.dtKm > 50 ? 1 : 0)} Mbps（1 km）` : '—' }
+                ]);
+            },
+            draw: (ctx, w, h, p, t) => {
+                const L = LABS.fiber;
+                if (p.mode === 'bend') return L.drawBend(ctx, w, h, p, t || 0);
+                if (p.mode === 'graded') return L.drawGraded(ctx, w, h, p, t || 0);
+                if (p.mode === 'single') return L.drawSingle(ctx, w, h, p, t || 0);
+                if (p.mode === 'compare') return L.drawCompare(ctx, w, h, p, t || 0);
+                return L.drawStep(ctx, w, h, p, t || 0);
+            },
+            /* 動畫時間：軸向光線在週期的 55% 到達出口，最慢的導光光線也要在週期內到達 */
+            animTime: (t, tAxis, tMax) => {
+                const T = 4.5, u = ((t % T) + T) % T / T;
+                const span = Math.max(tAxis / 0.55, tMax * 1.06);
+                return u * span;
+            },
+            noNTip: (ctx, w, h, p) => {
+                if (p.n1 > p.n2) return false;
+                labelFit(ctx, '芯層 n₁ 必須大於包層 n₂，光才能全反射而被導引', w / 2, h / 2, C.rose, 13, 'center', { clampW: w, plate: 'rgba(255,255,255,0.9)' });
+                return true;
+            },
+
+            /* ---------- 階射率 ---------- */
+            drawStep: (ctx, w, h, p, t) => {
+                const L = LABS.fiber;
+                const yc = Math.round(h * 0.62), a = Math.min(34, h * 0.085), x0 = 120, Lf = w - x0 - 24;
+                const run = L.straightRun(p, x0, yc, Lf, a);
+                L.drawBody(ctx, run.center, a, 1.9);
+                if (L.noNTip(ctx, w, h, p)) return;
+                L.drawLaunch(ctx, [x0, yc], L.rayAngles(p), p.n1, p.n2, 90);
+                L.drawRays(ctx, run.res);
+                const guided = run.res.filter((r) => r.exited && r.pwOut > 0.5);
+                L.publish(p, 'step', { guided: guided.length });
+                const tAxis = Lf * p.n1, tMax = guided.reduce((m, r) => Math.max(m, r.time), tAxis);
+                const tNow = L.animTime(t, tAxis, tMax);
+                L.drawDots(ctx, run.res.map((r) => (r.exited ? r.path : null)), tNow);
+                // 脈衝圖
+                const sigma = tAxis * 0.012, bw = Math.min(230, (w - 40) / 2.6), bh = 92;
+                const arr = guided.map((r) => ({ t: r.time, pw: r.pwOut }));
+                L.drawPulse(ctx, { x: 12, y: 10, w: bw, h: bh }, [{ t: 0, pw: arr.reduce((s, a2) => s + a2.pw, 0) || 1 }], sigma, -4 * sigma, (tMax - tAxis) + 4 * sigma, C.blue, '輸入脈衝（同時出發）', tNow, w);
+                L.drawPulse(ctx, { x: w - bw - 12, y: 10, w: bw, h: bh }, arr, sigma, tAxis - 4 * sigma, tMax + 4 * sigma, C.rose, '輸出脈衝（被拉寬）', tNow, w);
+                const placed = []; placed.hMax = h;
+                depthLabel(ctx, placed, `芯層 n₁ = ${p.n1.toFixed(2)}`, x0 + 8, yc - a * 0.3, '#7a5a10', w, 'left');
+                depthLabel(ctx, placed, `包層 n₂ = ${p.n2.toFixed(2)}`, x0 + 8, yc - a * 1.35, '#1f6f8b', w, 'left');
+                depthLabel(ctx, placed, '紫虛線：接受角', 6, yc + 64, C.violet, w, 'left');
+                if (run.res.some((r) => r.leaks.some((lk) => lk.pw > 0.1))) depthLabel(ctx, placed, '虛線：超過接受角，漏進包層的光', x0 + 8, yc + a * 1.9 + 18, FIBER_RAY, w, 'left');
+            },
+
+            /* ---------- 彎曲 ---------- */
+            bendGeom: (w, h, p) => {
+                const a = 8;                                        // 固定比例：彎曲半徑最大 28a 時，轉 180° 也放得進畫布
+                const x0 = 96, y0 = h - 30, L1 = Math.min(200, w * 0.2);
+                const R = p.bendR * a, phi = rad(p.bendA);
+                // 先求不含 L2 的終點與方向，再算出能留在畫布內的 L2
+                const c0 = fiberCenterline(x0, y0, L1, R, phi, 0);
+                const end = c0[c0.length - 1];
+                const lim = (pos, dir, lo, hi) => dir > 1e-9 ? (hi - pos) / dir : dir < -1e-9 ? (lo - pos) / dir : Infinity;
+                const L2 = Math.max(30, Math.min(w * 0.45,
+                    lim(end.c[0], end.t[0], 24 + a * 2, w - 24 - a * 2), lim(end.c[1], end.t[1], 24 + a * 2, h - 24 - a * 2)));
+                return { a, x0, y0, L1, R, phi, L2, center: fiberCenterline(x0, y0, L1, R, phi, L2), arcC: [x0 + L1, y0 - R] };
+            },
+            drawBend: (ctx, w, h, p, t) => {
+                const L = LABS.fiber, g = L.bendGeom(w, h, p);
+                p._bendGeom = g;
+                L.drawBody(ctx, g.center, g.a, 1.9);
+                if (L.noNTip(ctx, w, h, p)) return;
+                const walls = fiberWalls(g.center, g.a);
+                const angles = L.rayAngles(p);
+                const totalLen = g.L1 + g.R * g.phi + g.L2;
+                const res = angles.map((th) => fiberTrace(walls, [g.x0, g.y0], fiberLaunchDir([1, 0], th, p.n1), p.n1, p.n2, totalLen * 40));
+                // 對照：同一組光在等長直光纖中
+                const sWalls = fiberWalls(fiberCenterline(g.x0, g.y0, totalLen, 0, 0, 0), g.a);
+                const ref = angles.map((th) => fiberTrace(sWalls, [g.x0, g.y0], fiberLaunchDir([1, 0], th, p.n1), p.n1, p.n2, totalLen * 40));
+                const N = angles.length;
+                const sum = (arr) => arr.reduce((s, r) => s + r.pwOut, 0) / N;
+                const leakRays = res.filter((r, i) => ref[i].pwOut > 0.5 && r.pwOut < ref[i].pwOut - 0.05).length;
+                L.publish(p, 'bend', { ref: +sum(ref).toFixed(3), out: +sum(res).toFixed(3), leakRays });
+                L.drawLaunch(ctx, [g.x0, g.y0], angles, p.n1, p.n2, 40);
+                L.drawRays(ctx, res);
+                const guided = res.filter((r) => r.exited);
+                const tAxis = totalLen * p.n1, tMax = guided.reduce((m, r) => Math.max(m, r.time), tAxis);
+                L.drawDots(ctx, res.map((r) => (r.exited ? r.path : null)), L.animTime(t, tAxis, tMax));
+                // 拖曳把手：彎曲終點
+                const end = g.center[g.center.length - 2].c;
+                ctx.fillStyle = 'rgba(107,70,193,0.18)'; ctx.strokeStyle = C.violet; ctx.lineWidth = 1.5;
+                ctx.beginPath(); ctx.arc(end[0], end[1], g.a * 1.6, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                const placed = []; placed.hMax = h;
+                depthLabel(ctx, placed, '拖曳畫布讓光纖轉彎', 8, 18, C.violet, w, 'left');
+                depthLabel(ctx, placed, `出口光量 ${Math.round(p._bend.out * 100)}%（直的時候 ${Math.round(p._bend.ref * 100)}%）`, w - 8, 18, p._bend.out < p._bend.ref - 0.02 ? C.rose : C.green, w, 'right');
+                if (leakRays > 0) {
+                    const lk = res.flatMap((r) => r.leaks).filter((l) => l.pw > 0.1 && l.p[0] > g.x0 + g.L1 - 4)[0];
+                    if (lk) depthLabel(ctx, placed, '彎曲處漏光', lk.p[0] + lk.d[0] * 64, lk.p[1] + lk.d[1] * 64 + 4, FIBER_RAY, w, 'center');
+                }
+            },
+
+            /* ---------- 漸變折射率 ---------- */
+            gradedRun: (p, Lf, a) => LABS.fiber.rayAngles(p).map((th) => {
+                const al = Math.asin(Math.sin(th) / p.n1);
+                return gradedTrace(p.n1, p.n2, a, al, Lf, 700);
+            }),
+            drawGraded: (ctx, w, h, p, t) => {
+                const L = LABS.fiber;
+                const yc = Math.round(h * 0.64), a = Math.min(28, h * 0.075), x0 = 120, Lf = w - x0 - 24;
+                const center = fiberCenterline(x0, yc, Lf, 0, 0, 0);
+                const grad = ctx.createLinearGradient(0, yc - a, 0, yc + a);
+                grad.addColorStop(0, 'rgba(255,236,190,0.95)'); grad.addColorStop(0.5, 'rgba(250,218,150,0.95)'); grad.addColorStop(1, 'rgba(255,236,190,0.95)');
+                L.drawBody(ctx, center, a, 1.9, grad);
+                if (L.noNTip(ctx, w, h, p)) return;
+                L.drawLaunch(ctx, [x0, yc], L.rayAngles(p), p.n1, p.n2, 90);
+                const runs = L.gradedRun(p, Lf, a);
+                const paths = runs.map((r) => r.pts.map((q) => ({ p: [x0 + q.p[0], yc - q.p[1]], time: q.time, pw: 1 })));
+                paths.forEach((pts, i) => {
+                    ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 1.7;
+                    ctx.beginPath(); pts.forEach((q, k) => (k ? ctx.lineTo(...q.p) : ctx.moveTo(...q.p))); ctx.stroke();
+                    if (runs[i].escaped) {
+                        const A = pts[pts.length - 2].p, B = pts[pts.length - 1].p, d = depthNorm([B[0] - A[0], B[1] - A[1]]);
+                        ctx.save(); ctx.setLineDash([5, 4]); ctx.globalAlpha = 0.7;
+                        ctx.beginPath(); ctx.moveTo(...B); ctx.lineTo(B[0] + d[0] * 50, B[1] + d[1] * 50); ctx.stroke(); ctx.restore();
+                    }
+                });
+                const ok = runs.map((r) => !r.escaped);
+                const tAxis = Lf * p.n1, tMax = runs.reduce((m, r, i) => ok[i] ? Math.max(m, r.time) : m, tAxis);
+                const tNow = L.animTime(t, tAxis, tMax);
+                L.drawDots(ctx, paths.map((q, i) => ok[i] ? q : null), tNow);
+                const sigma = tAxis * 0.012, bw = Math.min(230, (w - 40) / 2.6), bh = 92;
+                // 時間軸範圍與階射率相同，才看得出差異
+                const st = L.straightRun(p, x0, yc, Lf, a).res.filter((r) => r.exited && r.pwOut > 0.5);
+                const tMaxStep = st.reduce((m, r) => Math.max(m, r.time), tAxis);
+                const arr = runs.filter((r, i) => ok[i]).map((r) => ({ t: r.time, pw: 1 }));
+                L.drawPulse(ctx, { x: 12, y: 10, w: bw, h: bh }, [{ t: 0, pw: arr.length || 1 }], sigma, -4 * sigma, (tMaxStep - tAxis) + 4 * sigma, C.blue, '輸入脈衝', tNow, w);
+                L.drawPulse(ctx, { x: w - bw - 12, y: 10, w: bw, h: bh }, arr, sigma, tAxis - 4 * sigma, tMaxStep + 4 * sigma, C.green, '輸出脈衝（幾乎不展寬）', tNow, w);
+                const placed = []; placed.hMax = h;
+                depthLabel(ctx, placed, '中央 n 最大、往外遞減', x0 + 8, yc - a * 1.35, '#7a5a10', w, 'left');
+            },
+
+            /* ---------- 單模 ---------- */
+            drawSingle: (ctx, w, h, p, t) => {
+                const L = LABS.fiber;
+                const yc = Math.round(h * 0.64), a = Math.min(28, h * 0.075) * 0.32, x0 = 120, Lf = w - x0 - 24;
+                const center = fiberCenterline(x0, yc, Lf, 0, 0, 0);
+                L.drawBody(ctx, center, a, 5.9);
+                // 單一模態：橫向高斯分布，延伸到包層；縱向是前進的波
+                const off = getOffscreen(Math.max(2, Math.round(Lf / 2)), 48), oc = off.ctx;
+                const img = oc.createImageData(off.canvas.width, 48), D = img.data;
+                const k = 2 * Math.PI / 26, phase = t * 6;
+                for (let j = 0; j < 48; j++) {
+                    const y = (j - 23.5) / 23.5 * a * 3, env = Math.exp(-(y * y) / (2 * (a * 0.95) ** 2));
+                    for (let i = 0; i < off.canvas.width; i++) {
+                        const wave = 0.55 + 0.45 * Math.cos(k * i * 2 - phase);
+                        const v = env * wave, idx = (j * off.canvas.width + i) * 4;
+                        D[idx] = 255; D[idx + 1] = 170; D[idx + 2] = 40; D[idx + 3] = Math.round(220 * v);
+                    }
+                }
+                off.ctx.putImageData(img, 0, 0);
+                ctx.drawImage(off.canvas, 0, 0, off.canvas.width, 48, x0, yc - a * 3, Lf, a * 6);
+                const sigma = 0.05, bw = Math.min(230, (w - 40) / 2.6), bh = 92;
+                L.drawPulse(ctx, { x: 12, y: 10, w: bw, h: bh }, [{ t: 0, pw: 1 }], sigma, -0.3, 0.3, C.blue, '輸入脈衝', null, w);
+                L.drawPulse(ctx, { x: w - bw - 12, y: 10, w: bw, h: bh }, [{ t: 0, pw: 1 }], sigma * 1.05, -0.3, 0.3, C.green, '輸出脈衝（形狀不變）', null, w);
+                const placed = []; placed.hMax = h;
+                depthLabel(ctx, placed, '芯徑約 9 μm（放大示意）', x0 + 8, yc - a * 6.4, '#7a5a10', w, 'left');
+                depthLabel(ctx, placed, '光的能量有一部分在包層中前進', x0 + 8, yc + a * 6.4 + 16, '#1f6f8b', w, 'left');
+            },
+
+            /* ---------- 三種比較 ---------- */
+            drawCompare: (ctx, w, h, p, t) => {
+                const L = LABS.fiber;
+                if (L.noNTip(ctx, w, h, p)) return;
+                const rows = 3, rh = h / rows, x0 = 24, bw = Math.min(200, w * 0.24), Lf = w - x0 - bw - 40;
+                const a = Math.min(20, rh * 0.15);
+                const st = L.straightRun(p, x0, 0, Lf, a);
+                const guidedS = st.res.filter((r) => r.exited && r.pwOut > 0.5);
+                const tAxis = Lf * p.n1, tMax = guidedS.reduce((m, r) => Math.max(m, r.time), tAxis);
+                const tNow = L.animTime(t, tAxis, tMax);
+                const sigma = tAxis * 0.012;
+                const placed = []; placed.hMax = h;
+                [['step', '階射率多模'], ['graded', '漸變折射率多模'], ['single', '單模']].forEach(([kind, title], ri) => {
+                    const yc = rh * ri + rh * 0.56;
+                    const center = fiberCenterline(x0, yc, Lf, 0, 0, 0);
+                    let arr;
+                    if (kind === 'step') {
+                        L.drawBody(ctx, center, a, 1.9);
+                        const run = L.straightRun(p, x0, yc, Lf, a);
+                        const res = run.res.filter((r) => r.exited && r.pwOut > 0.5);
+                        L.drawRays(ctx, res, false);
+                        L.drawDots(ctx, res.map((r) => r.path), tNow);
+                        arr = res.map((r) => ({ t: r.time, pw: r.pwOut }));
+                    } else if (kind === 'graded') {
+                        const grad = ctx.createLinearGradient(0, yc - a, 0, yc + a);
+                        grad.addColorStop(0, 'rgba(255,236,190,0.95)'); grad.addColorStop(0.5, 'rgba(250,218,150,0.95)'); grad.addColorStop(1, 'rgba(255,236,190,0.95)');
+                        L.drawBody(ctx, center, a, 1.9, grad);
+                        const runs = L.gradedRun(p, Lf, a).filter((r) => !r.escaped);
+                        const paths = runs.map((r) => r.pts.map((q) => ({ p: [x0 + q.p[0], yc - q.p[1]], time: q.time })));
+                        paths.forEach((pts, i) => { ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 1.5; ctx.beginPath(); pts.forEach((q, k) => (k ? ctx.lineTo(...q.p) : ctx.moveTo(...q.p))); ctx.stroke(); });
+                        L.drawDots(ctx, paths, tNow);
+                        arr = runs.map((r) => ({ t: r.time, pw: 1 }));
+                    } else {
+                        L.drawBody(ctx, center, a * 0.32, 5.9);
+                        ctx.strokeStyle = FIBER_RAY; ctx.lineWidth = 2;
+                        ctx.beginPath(); ctx.moveTo(x0, yc); ctx.lineTo(x0 + Lf, yc); ctx.stroke();
+                        L.drawDots(ctx, [[{ p: [x0, yc], time: 0 }, { p: [x0 + Lf, yc], time: tAxis }]], tNow);
+                        arr = [{ t: tAxis, pw: 1 }];
+                    }
+                    L.drawPulse(ctx, { x: w - bw - 12, y: rh * ri + 8, w: bw, h: rh - 16 }, arr, sigma, tAxis - 4 * sigma, tMax + 4 * sigma,
+                        kind === 'step' ? C.rose : C.green, '輸出脈衝', tNow, w);
+                    depthLabel(ctx, placed, title, x0, rh * ri + 16, C.ink, w, 'left');
+                });
             }
         };
 

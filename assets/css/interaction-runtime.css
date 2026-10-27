@@ -391,3 +391,17 @@
     font-size: 0.8rem;
     font-weight: 700;
 }
+
+/* 光纖實驗：優缺點兩欄與三種光纖比較表 */
+.lab-teach .fiber-pc { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap: 0.9rem; margin: 0.3rem 0 0.6rem; }
+.lab-teach .fiber-pc-col { border-radius: 10px; padding: 0.2rem 0.9rem 0.3rem; border: 1px solid rgba(15, 60, 80, 0.12); }
+.lab-teach .fiber-pc-col.is-pro { background: rgba(18, 128, 92, 0.06); }
+.lab-teach .fiber-pc-col.is-con { background: rgba(194, 38, 74, 0.05); }
+.lab-teach .fiber-pc-col.is-pro h5 { color: #12805c; }
+.lab-teach .fiber-pc-col.is-con h5 { color: #b0223f; }
+.lab-teach .fiber-pc-col ul { max-width: none; }
+.lab-teach .fiber-table-wrap { overflow-x: auto; margin: 0.3rem 0 0.9rem; }
+.lab-teach .fiber-table { border-collapse: collapse; min-width: 520px; width: 100%; font-size: 0.86rem; line-height: 1.6; }
+.lab-teach .fiber-table th, .lab-teach .fiber-table td { border: 1px solid rgba(15, 60, 80, 0.14); padding: 0.4rem 0.6rem; text-align: left; vertical-align: top; }
+.lab-teach .fiber-table thead th { background: rgba(11, 111, 146, 0.08); }
+.lab-teach .fiber-table tbody th { background: rgba(15, 60, 80, 0.04); white-space: nowrap; }
