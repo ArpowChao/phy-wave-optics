@@ -7299,7 +7299,7 @@
             tag: 'N16 / N17',
             hint: '',
             hintFor: (p) => p.mode === 'dof'
-                ? '相機鏡頭前有三個物體：近的花、中間的人、遠的樹。感光元件放在「對焦距離」成像的位置。改變光圈：大光圈（f 數小）光錐很粗，沒對焦的物體在感光元件上散成大模糊圈，照片只有對焦的地方清楚（景深淺）；縮小光圈，光錐變細，前後的物體都比較清楚（景深深）。右邊是依模糊圈大小算出來的照片。'
+                ? '相機鏡頭前有三個物體：近的花、中間的人、遠的樹。感光元件放在「對焦距離」成像的位置。改變光圈：大光圈（f 數小）光錐很粗，沒對焦的物體在感光元件上散成大模糊圈，照片只有對焦的地方清楚（景深淺）；縮小光圈，光錐變細，前後的物體都比較清楚（景深深）。右邊是依模糊圈大小算出來的照片。<br>光圈只是一片有孔的擋板：它只擋掉孔外的光，不會讓光轉彎；光只在透鏡處偏折。下方的放大圖說明<b>為什麼光圈會影響景深</b>：比較目前光圈（實線）和另一個光圈（虛線）的光錐與模糊圈。'
                 : p.mode === 'thick'
                 ? '可以選六種透鏡（雙凸、平凸、凹凸、雙凹、平凹、凸凹），分別調整前、後表面的曲率半徑，先用造鏡者公式 1/f = (n − 1)(1/R₁ − 1/R₂) 自己算焦距，再對答案。真正的透鏡有厚度，兩面都是球面：光在前、後兩個表面各折射一次（不是在中間一次彎折），每一條都照司乃耳定律精確計算。藍色是近軸光、紅色是遠軸光：用「看哪些光」分開看，比較兩者交在哪裡（球面像差）。「表面形狀」可以改成拋物面，或把球面和拋物面疊在一起比較。勾「薄透鏡公式的光路」對照理想情況。'
                 : p.mode === 'double'
@@ -7317,7 +7317,7 @@
                 ? '<b>共軛成像</b>：物屏距離 L 固定時，透鏡在兩個位置都能在屏幕上成清晰的實像，一個放大、一個縮小。兩個位置的物距和像距正好互換（p₁ = q₂、q₁ = p₂），所以兩次的放大率互為倒數（m₁·m₂ = 1）。<br><b>什麼時候找得到</b>：L 要大於 4f 才有兩個位置；L = 4f 時兩個位置合成一個（p = q = 2f，等大倒立）；L 小於 4f 時怎麼移都不清楚。<br><b>測焦距（貝索法）</b>：量出兩個位置的距離 d，焦距 f = (L² − d²) ÷ 4L。'
                 : '本實驗採實物：凸透鏡物距大於焦距時成倒立實像、小於焦距時成正立放大虛像；物在焦點時出射平行光。凹透鏡成正立縮小虛像。<br><b>虛像怎麼找</b>：折射後的光不會真的交在一起，把每一條折射光往回延長（虛線），延長線交在同一點，就是虛像。<br><b>三條光線</b>：① 平行主軸入射 → 凸透鏡折射後通過另一側焦點；凹透鏡折射後好像從同側焦點發出。② 通過鏡心，方向不變。③ 凸透鏡：通過（或來自）同側焦點方向的光，折射後平行主軸；凹透鏡：瞄準另一側焦點的光，折射後平行主軸。<br>符號法則：凸透鏡 f 取正、凹透鏡 f 取負；q > 0 為鏡後實像、q < 0 為鏡前虛像；m = −q/p，m > 0 正立、m < 0 倒立。',
             // 景深模式在窄螢幕上下排光路圖與照片，畫布要高一些
-            height: (p, w) => p.mode === 'dof' && w < 640 ? 760 : 420,
+            height: (p, w) => p.mode === 'dof' ? (w < 640 ? 1190 : 600) : 420,
             modes: [
                 { key: 'convex', label: '凸透鏡（f > 0）' },
                 { key: 'concave', label: '凹透鏡（f < 0）' },
@@ -7785,15 +7785,82 @@
                 ctx.strokeStyle = '#5f6b70'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.stroke();
                 ctx.restore();
             },
+            /* 「為什麼光圈會影響景深」放大圖：透鏡到感光元件之間，最模糊的那個物體（主軸上一點）的光錐，
+             * 目前光圈（實線）與另一個光圈（虛線）比較；比例尺固定，換光圈時光錐真的變粗、變細。 */
+            drawDofWhy: (ctx, box, g, wide) => {
+                const L = LABS.lens, mm = (c) => `${(c * 10).toFixed(2)} mm`;
+                ctx.fillStyle = '#ffffff'; ctx.fillRect(box.x, box.y, box.w, box.h);
+                ctx.strokeStyle = 'rgba(18,49,58,0.18)'; ctx.lineWidth = 1; ctx.strokeRect(box.x + 0.5, box.y + 0.5, box.w - 1, box.h - 1);
+                label(ctx, '為什麼光圈會影響景深？（放大：透鏡 → 感光元件）', box.x + 10, box.y + 18, C.ink, 12);
+                const o = g.objs.reduce((m, q) => (q.c > m.c ? q : m), g.objs[0]);
+                const N2 = g.N <= 8 ? g.N * 2 : g.N / 2, D2 = g.f / N2;
+                // 版面：寬螢幕圖在左、文字在右；窄螢幕圖在上、文字在下
+                const dx0 = box.x + 14, dx1 = wide ? box.x + box.w * 0.56 : box.x + box.w - 14;
+                const dy0 = box.y + 48, dy1 = wide ? box.y + box.h - 14 : box.y + 48 + Math.min(160, box.h * 0.5);
+                const xs0 = -3.5, xs1 = 32, kx = (dx1 - dx0) / (xs1 - xs0), ky = (dy1 - dy0) / 2 / 4.2, cyA = (dy0 + dy1) / 2;
+                const PX = (x) => dx0 + (x - xs0) * kx, PY = (y) => cyA - y * ky;
+                const clipR = wide ? box.x + box.w * 0.6 - 10 : box.x + box.w - 4;
+                ctx.save(); ctx.beginPath(); ctx.rect(box.x + 2, dy0 - 18, clipR - box.x - 2, dy1 - dy0 + 30); ctx.clip();
+                dashed(ctx, PX(xs0), cyA, PX(xs1), cyA, 'rgba(18,49,58,0.35)');
+                // 透鏡、光圈、感光元件
+                ctx.strokeStyle = C.blue; ctx.lineWidth = 2; ctx.beginPath();
+                ctx.moveTo(PX(0), PY(4)); ctx.quadraticCurveTo(PX(0) + 8, cyA, PX(0), PY(-4));
+                ctx.moveTo(PX(0), PY(4)); ctx.quadraticCurveTo(PX(0) - 8, cyA, PX(0), PY(-4)); ctx.stroke();
+                ctx.fillStyle = '#3d474b';
+                ctx.fillRect(PX(g.xs) - 2.5, PY(4.2), 5, PY(g.D / 2) - PY(4.2));
+                ctx.fillRect(PX(g.xs) - 2.5, PY(-g.D / 2), 5, PY(-4.2) - PY(-g.D / 2));
+                ctx.fillStyle = '#9aa6aa'; ctx.fillRect(PX(g.s) - 2, PY(4.1), 4, PY(-4.1) - PY(4.1));
+                // 光錐：主軸上的物點，穿過光圈上、下緣
+                const cone = (D, col, width, dash) => {
+                    const ys = [];
+                    [D / 2, -D / 2].forEach((a) => {
+                        const [yL, k] = L.dofRay(o.u, 0, a, g.xs, g.f), xe = Math.max(o.v, g.s) + 1.5;
+                        const yA = g.xs < 0 ? a + (yL - a) * (xs0 - g.xs) / (0 - g.xs) : yL; // 透鏡左方的入射段
+                        ctx.save(); ctx.strokeStyle = col; ctx.lineWidth = width; if (dash) ctx.setLineDash(dash);
+                        ctx.beginPath(); ctx.moveTo(PX(xs0), PY(g.xs < 0 ? yA : yL)); ctx.lineTo(PX(0), PY(yL)); ctx.lineTo(PX(xe), PY(yL + k * xe)); ctx.stroke(); ctx.restore();
+                        ys.push(yL + k * g.s);
+                    });
+                    return ys;
+                };
+                const e2 = cone(D2, 'rgba(90,100,110,0.75)', 1.3, [5, 4]);
+                const e1 = cone(g.D, o.col, 2, null);
+                const seg = (ys, col, wd, dx) => { ctx.strokeStyle = col; ctx.lineWidth = wd; ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(PX(g.s) + dx, PY(ys[0])); ctx.lineTo(PX(g.s) + dx, PY(ys[1]) + 0.5); ctx.stroke(); ctx.lineCap = 'butt'; };
+                seg(e1, o.col, 6, 0); seg(e2, '#5a646e', 4, 9);
+                // 像點
+                if (o.v < xs1) { ctx.fillStyle = o.col; ctx.beginPath(); ctx.arc(PX(o.v), cyA, 3.5, 0, Math.PI * 2); ctx.fill(); }
+                const placed = []; placed.hMax = box.y + box.h;
+                depthLabel(ctx, placed, `${o.name} 的像點（v = ${o.v.toFixed(1)} cm）`, Math.min(PX(o.v), dx1 - 4), cyA + 18, o.col, dx1 + 6, o.v > g.s ? 'right' : 'center');
+                depthLabel(ctx, placed, `感光元件（s = ${g.s.toFixed(1)} cm）`, PX(g.s), PY(4.1) - 6, C.muted, dx1 + 6, 'center');
+                const c2 = Math.abs(e2[0] - e2[1]), t1 = `f/${g.N} 模糊圈 ${mm(o.c)}`, t2 = `f/${N2} 模糊圈 ${mm(c2)}（虛線）`;
+                ctx.font = '11px Outfit, "Noto Sans TC", sans-serif';
+                const lw = Math.max(ctx.measureText(t1).width, ctx.measureText(t2).width) + 8;
+                const onLeft = PX(g.s) + 16 + lw > clipR && PX(g.s) - 10 - lw > box.x + 4;
+                const lx = onLeft ? PX(g.s) - 10 : Math.min(PX(g.s) + 16, clipR - lw), la = onLeft ? 'right' : 'left';
+                const yTop = Math.max(dy0 + 6, PY(Math.max(...e1)) - 4), yBot = Math.min(dy1 + 4, PY(Math.min(...e1)) + 14);
+                depthLabel(ctx, placed, t1, lx, yTop, o.col, clipR, la);
+                depthLabel(ctx, placed, t2, lx, Math.max(yBot, yTop + 18), '#5a646e', clipR, la);
+                ctx.restore();
+                // 說明文字
+                const tx = wide ? box.x + box.w * 0.6 : box.x + 12, tw = wide ? box.w * 0.38 : box.w - 24;
+                let ty = wide ? box.y + 44 : dy1 + 24;
+                const lines = [
+                    [`① 沒對焦的物體（這裡是最模糊的「${o.name.split('：')[1] || o.name}」），像點不在感光元件上，光錐在感光元件上截出一段，就是模糊圈。`, C.ink],
+                    ['② 相似三角形：模糊圈 c ÷ 光錐寬 D = |v − s| ÷ v，所以 c ∝ D：光圈口徑越大，同一個物體越模糊。', C.ink],
+                    [`③ 光圈縮小（f 數變大，口徑 D = f ÷ N 變小）→ 光錐變細 → 模糊圈變小 → 離對焦距離更近或更遠的物體，模糊圈也小到看不出來 → 清楚的範圍（景深）變大。`, '#12805c'],
+                    ['反過來，大光圈只有對焦的地方清楚，前後都糊（景深淺），適合拍人像。', C.muted]
+                ];
+                lines.forEach(([t, col]) => { ty += labelWrap(ctx, t, tx, ty, col, 11, 15, tw) * 15 + 6; });
+            },
             drawDof: (ctx, w, h, p) => {
                 const L = LABS.lens, g = L.dof(p), wide = w >= 640;
-                const aw = wide ? Math.round(w * 0.58) : w, ah = wide ? h : Math.round(h * 0.55);
+                const aw = wide ? Math.round(w * 0.58) : w, ah = wide ? h : 790;
                 const bx = wide ? aw + 10 : 0, by = wide ? 0 : ah + 10, bw = wide ? w - aw - 10 : w, bh = wide ? h : h - ah - 10;
-                // ── 左：光路圖。物體那側的距離用對數壓縮，透鏡右側（像與感光元件）放大成線性比例，
-                //    光錐的會聚與模糊圈才看得清楚；光圈前後一小段也用線性比例。
-                const axisY = ah * 0.5, top = 34, lensX = aw * 0.44, rightCm = 30, k2 = (aw - 24 - lensX) / rightCm, ds = L.dofStop;
-                const vs = (axisY - top - 6) / 32;
-                const X = (x) => x >= -ds - 0.5 ? lensX + x * k2 : (lensX - (ds + 0.5) * k2) - (lensX - (ds + 0.5) * k2 - 22) * Math.log(1 + (-x - ds - 0.5) / 5) / Math.log(1 + 150 / 5);
+                // ── 左上：光路圖。透鏡左、右兩側各用一個「線性」比例（右側放大，模糊圈才看得清楚）：
+                //    同一側的光線一定畫成直線，只在透鏡處偏折；光圈只擋光、不會讓光轉彎。
+                const rh = 330, top = 34, rBot = rh - 44, vs = (rBot - top) / 23.5, axisY = top + 15 * vs;
+                const lensX = Math.round(aw * 0.52), leftCm = 60, rightCm = 32;
+                const k1 = (lensX - 16) / leftCm, k2 = (aw - 16 - lensX) / rightCm, ds = L.dofStop;
+                const X = (x) => lensX + x * (x < 0 ? k1 : k2);
                 const Y = (y) => axisY - y * vs;
                 ctx.fillStyle = '#f4f7f8'; ctx.fillRect(0, 0, aw, ah);
                 axis(ctx, 8, axisY, aw - 8, axisY);
@@ -7810,39 +7877,40 @@
                 labelFit(ctx, `光圈 f/${g.N}（孔徑 ${g.D.toFixed(2)} cm，在透鏡${g.xs < 0 ? '前' : '後'} ${ds} cm）`, sxp, Y(-lensH - 1.2) + 30, C.ink, 11, 'center', { clampW: aw, plate: 1 });
                 // 感光元件
                 const sX = X(g.s);
-                ctx.fillStyle = '#9aa6aa'; ctx.fillRect(sX - 2, Y(6), 4, Y(-6) - Y(6));
-                labelFit(ctx, '感光元件', sX, Y(-6) + 16, C.muted, 10, 'center', { clampW: aw, plate: 1 });
-                ctx.save(); ctx.beginPath(); ctx.rect(4, top, aw - 8, ah - top - 40); ctx.clip();
+                ctx.fillStyle = '#9aa6aa'; ctx.fillRect(sX - 2, Y(5.5), 4, Y(-5.5) - Y(5.5));
+                labelFit(ctx, '感光元件', sX, Y(-5.5) + 16, C.muted, 10, 'center', { clampW: aw, plate: 1 });
+                ctx.save(); ctx.beginPath(); ctx.rect(4, top, aw - 8, rBot - top + 2); ctx.clip();
                 g.objs.forEach((o) => {
-                    const ox = -o.u, iy = -o.h * o.v / o.u;
+                    const ox = -o.u;
                     arrow(ctx, X(ox), axisY, X(ox), Y(o.h), o.col, 2.6);
                     // 穿過光圈上緣、中心、下緣的三條光：物 → 光圈 → 透鏡（光圈在後則 物 → 透鏡 → 光圈）→ 像點 → 感光元件
                     const ends = [];
                     [ap, 0, -ap].forEach((a) => {
-                        const [yL, k1] = L.dofRay(o.u, o.h, a, g.xs, g.f);
-                        const xEnd = Math.max(o.v, g.s), yEnd = yL + k1 * xEnd;
+                        const [yL, k1r] = L.dofRay(o.u, o.h, a, g.xs, g.f);
+                        const xEnd = Math.max(o.v, g.s), yEnd = yL + k1r * xEnd;
                         ctx.strokeStyle = o.col; ctx.globalAlpha = a === 0 ? 0.45 : 0.85; ctx.lineWidth = a === 0 ? 1 : 1.4;
                         ctx.beginPath(); ctx.moveTo(X(ox), Y(o.h));
-                        if (g.xs < 0) ctx.lineTo(X(g.xs), Y(a));
-                        ctx.lineTo(X(0), Y(yL));
-                        if (g.xs > 0) ctx.lineTo(X(g.xs), Y(a));
+                        ctx.lineTo(X(0), Y(yL));                    // 物到透鏡是一條直線（光圈在前時，這條線剛好通過光圈的孔）
                         ctx.lineTo(X(xEnd), Y(yEnd)); ctx.stroke();
-                        ends.push(yL + k1 * g.s);
-                        if (a === 0) ctx.globalAlpha = 1;
+                        ends.push(yL + k1r * g.s);
                     });
                     ctx.globalAlpha = 1;
                     // 感光元件上的模糊圈
                     ctx.strokeStyle = o.col; ctx.lineWidth = 5; ctx.lineCap = 'round';
                     ctx.beginPath(); ctx.moveTo(sX, Y(ends[0])); ctx.lineTo(sX, Y(ends[2]) + (Math.abs(Y(ends[0]) - Y(ends[2])) < 1 ? 1 : 0)); ctx.stroke(); ctx.lineCap = 'butt';
-                    labelFit(ctx, o.name, X(ox) + 6, Y(o.h) - 6, o.col, 11, 'left', { clampW: aw, plate: 1 });
+                    if (X(ox) > 8) labelFit(ctx, o.name, X(ox) + 6, Y(o.h) - 6, o.col, 11, 'left', { clampW: aw, plate: 1 });
                 });
                 ctx.restore();
+                // 樹在畫面外（140 cm），光線由左邊進來
+                const farO = g.objs.find((o) => X(-o.u) < 8);
+                if (farO) labelFit(ctx, `← ${farO.name}（${farO.u} cm，在畫面左方外）`, 10, Y(14.2), farO.col, 11, 'left', { clampW: aw, plate: 1 });
                 // 實際光圈的樣子（從正面看）
-                const ir = Math.min(46, ah * 0.11), icx = aw - ir - 14, icy = top + ir + 6;
+                const ir = Math.min(34, rh * 0.1), icx = aw - ir - 14, icy = top + ir;
                 L.drawIris(ctx, icx, icy, ir, g.N);
                 labelFit(ctx, `實際的光圈（正面看）f/${g.N}`, icx, icy + ir + 16, C.ink, 10, 'center', { clampW: aw, plate: 1 });
-                labelWrap(ctx, '光圈是透鏡前（或後）一片孔徑可變的擋板，只讓穿過圓孔的光進到透鏡；每個物體尖端發出的光形成一個光錐，像點剛好落在感光元件上才清楚，否則散成一段模糊圈（粗線）。　示意圖：左側距離已壓縮、右側放大', 12, ah - 26, C.muted, 10, 13, aw - 24);
+                labelFit(ctx, '示意圖：透鏡左、右兩側比例不同（右側放大），光線只在透鏡處偏折', 12, rh - 8, C.muted, 10, 'left', { maxW: aw - 24, clampW: aw });
                 label(ctx, `光路圖：對焦在 ${g.fd} cm`, 12, 20, C.ink, 12);
+                L.drawDofWhy(ctx, { x: 6, y: rh + 6, w: aw - 12, h: ah - rh - 12 }, g, wide);
 
                 // ── 右：相機拍到的照片（依模糊圈大小把物體畫糊）
                 const key = `${g.N}|${g.fd}|${Math.round(bw)}x${Math.round(bh)}`;
