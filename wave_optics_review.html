@@ -1327,7 +1327,7 @@
                 'N14-LAKE-2': { lab: 'apparent_depth', mode: 'practice', guide: '<b>同一個湖、不同身高</b>：在「評估練習」模式作答後，比較實際水位與「以為的水位」。' },
                 'N14-LAKE-4': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來一張課桌深？</b>在「評估練習」模式用生活物品出題，揭曉後同一個物品會放到實際湖底，看出還差多少。' },
                 'N14-LAKE-3': { lab: 'apparent_depth', mode: 'practice', guide: '<b>看起來只到膝蓋？</b>在「評估練習」模式揭曉後，對照膝、胯、肚臍的高度。' },
-                'N15-FIBER-1': { lab: 'fiber', mode: 'step', guide: '<b>接受角</b>：在「階射率光纖」模式調整射入角度，超過紫色虛線（接受角）的光會在側面漏出。' },
+                'N15-FIBER-1': { lab: 'fiber', mode: 'step', guide: '<b>接受角</b>：「射入的光」選「一條光線」，慢慢加大入射角：入射角越大，打到界面的入射角越小；超過紫色虛線（接受角）就小於臨界角而漏光。' },
                 'N15-FIBER-2': { lab: 'fiber', mode: 'bend', guide: '<b>讓光纖轉彎</b>：拖曳畫布或調小彎曲半徑，看光從彎曲外側漏出；再把包層折射率調小，比較是否比較不怕彎。' },
                 'N15-FIBER-3': { lab: 'fiber', mode: 'step', guide: '<b>脈衝被拉寬</b>：觀察白點同時出發、到達出口的先後，再看右上方的輸出脈衝。' },
                 'DRTE-109-14': { lab: 'snell', mode: null, guide: '<b>逐一畫界面</b>：觀察高、低折射率之間的偏折方向。題目夾層的兩界面平行，且兩外側介質相同，因此出射方向與入射方向平行。' }
@@ -5800,10 +5800,10 @@
                 if (!best) break;
                 pos = [pos[0] + dir[0] * best.t, pos[1] + dir[1] * best.t];
                 time += best.t * n1; len += best.t;
-                path.push({ p: pos.slice(), time, pw });
                 let nOut = best.n;
                 let cosi = dir[0] * nOut[0] + dir[1] * nOut[1];
                 if (cosi < 0) { nOut = [-nOut[0], -nOut[1]]; cosi = -cosi; }
+                path.push({ p: pos.slice(), time, pw, nOut, inc: deg(Math.acos(Math.min(1, cosi))) });
                 const sint = n1 / n2 * Math.sqrt(Math.max(0, 1 - cosi * cosi));
                 if (sint < 1) {                                       // 未達臨界角：部分漏出
                     const R = fresnelR(n1, n2, cosi), eta = n1 / n2;
@@ -5854,7 +5854,7 @@
             wide: true,
             hint: '光從左端射入芯層，在芯層與包層的界面全反射而前進。',
             hintFor: (p) => ({
-                step: '光從左端射入芯層（n₁），在芯層與包層（n₂ < n₁）的界面全反射，被侷限在芯層中前進。入射角超過「接受角」的光，打到界面時入射角小於臨界角，會漏進包層。白點是同時出發的光脈衝：走鋸齒路徑的光比較晚到，輸出脈衝被拉寬（模態色散）。',
+                step: '可在下方「射入的光」選「一條光線」，自己調入射角，看光打到界面的入射角和臨界角比較。<br>光從左端射入芯層（n₁），在芯層與包層（n₂ < n₁）的界面全反射，被侷限在芯層中前進。入射角超過「接受角」的光，打到界面時入射角小於臨界角，會漏進包層。白點是同時出發的光脈衝：走鋸齒路徑的光比較晚到，輸出脈衝被拉寬（模態色散）。',
                 bend: '在畫布上拖曳，或調整滑桿讓光纖轉彎。轉彎時，光打到外側界面的入射角變小；彎得太急，入射角小於臨界角，光就從彎曲處漏出去。讀數會比較「同一組光在直光纖」與「彎曲後」到達出口的光量。',
                 graded: '漸變折射率光纖的芯層中央折射率最高、往外遞減。光不再鋸齒反射，而是平滑地彎回中央；走得遠的光在外圍低折射率處跑得較快，幾乎和中央的光同時到達，脈衝展寬大幅減少。',
                 single: '單模光纖的芯徑只有約 9 μm，接近光的波長，只允許一種傳播方式（模態），沒有「不同路徑的時間差」。光的能量有一小部分延伸到包層中一起前進。長距離與海底電纜都用單模光纖。',
@@ -5883,11 +5883,15 @@
                   fmt: () => '' },
                 { key: 'n1', label: '芯層折射率 n₁', min: 1.40, max: 1.60, step: 0.01, value: 1.50, fmt: (v) => v.toFixed(2), only: ['step', 'bend', 'graded', 'compare'] },
                 { key: 'n2', label: '包層折射率 n₂', min: 1.30, max: 1.59, step: 0.01, value: 1.40, fmt: (v) => v.toFixed(2), only: ['step', 'bend', 'graded', 'compare'] },
-                { key: 'launch', label: '射入光束的最大入射角（空氣中）', min: 0, max: 80, step: 1, value: 40, fmt: (v) => `±${v}°`, only: ['step', 'bend', 'graded', 'compare'] },
+                { key: 'beam', label: '射入的光', value: 'fan', only: ['step', 'bend', 'graded'],
+                  options: [{ value: 'fan', label: '一束光（多條，不同入射角）' }, { value: 'single', label: '一條光線（自己調入射角）' }],
+                  fmt: () => '' },
+                { key: 'angle', label: '入射角（空氣中，向上為正）', min: -80, max: 80, step: 1, value: 20, fmt: (v) => `${v}°`, only: ['step', 'bend', 'graded'], showIf: (p) => p.beam === 'single' },
+                { key: 'launch', label: '射入光束的最大入射角（空氣中）', min: 0, max: 80, step: 1, value: 40, fmt: (v) => `±${v}°`, only: ['step', 'bend', 'graded', 'compare'], showIf: (p) => p.mode === 'compare' || p.beam !== 'single' },
                 { key: 'bendR', label: '彎曲半徑 R（芯半徑 a 的倍數）', min: 4, max: 28, step: 1, value: 14, fmt: (v) => `${v} a`, only: ['bend'] },
                 { key: 'bendA', label: '彎曲角度（也可拖曳畫布）', min: 0, max: 180, step: 1, value: 90, fmt: (v) => `${v}°`, only: ['bend'] }
             ],
-            onReset: (p) => { p._bend = p._step = p._bendSig = p._stepSig = null; },
+            onReset: (p) => { p._bend = p._step = p._bendOne = p._bendSig = p._stepSig = p._bendOneSig = null; },
             teach: `
                 <h4>光纖的優點與缺點</h4>
                 <div class="fiber-pc">
@@ -5987,7 +5991,9 @@
             },
 
             /* ---- 共用：光線組、光纖外觀、脈衝圖 ---- */
+            isSingle: (p) => p.beam === 'single' && p.mode !== 'compare',
             rayAngles: (p) => {
+                if (LABS.fiber.isSingle(p)) return [rad(p.angle)];
                 const m = rad(p.launch), N = 9;
                 return Array.from({ length: N }, (_, i) => m === 0 ? 0 : -m + 2 * m * i / (N - 1));
             },
@@ -6034,6 +6040,20 @@
                         ctx.restore();
                     });
                 });
+            },
+            /* 一條光線時：在某次碰到界面處畫法線、入射角弧與數值，和臨界角比較 */
+            drawIncAngle: (ctx, prev, hit, thc, placed, w, off) => {
+                const P = hit.p, nIn = [-hit.nOut[0], -hit.nOut[1]];
+                dashed(ctx, P[0] - nIn[0] * 16, P[1] - nIn[1] * 16, P[0] + nIn[0] * 44, P[1] + nIn[1] * 44, 'rgba(18,49,58,0.75)');
+                const back = depthNorm([prev.p[0] - P[0], prev.p[1] - P[1]]);
+                const a1 = Math.atan2(nIn[1], nIn[0]);
+                let dA = Math.atan2(back[1], back[0]) - a1;
+                while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+                const ok = hit.inc >= deg(thc) - 1e-6, col = ok ? C.green : C.rose;
+                ctx.strokeStyle = col; ctx.lineWidth = 2;
+                ctx.beginPath(); ctx.arc(P[0], P[1], 20, a1, a1 + dA, dA < 0); ctx.stroke();
+                const txt = `入射角 ${hit.inc.toFixed(1)}° ${ok ? '≥' : '<'} 臨界角 ${deg(thc).toFixed(1)}°：${ok ? '全反射' : '部分漏出'}`;
+                depthLabel(ctx, placed, txt, P[0] + hit.nOut[0] * off, P[1] + hit.nOut[1] * off + 4, col, w, 'center');
             },
             /* 動畫光點：依沿途時間內插位置 */
             drawDots: (ctx, paths, tNow) => {
@@ -6090,8 +6110,33 @@
                     { label: '臨界角 θc', value: `${deg(st.thc).toFixed(1)}°` },
                     { label: '接受角 θa（NA = sin θa）', value: `${st.thA.toFixed(1)}°（NA ${Math.min(1, st.NA).toFixed(2)}）` }
                 ];
+                const one = L.isSingle(p) ? (() => {
+                    const rr = deg(Math.asin(Math.sin(rad(Math.abs(p.angle))) / p.n1));
+                    return { rr, inc: 90 - rr, thcD: deg(st.thc) };
+                })() : null;
+                if (one && p.mode === 'step') {
+                    const ok = one.inc >= one.thcD - 1e-6, s1 = p._step || {};
+                    return base.concat([
+                        { label: '進入芯層後的折射角 r', value: `${one.rr.toFixed(1)}°` },
+                        { label: '打到界面的入射角 90° − r', value: `${one.inc.toFixed(1)}°（${ok ? '≥' : '<'} θc）` },
+                        { label: '結果', value: ok ? '每次都全反射，光被侷限在芯層' : '每次反射都有一部分漏進包層' },
+                        { label: '到達出口的光量', value: s1.out != null ? `${Math.round(s1.out * 100)}%` : '—' }
+                    ]);
+                }
+                if (one && p.mode === 'graded') {
+                    const NA = Math.sqrt(p.n1 * p.n1 - p.n2 * p.n2), ratio = Math.abs(Math.sin(rad(p.angle))) / NA;
+                    return base.concat([
+                        { label: '進入芯層後與軸的夾角', value: `${one.rr.toFixed(1)}°` },
+                        { label: '離中心最遠（sin θ ÷ NA × a）', value: ratio < 1 ? `${ratio.toFixed(2)} a，被導引` : '超過芯半徑，漏出' }
+                    ]);
+                }
                 if (p.mode === 'bend') {
-                    const b = p._bend || {};
+                    const b = p._bend || {}, b1 = p._bendOne || {};
+                    if (one) return base.concat([
+                        { label: '直的部分：打到界面的入射角', value: b1.first != null ? `${b1.first.toFixed(1)}°` : '不碰界面（沿軸）' },
+                        { label: '彎曲處：最小的入射角', value: b1.min != null ? `${b1.min.toFixed(1)}°（${b1.min >= one.thcD - 1e-6 ? '≥' : '<'} θc）` : '—' },
+                        { label: '到達出口的光量', value: b.out != null ? `${Math.round(b.out * 100)}%（直的時候 ${Math.round(b.ref * 100)}%）` : '—' }
+                    ]);
                     return base.concat([
                         { label: '直光纖時到達出口', value: b.ref != null ? `${Math.round(b.ref * 100)}%` : '—' },
                         { label: `彎曲 ${p.bendA}°、R = ${p.bendR} a 時到達出口`, value: b.out != null ? `${Math.round(b.out * 100)}%（${b.leakRays} 條光在彎曲處漏光）` : '—' },
@@ -6145,10 +6190,11 @@
                 L.drawLaunch(ctx, [x0, yc], L.rayAngles(p), p.n1, p.n2, 90);
                 L.drawRays(ctx, run.res);
                 const guided = run.res.filter((r) => r.exited && r.pwOut > 0.5);
-                L.publish(p, 'step', { guided: guided.length });
+                L.publish(p, 'step', { guided: guided.length, out: +run.res[0].pwOut.toFixed(3) });
                 const tAxis = Lf * p.n1, tMax = guided.reduce((m, r) => Math.max(m, r.time), tAxis);
                 const tNow = L.animTime(t, tAxis, tMax);
                 L.drawDots(ctx, run.res.map((r) => (r.exited ? r.path : null)), tNow);
+                if (L.isSingle(p)) return L.stepSingleNotes(ctx, w, h, p, run, x0, yc, a);
                 // 脈衝圖
                 const sigma = tAxis * 0.012, bw = Math.min(230, (w - 40) / 2.6), bh = 92;
                 const arr = guided.map((r) => ({ t: r.time, pw: r.pwOut }));
@@ -6159,6 +6205,23 @@
                 depthLabel(ctx, placed, `包層 n₂ = ${p.n2.toFixed(2)}`, x0 + 8, yc - a * 1.35, '#1f6f8b', w, 'left');
                 depthLabel(ctx, placed, '紫虛線：接受角', 6, yc + 64, C.violet, w, 'left');
                 if (run.res.some((r) => r.leaks.some((lk) => lk.pw > 0.1))) depthLabel(ctx, placed, '虛線：超過接受角，漏進包層的光', x0 + 8, yc + a * 1.9 + 18, FIBER_RAY, w, 'left');
+            },
+
+            stepSingleNotes: (ctx, w, h, p, run, x0, yc, a) => {
+                const L = LABS.fiber, r = run.res[0], placed = []; placed.hMax = h;
+                const th = rad(p.angle), rr = Math.asin(Math.sin(th) / p.n1);
+                // 端面：法線（軸）、入射角 θ 與折射角 r
+                dashed(ctx, x0 - 96, yc, x0 + 70, yc, 'rgba(18,49,58,0.55)');
+                depthLabel(ctx, placed, `θ = ${Math.abs(p.angle)}°`, x0 - 60, yc + (p.angle >= 0 ? 26 : -14), C.ink, w, 'center');
+                if (Math.abs(p.angle) > 0) depthLabel(ctx, placed, `r = ${deg(Math.abs(rr)).toFixed(1)}°`, x0 + 6, yc + (p.angle >= 0 ? 18 : -8), C.ink, w, 'left');
+                const hit = r.path.length > 2 ? r.path[1] : null;
+                if (hit && hit.nOut) L.drawIncAngle(ctx, r.path[0], hit, Math.asin(p.n2 / p.n1), placed, w, a * 0.9 + 22);
+                else depthLabel(ctx, placed, '光沿著軸前進，不碰到界面', x0 + (w - x0) / 2, yc - a * 1.9 - 16, C.ink, w, 'center');
+                const sgn = p.angle >= 0 ? 1 : -1;                  // 標在第一次反射的另一側，避開入射角標示
+                depthLabel(ctx, placed, `芯層 n₁ = ${p.n1.toFixed(2)}`, w - 30, yc + sgn * a * 0.55 + 4, '#7a5a10', w, 'right');
+                depthLabel(ctx, placed, `包層 n₂ = ${p.n2.toFixed(2)}`, w - 30, yc + sgn * a * 1.45 + 4, '#1f6f8b', w, 'right');
+                depthLabel(ctx, placed, `出口光量 ${Math.round(r.pwOut * 100)}%`, w - 8, 18, r.pwOut > 0.95 ? C.green : C.rose, w, 'right');
+                depthLabel(ctx, placed, '紫虛線：接受角', 6, yc + 64, C.violet, w, 'left');
             },
 
             /* ---------- 彎曲 ---------- */
@@ -6202,7 +6265,14 @@
                 const placed = []; placed.hMax = h;
                 depthLabel(ctx, placed, '拖曳畫布讓光纖轉彎', 8, 18, C.violet, w, 'left');
                 depthLabel(ctx, placed, `出口光量 ${Math.round(p._bend.out * 100)}%（直的時候 ${Math.round(p._bend.ref * 100)}%）`, w - 8, 18, p._bend.out < p._bend.ref - 0.02 ? C.rose : C.green, w, 'right');
-                if (leakRays > 0) {
+                if (L.isSingle(p)) {
+                    const pts = res[0].path, hits = pts.map((q, i) => ({ q, i })).filter((o) => o.q.nOut);
+                    const straight = hits.filter((o) => o.q.p[0] < g.x0 + g.L1 - 1);
+                    const worst = hits.reduce((m, o) => (!m || o.q.inc < m.q.inc ? o : m), null);
+                    L.publish(p, 'bendOne', { first: straight.length ? +straight[0].q.inc.toFixed(1) : null, min: worst ? +worst.q.inc.toFixed(1) : null });
+                    if (worst) L.drawIncAngle(ctx, pts[worst.i - 1], worst.q, Math.asin(p.n2 / p.n1), placed, w, g.a * 0.9 + 26);
+                }
+                if (leakRays > 0 && !L.isSingle(p)) {
                     const lk = res.flatMap((r) => r.leaks).filter((l) => l.pw > 0.1 && l.p[0] > g.x0 + g.L1 - 4)[0];
                     if (lk) depthLabel(ctx, placed, '彎曲處漏光', lk.p[0] + lk.d[0] * 64, lk.p[1] + lk.d[1] * 64 + 4, FIBER_RAY, w, 'center');
                 }
@@ -6237,6 +6307,19 @@
                 const tAxis = Lf * p.n1, tMax = runs.reduce((m, r, i) => ok[i] ? Math.max(m, r.time) : m, tAxis);
                 const tNow = L.animTime(t, tAxis, tMax);
                 L.drawDots(ctx, paths.map((q, i) => ok[i] ? q : null), tNow);
+                if (L.isSingle(p)) {
+                    const placed = []; placed.hMax = h;
+                    const NA = Math.sqrt(Math.max(0, p.n1 * p.n1 - p.n2 * p.n2)), ratio = NA > 0 ? Math.abs(Math.sin(rad(p.angle))) / NA : Infinity;
+                    dashed(ctx, x0 - 96, yc, x0 + Lf, yc, 'rgba(18,49,58,0.4)');
+                    depthLabel(ctx, placed, `θ = ${Math.abs(p.angle)}°`, x0 - 60, yc + (p.angle >= 0 ? 26 : -14), C.ink, w, 'center');
+                    if (ratio < 1 && ratio > 0.02) {
+                        const sg = p.angle >= 0 ? -1 : 1, yT = yc + sg * ratio * a;
+                        dashed(ctx, x0, yT, x0 + Lf, yT, C.green);
+                        depthLabel(ctx, placed, `離中心最遠 ${ratio.toFixed(2)} a：還沒碰到包層就彎回來`, x0 + Lf * 0.5, yc + sg * (a * 1.9 + 14) + 4, C.green, w, 'center');
+                    } else if (ratio >= 1) depthLabel(ctx, placed, '入射角太大：還沒彎回來就跑出芯層', x0 + Lf * 0.5, yc - a * 1.9 - 14, C.rose, w, 'center');
+                    depthLabel(ctx, placed, '中央 n 最大、往外遞減', x0 + 8, yc + a * 1.9 + 18, '#7a5a10', w, 'left');
+                    return;
+                }
                 const sigma = tAxis * 0.012, bw = Math.min(230, (w - 40) / 2.6), bh = 92;
                 // 時間軸範圍與階射率相同，才看得出差異
                 const st = L.straightRun(p, x0, yc, Lf, a).res.filter((r) => r.exited && r.pwOut > 0.5);
