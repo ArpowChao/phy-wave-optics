@@ -23,6 +23,34 @@ const LESSON_LABS = {
     N18:{id:'young',mode:'setup'},N19:{id:'young',mode:'setup'},N20:{id:'diffraction',mode:'huygens'}
 };
 
+/* 節點頁的「相關互動實驗」：每個實驗列出模式，直接連到對應情境。
+ * 同一個實驗用在多個節點時，只列和該節點有關的模式（沒列在這裡的就全部列出）。 */
+const NODE_LAB_MODES = {
+    N06: { ripple: ['reflect', 'refract'] },
+    N07: { ripple: ['interfere', 'diffract'] },
+    N08: { mirage: ['nightSound', 'sofar'] },
+    N10: { pipes: ['string', 'open', 'closed'] },
+    N12: { pipes: ['open', 'closed'] },
+    N13: { snell: ['ray'], parallax: ['mirror', 'slab'] },
+    N14: { snell: ['ray'], parallax: ['depth', 'slab'] },
+    N16: { lens: ['convex', 'concave', 'conj', 'double', 'thick'], parallax: ['convex', 'concave'] },
+    N17: { lens: ['convex', 'double', 'dof'] },
+    N18: { young: ['setup'] }
+};
+function labLinksHtml(code, labs) {
+    if (!labs.length) return '';
+    const cards = labs.map(l => {
+        const modes = (typeof LABS !== 'undefined' && LABS[l] && LABS[l].modes) || [];
+        const pick = NODE_LAB_MODES[code] && NODE_LAB_MODES[code][l];
+        const list = pick ? modes.filter(m => pick.includes(m.key)) : modes;
+        const chips = list.length
+            ? list.map(m => routeLink(`lab-${l}:${m.key}:${code}`, m.label, 'lab-chip')).join('')
+            : routeLink(`lab-${l}::${code}`, '開啟實驗 →', 'lab-chip');
+        return `<article class="lab-link-card"><h4>${labMeta[l].name}${l === 'optical_bench' ? '・延伸探究' : ''}</h4><p>${labMeta[l].desc}</p><div class="lab-chips">${chips}</div></article>`;
+    }).join('');
+    return `<section class="lab-links"><span class="lesson-kicker">動手做</span><h3>相關互動實驗：點選直接開到對應情境</h3><div class="lab-link-grid">${cards}</div></section>`;
+}
+
 function readLearning() {
     try {
         const saved = JSON.parse(localStorage.getItem(LEARNING_KEY) || '{}');
@@ -213,9 +241,9 @@ function renderNodeView(code) {
         ${guide?.example ? `<section class="worked-example"><span class="lesson-kicker">跟著做一題</span><h3>${guide.example.title}</h3><p>${guide.example.given}</p><ol>${guide.example.steps.map(step => `<li>${step}</li>`).join('')}</ol><p class="example-result">${guide.example.result}</p></section>` : ''}
         ${guide?.check ? `<section class="lesson-check"><span class="lesson-kicker">03　檢查自己是否理解</span><h3>${guide.check.q}</h3><div class="check-options">${guide.check.opts.map((o, n) => `<button type="button" aria-pressed="false" onclick="answerLessonCheck('${code}',${n},this)">${o}</button>`).join('')}</div><div class="check-feedback" id="lesson-feedback" role="status" aria-live="polite"></div></section>` : ''}
         ${resonanceChecksHtml(code, guide)}
+        ${labLinksHtml(code, labs)}
         ${remainingMedia.length ? `<details id="lesson-media" class="lesson-disclosure"><summary>用動畫再看一次</summary><div class="disclosure-content">${animSectionForNode(code, featuredMedia)}</div></details>` : ''}
         ${extraFeatures}${examHtml}
-        ${labs.length > 1 ? `<details class="lesson-disclosure"><summary>其他相關實驗${labs.includes('optical_bench') ? '・含延伸工作臺' : ''}</summary><div class="disclosure-content tool-shortcuts">${labs.filter(l => l !== primaryLab).map(l => routeLink(`lab-${l}${l === 'mirage' && code === 'N08' ? ':nightSound' : ''}`, l === 'mirage' && code === 'N08' ? '晚上聲音傳得遠・深海聲道（聲波的連續折射）' : labMeta[l].name)).join('')}</div></details>` : ''}
         <section class="lesson-finish"><p>試著不用看公式，說明本節的重點。能說清楚再自行確認理解。</p><div class="lesson-actions"><button id="lesson-done" class="lesson-primary" aria-pressed="${state.done.includes(code)}" onclick="toggleLessonDone('${code}')">${state.done.includes(code) ? '✓ 已確認理解・點此取消' : '我能說明本節重點'}</button><button class="lesson-secondary" onclick="openBankForNode('${code}')">練本節觀念題</button></div><p id="learning-save-feedback" class="progress-note" role="status"></p><div class="lesson-neighbors">${prev ? routeLink(`node-${prev}`, `← ${nodeMeta[prev].title}`) : routeLink(`module-${meta.module}`, '← 本章學習順序')}${next ? routeLink(`node-${next}`, `${nodeMeta[next].title} →`) : routeLink('home', '回到學習首頁 →')}</div></section>`;
     bindAnimsIn(remainingMedia);
     if (code === 'N12') SwingWork.mount(document.getElementById('swing-work'), activeDisposers);
@@ -284,8 +312,11 @@ function renderSingleLabView(rawId) {
     const [id,initialMode,fromCode] = String(rawId).split(':');
     if (!LABS[id]) { renderLabIndex(); return; }
     const nodes = nodesOfLab(id).slice();
-    const modeCode = id === 'ripple' ? (initialMode === 'interfere' || initialMode === 'diffract' ? 'N07' : 'N06') : id === 'parallax' ? 'N14' : null;
-    const code = ALL_NODES.includes(fromCode) && LESSON_LABS[fromCode]?.id === id ? fromCode : modeCode || nodes[0];
+    const modeCode = id === 'ripple' ? (initialMode === 'interfere' || initialMode === 'diffract' ? 'N07' : 'N06')
+        : id === 'parallax' ? (initialMode === 'convex' || initialMode === 'concave' ? 'N16' : 'N14')
+        : id === 'mirage' ? (initialMode === 'nightSound' || initialMode === 'sofar' ? 'N08' : 'N15') : null;
+    // 從節點頁點進來（且該實驗屬於這個節點）就以那個節點為準
+    const code = ALL_NODES.includes(fromCode) && (LESSON_LABS[fromCode]?.id === id || nodes.includes(fromCode)) ? fromCode : modeCode || nodes[0];
     if (code && !nodes.includes(code)) nodes.unshift(code);
     const guide = lessonGuide(code);
     const preset = code === fromCode ? LESSON_LABS[code]?.params : null;

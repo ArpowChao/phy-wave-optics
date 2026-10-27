@@ -183,3 +183,13 @@ body { background:#f7f9f8; }
 @media(max-width:900px) { #sidebar { width:100%; padding:1rem; } #sidebar > .sidebar-more { display:none; } #sidebar.mobile-open > .sidebar-more { display:block; } .sidebar-brand { margin:0; padding:0 3rem 0 0; } .sidebar-brand p { margin-top:.2rem; } #main-content { padding-top:1.5rem; } }
 @media(max-width:600px) { .chapter-grid,.study-flow,.quiz-filter-bar { grid-template-columns:1fr; } .study-flow { gap:0; } .study-flow div { padding:.7rem 1rem; } .home-hero h2 { font-size:1.9rem; } .chapter-card { padding:1.1rem; } .view-header h2 { font-size:1.6rem; } .lesson-goal,.observe-card,.worked-example,.lesson-check { padding:1rem; } .disclosure-content { padding:.8rem; } .node-list a { padding:1rem; gap:.65rem; } .lab-controls { grid-template-columns:1fr; } .lesson-primary,.lesson-secondary { width:100%; } .quiz-pagination .lesson-secondary { width:auto; } }
 @media print { .print-hide,.lesson-actions,.check-options,.lesson-neighbors { display:none !important; } .lesson-disclosure,.formula-detail { break-inside:avoid; } .lesson-disclosure > .disclosure-content,.formula-detail > .formula-desc { display:block !important; } body,#main-content { background:white; } .chapter-grid { display:block; } }
+/* 節點頁：相關互動實驗（每個模式一個連結） */
+.lab-links { margin:1.5rem 0; }
+.lab-links h3 { margin:.2rem 0 .8rem; font-size:1.08rem; }
+.lab-link-grid { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(100%, 300px), 1fr)); gap:.8rem; }
+.lab-link-card { border:1px solid #cfe0e3; border-radius:12px; padding:.9rem 1rem; background:white; }
+.lab-link-card h4 { margin:0 0 .3rem; font-size:.98rem; color:#12313a; }
+.lab-link-card p { margin:0 0 .6rem; font-size:.82rem; line-height:1.6; color:#5b7480; }
+.lab-chips { display:flex; flex-wrap:wrap; gap:.4rem; }
+.lab-chip { display:inline-block; padding:.28rem .7rem; border:1px solid #9cc7cc; border-radius:999px; background:#f2f9fa; color:#176c70; font-size:.82rem; text-decoration:none; }
+.lab-chip:hover, .lab-chip:focus-visible { background:#176c70; color:white; border-color:#176c70; }

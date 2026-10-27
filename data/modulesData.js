@@ -20,9 +20,9 @@ const nodeMeta = {
     N13: { module: 3, section: '§3-1', title: '光的反射與折射定律', lab: ['snell', 'optical_bench', 'parallax'] },
     N14: { module: 3, section: '§3-1', title: '視深現象與光的色散', lab: ['apparent_depth', 'parallax', 'rainbow', 'snell'] },
     N15: { module: 3, section: '§3-2', title: '全反射與臨界角', lab: ['snell', 'halfcyl', 'fiber', 'mirage'] },
-    N16: { module: 3, section: '§3-3', title: '透鏡成像與薄透鏡公式', lab: ['lens', 'optical_bench'] },
+    N16: { module: 3, section: '§3-3', title: '透鏡成像與薄透鏡公式', lab: ['lens', 'parallax', 'optical_bench'] },
     N17: { module: 3, section: '§3-3', title: '光學儀器與視力矯正', lab: ['lens', 'optical_bench'] },
-    N18: { module: 4, section: '§4-1', title: '光的波動說與科學史', lab: null },
+    N18: { module: 4, section: '§4-1', title: '光的波動說與科學史', lab: ['young'] },
     N19: { module: 4, section: '§4-2', title: '楊氏雙狹縫干涉', lab: 'young' },
     N20: { module: 4, section: '§4-3', title: '單狹縫繞射', lab: 'diffraction' },
     N21: { module: 2, section: '延伸', title: '都卜勒效應', lab: null }
