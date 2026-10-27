@@ -6834,15 +6834,15 @@
             hintFor: (p) => ({
                 road: '夏天柏油路面很燙，貼近路面的空氣很熱、密度小、折射率小。從遠方車子斜斜往下的光，越靠近路面，入射角越大，到了「掠射」時就轉彎往上（相當於全反射），進入你的眼睛。你沿著這條光線的反方向看，會在路面上看到倒立的車子和一片「天空」，像一灘水；車子的輪子反而看不到。右上角是眼睛真正看到的畫面（沒有放大）。',
                 superior: '海面很冷（或晚上地面輻射冷卻），上方空氣反而比較暖，叫「逆溫」。這時下層折射率大、上層小，光往下彎，可以繞過地球的弧面：本來被地平線擋住的船看起來浮在海面上，有時還會出現倒立的像。右上角是眼睛真正看到的畫面。',
-                nightSound: '聲速 v ∝ √T：溫度高的地方聲音跑得快。晚上地面冷、上方暖，往上斜傳的聲音會彎回地面，所以遠處也聽得到；白天地面熱、上方冷，聲音往上彎，遠處出現聽不清楚的「聲影區」。切換白天／晚上比較。',
-                sofar: '海水上層溫度高、聲速大；深處壓力大，聲速也大；中間約 1000～1300 m 深的地方聲速最小，形成「深海聲道」。聲音往上或往下傳，都會彎回聲速最小的深度，被困在聲道裡傳到數千公里外，就像漸變折射率光纖。'
+                nightSound: '聲速 v ∝ √T：溫度高的地方聲音跑得快。晚上地面冷、上方暖，往上斜傳的聲音會彎回地面，所以遠處也聽得到；白天地面熱、上方冷，聲音往上彎，遠處出現聽不清楚的「聲影區」。切換白天／晚上比較；「聲線」選「一條聲線」可以自己調仰角，看它在哪個高度轉彎、多遠回到地面。',
+                sofar: '海水上層溫度高、聲速大；深處壓力大，聲速也大；中間約 1000～1300 m 深的地方聲速最小，形成「深海聲道」。聲音往上或往下傳，都會彎回聲速最小的深度，被困在聲道裡傳到數千公里外，就像漸變折射率光纖。<br>預設只畫一條聲線：調整「射出角度」，看橘色虛線（上、下轉折深度）怎麼變；角度太大時聲線會碰到海面或海底。也可以切換成「全部聲線一起看」。'
             })[p.mode] || '',
             note: '連續變化的介質中，光線往折射率大的一側彎曲。',
             noteFor: (p) => ({
                 road: '把空氣想成很多水平薄層：由上往下，每一層的 n 都比上一層小一點，所以光從上往下斜射時，每過一層入射角就變大一點（n sinθ 不變）。當入射角增加到 90°，光就轉為向上，這和全反射的條件相同：要「由折射率大射向折射率小」。<br>能被「反射」上來的光，掠射角（光與地面的夾角）非常小：cos θ = n地面／n上方，溫差 25 °C 時只有約 0.4°。所以蜃景只出現在遠處、而且要從很低的角度看。<br>簡化：只考慮溫度造成的折射率變化（氣壓固定），垂直方向放大很多倍才畫得出光線的彎曲。',
                 superior: '上現蜃景常出現在冷海面、冰面或晚上輻射冷卻的地面上方。逆溫層中 n 隨高度減少得夠快時（每公尺減少超過 1/R ≈ 1.57×10⁻⁷），光線彎曲得比地球表面還彎，光就沿著海面傳得很遠，稱為大氣波導；遠方的船、島甚至城市都可能被「抬」到地平線上，或拉長、倒立、層層疊疊，即「海市蜃樓」（Fata Morgana）。<br>圖中已把地球曲率畫出來，垂直方向放大很多倍；右上角的小圖則是眼睛實際看到的角度（水平、垂直比例相同）。',
                 nightSound: '聲波由聲速 v₁ 的區域進入 v₂ 的區域時 sinθ₁／v₁ = sinθ₂／v₂（θ 是與鉛直方向的夾角）。晚上越往上 v 越大，往上斜傳的聲音入射角越來越大，到 90° 就轉回地面，相當於全反射；仰角小於 cos⁻¹(v地面／v上方) 的聲音都會回到地面。<br>回到地面的聲音還會被地面反射、再彎回來，一跳一跳傳到遠處。所以晚上常聽得到遠處的火車、廟會或工地聲。<br>白天則相反：聲音往上彎，在某個距離之外，地面附近幾乎收不到直接傳來的聲音（聲影區）。',
-                sofar: '深海聲道（SOFAR channel）：上層主要受溫度影響（越深越冷、聲速變小），深層主要受壓力影響（越深壓力越大、聲速變大），聲速最小處就是聲道軸。從聲道軸附近發出、傾角不大的聲音，往上會因為聲速變大而彎回、往下也會彎回，不碰到海面或海底，能量損失很小。<br>有趣的是：走大波浪的聲線雖然路徑較長，但經過聲速較大的區域，反而比沿著聲道軸前進的聲音先到達（看白點），這和漸變折射率光纖的道理相同。<br>應用：二戰時用來定位落海的飛行員（在聲道深度引爆小炸彈）、監測海底地震與核試爆、研究鯨魚的長距離叫聲。圖中的溫度曲線為示意。'
+                sofar: '深海聲道（SOFAR channel）：上層主要受溫度影響（越深越冷、聲速變小），深層主要受壓力影響（越深壓力越大、聲速變大），聲速最小處就是聲道軸。從聲道軸附近發出、傾角不大的聲音，往上會因為聲速變大而彎回、往下也會彎回，不碰到海面或海底，能量損失很小。<br><b>轉折深度怎麼算</b>：把海水想成很多水平薄層，聲波折射時 cos θ ÷ c 保持不變（θ 為聲線與水平的夾角）。聲線往上走，聲速越來越大，cos θ 也越來越大，到 cos θ = 1（變成水平）時就轉彎；所以轉折處的聲速 c = c源 ÷ cos θ₀。射出角度越大，需要的聲速越大，轉折點離聲道軸越遠；如果海面（或海底）的聲速還不夠大，聲音就會碰到海面反射（或被海底吸收）。<br>走大波浪的聲線路徑較長，但經過聲速較大的區域，所以抵達時間和沿聲道軸前進的聲音差不多，這和漸變折射率光纖的道理相同。<br>應用：二戰時用來定位落海的飛行員（在聲道深度引爆小炸彈）、監測海底地震與核試爆、研究鯨魚的長距離叫聲。圖中的溫度曲線為示意。'
             })[p.mode] || '',
             modes: [
                 { key: 'road', label: '下現蜃景：炎熱路面' },
@@ -6864,8 +6864,14 @@
                 { key: 'time', label: '時間', value: 'night', only: ['nightSound'],
                   options: [{ value: 'night', label: '晚上（地面冷、上方暖）' }, { value: 'day', label: '白天（地面熱、上方冷）' }], fmt: () => '' },
                 { key: 'dTs', label: '地面與上空的溫差', min: 0, max: 15, step: 1, value: 8, fmt: (v) => `${v} °C`, only: ['nightSound'] },
+                { key: 'nRays', label: '聲線', value: 'fan', only: ['nightSound'], fmt: () => '',
+                  options: [{ value: 'fan', label: '全部聲線一起看' }, { value: 'one', label: '一條聲線（調整仰角）' }] },
+                { key: 'nAng', label: '仰角', min: -4, max: 20, step: 0.5, value: 4, fmt: (v) => `${v}°`, only: ['nightSound'], showIf: (p) => p.nRays === 'one' },
                 { key: 'srcZ', label: '聲源深度', min: 100, max: 3000, step: 50, value: 1300, fmt: (v) => `${v} m`, only: ['sofar'] },
-                { key: 'spread', label: '聲音射出的角度範圍', min: 2, max: 25, step: 1, value: 16, fmt: (v) => `±${v}°`, only: ['sofar'] }
+                { key: 'sRays', label: '聲線', value: 'one', only: ['sofar'], fmt: () => '',
+                  options: [{ value: 'one', label: '一條聲線（調整射出角度）' }, { value: 'fan', label: '全部聲線一起看' }] },
+                { key: 'sAng', label: '射出角度（向上為正）', min: -25, max: 25, step: 1, value: 8, fmt: (v) => `${v > 0 ? '+' : ''}${v}°`, only: ['sofar'], showIf: (p) => p.sRays === 'one' },
+                { key: 'spread', label: '聲音射出的角度範圍', min: 2, max: 25, step: 1, value: 16, fmt: (v) => `±${v}°`, only: ['sofar'], showIf: (p) => p.sRays !== 'one' }
             ],
 
             /* ---- 共用：版面、折射率（溫度、聲速）分布圖、物理計算的快取 ---- */
@@ -6899,6 +6905,10 @@
                     ctx.strokeStyle = c.color; ctx.lineWidth = 2; ctx.beginPath();
                     for (let k = 0; k <= 160; k++) { const v = vLo + (vHi - vLo) * k / 160, X = Xv(c.f(v)); if (k) ctx.lineTo(X, Y(v)); else ctx.moveTo(X, Y(v)); }
                     ctx.stroke();
+                    if (c.mark != null && c.mark >= c.lo && c.mark <= c.hi) {   // 例如轉折處的聲速：垂直虛線和曲線的交點就是轉折深度
+                        dashed(ctx, Xv(c.mark), top, Xv(c.mark), bot, c.markColor || C.orange);
+                        if (c.markLabel) labelFit(ctx, c.markLabel, Xv(c.mark), bot + 34, c.markColor || C.orange, 8, 'center', { clampW: w });
+                    }
                     labelFit(ctx, c.name, x0, top - 16, c.color, 10, 'left', { maxW: cw + gap, clampW: w });
                     labelFit(ctx, c.fmt(c.lo), x0, bot + 12, C.muted, 8, 'left', { clampW: w });
                     labelFit(ctx, `${c.fmt(c.hi)} →`, x1, bot + 22, C.muted, 8, 'right', { clampW: w });
@@ -6919,7 +6929,7 @@
             },
             cache: {},
             data: (p) => {
-                const L = LABS.mirage, key = JSON.stringify([p.mode, p.dT, p.eyeH, p.objD, p.invT, p.layer, p.eyeS, p.shipD, p.time, p.dTs, p.srcZ, p.spread]);
+                const L = LABS.mirage, key = JSON.stringify([p.mode, p.dT, p.eyeH, p.objD, p.invT, p.layer, p.eyeS, p.shipD, p.time, p.dTs, p.srcZ, p.spread, p.sRays, p.sAng, p.nRays, p.nAng]);
                 if (L.cache.key !== key) { L.cache = { key, d: L['calc_' + p.mode](p) }; }
                 return L.cache.d;
             },
@@ -6947,6 +6957,12 @@
                 }
                 if (p.mode === 'nightSound') {
                     const nf = soundAirN(p.dTs, p.time === 'night'), cg = nf(0)[3], ct = nf(250)[3];
+                    if (d.one) return [
+                        { label: '地面聲速／250 m 高處', value: `${cg.toFixed(1)} m/s／${ct.toFixed(1)} m/s` },
+                        { label: '轉折處的聲速 = c源 ÷ cos θ₀', value: d.turn ? `${d.turn.cT.toFixed(1)} m/s` : '—（仰角 ≤ 0，直接往地面）' },
+                        { label: '轉折高度', value: d.turn ? (d.turn.y !== null ? `約 ${Math.round(d.turn.y)} m` : '沒有：上方聲速不夠大，聲音一直往上') : '—' },
+                        { label: '第一次回到地面', value: d.back !== null ? `約 ${Math.round(d.back)} m 外` : '回不到地面' }
+                    ];
                     return [
                         { label: '地面聲速／250 m 高處', value: `${cg.toFixed(1)} m/s／${ct.toFixed(1)} m/s` },
                         { label: '能彎回地面的最大仰角', value: p.time === 'night' && ct > cg ? `約 ${deg(Math.acos(cg / ct)).toFixed(1)}°（cos θ = v地面／v上方）` : '沒有（聲音往上彎）' },
@@ -6956,6 +6972,14 @@
                 }
                 const nf = sofarN(), cs = nf(0)[3], cb = nf(-5000)[3], c1 = nf(-p.srcZ)[3];
                 const lim = Math.min(cs, cb);
+                if (d.one) return [
+                    { label: '聲源處聲速', value: `${c1.toFixed(1)} m/s` },
+                    { label: '轉折處的聲速 = c源 ÷ cos θ₀', value: `${d.cT.toFixed(1)} m/s` },
+                    { label: '上轉折深度', value: d.zUp !== null ? `約 ${Math.round(d.zUp)} m` : `沒有（海面聲速 ${d.cS.toFixed(1)} m/s 還不夠大）` },
+                    { label: '下轉折深度', value: d.zDn !== null ? `約 ${Math.round(d.zDn)} m` : `沒有（海底聲速 ${d.cB.toFixed(1)} m/s 還不夠大）` },
+                    { label: '結果', value: d.bottom ? '打到海底，能量被吸收' : d.surface ? '在海面反射後繼續前進，每次反射都損失能量' : '被困在聲道裡，不碰海面、海底，傳得很遠' },
+                    { label: '一個波浪的水平長度', value: d.period ? `約 ${(d.period / 1000).toFixed(0)} km` : '—' }
+                ];
                 return [
                     { label: '聲道軸（聲速最小）', value: `約 1300 m 深，${nf(-1300)[3].toFixed(0)} m/s` },
                     { label: '海面／海底（5000 m）聲速', value: `${cs.toFixed(0)}／${cb.toFixed(0)} m/s` },
@@ -7013,7 +7037,15 @@
             calc_nightSound: (p) => {
                 const night = p.time === 'night', nf = soundAirN(p.dTs, night), xMax = 3000;
                 const o = { xMax, yMin: 0, yMax: 250, ds: 2, bottom: 'reflect', top: 'stop', every: 5 };
-                const rays = Array.from({ length: 17 }, (_, i) => rad(-4 + 1.25 * i)).map((a) => gradTrace(nf, 0, 1.5, a, o));
+                const one = p.nRays === 'one';
+                const rays = (one ? [rad(p.nAng)] : Array.from({ length: 17 }, (_, i) => rad(-4 + 1.25 * i))).map((a) => gradTrace(nf, 0, 1.5, a, o));
+                // 一條聲線：轉折高度（c = c源 ÷ cos θ₀）與第一次回到地面的距離
+                let turn = null;
+                if (one && p.nAng > 0) {
+                    const c = (y) => nf(y)[3], cT = c(1.5) / Math.cos(rad(p.nAng));
+                    if (night && c(250) >= cT) { let lo = 1.5, hi = 250; for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if (c(m) < cT) lo = m; else hi = m; } turn = { y: (lo + hi) / 2, cT }; }
+                    else turn = { y: null, cT };
+                }
                 // 地面附近收到聲音的距離（每 100 m 一格）
                 const bins = new Array(30).fill(0);
                 rays.forEach((r) => {
@@ -7026,16 +7058,28 @@
                 const reach = (last + 1) * 100;
                 const lb = bins[20] + bins[19];
                 return {
-                    rays, bins,
+                    rays, bins, one, turn, back: one && rays[0].hits.length ? rays[0].hits[0] : null,
                     reachTxt: reach >= 3000 ? '一直到 3 km 外' : `約 ${reach} m 內，之後是聲影區`,
                     listener: lb > 0 ? '聽得到（有聲音彎回地面）' : '在聲影區，幾乎聽不到'
                 };
             },
             calc_sofar: (p) => {
                 const nf = sofarN(), o = { xMax: 120000, yMin: -5000, yMax: 0, ds: 60, bottom: 'stop', top: 'reflect', every: 6 };
-                const n = 15, rays = Array.from({ length: n }, (_, i) => rad(-p.spread + 2 * p.spread * i / (n - 1))).map((a) => gradTrace(nf, 0, -p.srcZ, a, o));
+                const one = p.sRays === 'one';
+                const angs = one ? [rad(p.sAng)] : Array.from({ length: 15 }, (_, i) => rad(-p.spread + 2 * p.spread * i / 14));
+                const rays = angs.map((a) => gradTrace(nf, 0, -p.srcZ, a, o));
                 const trapped = rays.filter((r) => r.end === 'far' && r.pts.every((q) => q.y < -0.5)).length;
-                return { rays, trapped };
+                if (!one) return { rays, trapped, one };
+                /* 轉折深度：聲線變成水平之處，cos θ ÷ c 不變 → c(z) = c源 ÷ cos θ₀ */
+                const c = (z) => nf(-z)[3], cT = c(p.srcZ) / Math.cos(rad(p.sAng));
+                const solve = (lo, hi) => { for (let i = 0; i < 50; i++) { const m = (lo + hi) / 2; if ((c(m) - cT) * (c(lo) - cT) > 0) lo = m; else hi = m; } return (lo + hi) / 2; };
+                const zUp = c(0) >= cT ? solve(0, 1300) : null, zDn = c(5000) >= cT ? solve(1300, 5000) : null;
+                // 一個波浪的水平長度：相鄰兩個最高點的距離
+                const r = rays[0], tops = [];
+                for (let i = 1; i + 1 < r.pts.length; i++) if (r.pts[i].y >= r.pts[i - 1].y && r.pts[i].y > r.pts[i + 1].y) tops.push(r.pts[i].x);
+                const period = tops.length > 1 ? tops[1] - tops[0] : null;
+                const surface = r.pts.some((q) => q.y > -0.5);
+                return { rays, trapped, one, cT, zUp, zDn, period, surface, bottom: r.end === 'bottom', cS: c(0), cB: c(5000) };
             },
 
             /* 下方參考資料：依模式顯示（目前只有深海聲道） */
@@ -7234,13 +7278,13 @@
                 if (night) { sky.addColorStop(0, '#26324f'); sky.addColorStop(1, '#4b5a78'); } else { sky.addColorStop(0, '#cfe7f5'); sky.addColorStop(1, '#f1f8fb'); }
                 ctx.fillStyle = sky; ctx.fillRect(sc.x0, sc.top - 30, sc.x1 - sc.x0, gy - sc.top + 30);
                 ctx.fillStyle = night ? '#3f4a35' : '#8fae6a'; ctx.fillRect(sc.x0, gy, sc.x1 - sc.x0, h - gy);
-                d.bins.forEach((b, i) => {
+                if (!d.one) d.bins.forEach((b, i) => {
                     ctx.fillStyle = b > 0 ? 'rgba(80,220,140,0.95)' : 'rgba(170,170,170,0.7)';
                     ctx.fillRect(X(i * 100) + 1, gy + 4, X((i + 1) * 100) - X(i * 100) - 2, 7);
                 });
                 const col = night ? '#a9cdff' : '#2b6cb0';
-                d.rays.forEach((r) => L.path(ctx, r, map, col, 1.4, r.end === 'top' ? 0.45 : 0.95));
-                L.dots(ctx, d.rays, map, L.phase(t), col, true);
+                if (d.one && d.turn && d.turn.y !== null) dashed(ctx, sc.x0, Y(d.turn.y), sc.x1, Y(d.turn.y), 'rgba(255,170,90,0.95)');
+                d.rays.forEach((r) => L.path(ctx, r, map, col, d.one ? 2.6 : 1.4, r.end === 'top' ? (d.one ? 0.85 : 0.45) : 0.95));
                 ctx.fillStyle = '#f0a020'; ctx.beginPath(); ctx.arc(X(0), Y(1.5), 5, 0, Math.PI * 2); ctx.fill();
                 drawPerson(ctx, X(2000), gy, 28, { color: night ? '#e8eef2' : '#1d2b33' });
                 const placed = []; placed.hMax = h;
@@ -7249,11 +7293,13 @@
                 L.tag(ctx, placed, night ? '晚上：越往上越暖，聲音往下彎回地面' : '白天：越往上越冷，聲音往上彎', sc.x0 + 6, sc.top + 4, night ? '#ffe39a' : '#9a4a0c', w, 'left', night);
                 L.tag(ctx, placed, '聲源', X(0) + 6, gy - 14, '#ffd27a', w, 'left', true);
                 L.tag(ctx, placed, '2 km 外的人', X(2000) + 12, gy - 34, night ? '#ffffff' : C.ink, w, 'left', night);
-                L.tag(ctx, placed, '地面：綠色＝聲音到得了　灰色＝聲影區', sc.x1 - 4, gy + 26, C.ink, w, 'right');
+                if (d.one && d.turn && d.turn.y !== null) L.tag(ctx, placed, `轉折高度 約 ${Math.round(d.turn.y)} m：聲速 = ${d.turn.cT.toFixed(1)} m/s，聲線變水平後往下彎`, sc.x0 + 6, Y(d.turn.y) - 6, '#ffc58a', w, 'left', night);
+                if (!d.one) L.tag(ctx, placed, '地面：綠色＝聲音到得了　灰色＝聲影區', sc.x1 - 4, gy + 26, C.ink, w, 'right');
+                else if (d.back !== null) L.tag(ctx, placed, `約 ${Math.round(d.back)} m 外回到地面（被地面反射後再往上）`, X(d.back), gy + 26, C.ink, w, 'center');
                 const nf = soundAirN(p.dTs, night);
                 L.drawPanel(ctx, lay, Y, 0, vTop, [
                     { name: '溫度', lo: 10, hi: 35, f: (v) => nf(v)[2] - 273.15, color: C.rose, fmt: (v) => `${v}°C` },
-                    { name: '聲速', lo: 336, hi: 352, f: (v) => nf(v)[3], color: C.blue, fmt: (v) => `${v}` }
+                    { name: '聲速', lo: 336, hi: 352, f: (v) => nf(v)[3], color: C.blue, fmt: (v) => `${v}`, mark: d.one && d.turn ? d.turn.cT : null, markColor: '#d9822b' }
                 ], w, { name: '高度', ticks: [0, 100, 200], fmt: (v) => `${v} m` });
                 labelFit(ctx, '聲速單位 m/s；v ∝ √T', lay.panel.x + 4, lay.pBot + 36, C.muted, 9, 'left', { maxW: lay.panel.w, clampW: w });
             },
@@ -7270,26 +7316,33 @@
                 ctx.fillStyle = sea; ctx.fillRect(sc.x0, Y(0), sc.x1 - sc.x0, Y(vBot) - Y(0));
                 ctx.fillStyle = '#5b4a3a'; ctx.fillRect(sc.x0, Y(vBot), sc.x1 - sc.x0, h - Y(vBot));
                 dashed(ctx, sc.x0, Y(-1300), sc.x1, Y(-1300), 'rgba(255,230,120,0.95)');
-                d.rays.forEach((r) => L.path(ctx, r, map, '#9fe0ff', 1.4, r.end === 'bottom' ? 0.35 : 0.95));
+                if (d.one) {
+                    [[d.zUp, '上'], [d.zDn, '下']].forEach(([z, nm]) => { if (z !== null) dashed(ctx, sc.x0, Y(-z), sc.x1, Y(-z), 'rgba(255,170,90,0.95)'); });
+                }
+                d.rays.forEach((r) => L.path(ctx, r, map, d.one ? '#bfeaff' : '#9fe0ff', d.one ? 2.6 : 1.4, r.end === 'bottom' ? (d.one ? 0.8 : 0.35) : 0.95));
                 d.rays.filter((r) => r.end === 'bottom').forEach((r) => {
                     const q = r.pts[r.pts.length - 1], [a, b] = map(q.x, q.y);
                     ctx.strokeStyle = '#ff9a7a'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(a - 4, b - 4); ctx.lineTo(a + 4, b + 4); ctx.moveTo(a + 4, b - 4); ctx.lineTo(a - 4, b + 4); ctx.stroke();
                 });
-                L.dots(ctx, d.rays.filter((r) => r.end === 'far'), map, L.phase(t), '#ffd166', true);
                 ctx.fillStyle = '#ffd166'; ctx.beginPath(); ctx.arc(...map(0, -p.srcZ), 5, 0, Math.PI * 2); ctx.fill();
                 const placed = []; placed.hMax = h;
                 const ex = Math.round(((sc.bot - sc.top) / (vTop - vBot)) / ((sc.x1 - sc.x0 - 30) / xMax));
                 L.tag(ctx, placed, `水平 120 km，垂直方向放大約 ${ex} 倍`, sc.x0 + 6, sc.top - 12, C.muted, w, 'left');
                 L.tag(ctx, placed, '聲源', X(0) + 10, Y(-p.srcZ) - 10, '#ffd166', w, 'left', true);
                 L.tag(ctx, placed, '聲道軸：聲速最小（約 1300 m 深）', sc.x1 - 6, Y(-1300) - 8, '#ffe58a', w, 'right', true);
-                L.tag(ctx, placed, '× 碰到海底，能量被吸收', sc.x1 - 6, Y(vBot) - 10, '#ffc2ad', w, 'right', true);
-                L.tag(ctx, placed, '白點：同時出發的聲音', sc.x0 + 6, Y(-4400), '#ffffff', w, 'left', true);
+                if (d.rays.some((r) => r.end === 'bottom')) L.tag(ctx, placed, '× 碰到海底，能量被吸收', sc.x1 - 6, Y(vBot) - 10, '#ffc2ad', w, 'right', true);
+                if (d.one) {
+                    L.tag(ctx, placed, `射出角度 ${p.sAng > 0 ? '+' : ''}${p.sAng}°`, X(0) + 10, Y(-p.srcZ) + 20, '#ffd166', w, 'left', true);
+                    if (d.zUp !== null) L.tag(ctx, placed, `上轉折 約 ${Math.round(d.zUp)} m：聲速 = ${d.cT.toFixed(1)} m/s，聲線變水平後往下彎`, sc.x0 + 6, Y(-d.zUp) - 6, '#ffc58a', w, 'left', true);
+                    else L.tag(ctx, placed, '聲速不夠大就到海面：在海面反射', sc.x0 + 6, Y(0) + 18, '#ffc58a', w, 'left', true);
+                    if (d.zDn !== null) L.tag(ctx, placed, `下轉折 約 ${Math.round(d.zDn)} m：聲速又是 ${d.cT.toFixed(1)} m/s，往上彎回`, sc.x0 + 6, Y(-d.zDn) + 16, '#ffc58a', w, 'left', true);
+                }
                 const nf = sofarN();
                 L.drawPanel(ctx, lay, Y, vBot, 0, [
                     { name: '溫度(示意)', lo: 0, hi: 26, f: (v) => nf(v)[2], color: C.rose, fmt: (v) => `${v}°C` },
-                    { name: '聲速', lo: 1495, hi: 1560, f: (v) => nf(v)[3], color: C.blue, fmt: (v) => `${v}` }
+                    { name: '聲速 m/s', lo: 1495, hi: 1560, f: (v) => nf(v)[3], color: C.blue, fmt: (v) => `${v}`, mark: d.one ? d.cT : null, markColor: '#d9822b' }
                 ], w, { name: '深度', ticks: [0, -1000, -2000, -3000, -4000, -5000], fmt: (v) => `${-v / 1000} km` });
-                labelFit(ctx, '聲速單位 m/s', lay.panel.x + 4, lay.pBot + 36, C.muted, 9, 'left', { maxW: lay.panel.w, clampW: w });
+                if (d.one) labelFit(ctx, '橘虛線與聲速曲線交點＝轉折深度', lay.panel.x + 4, lay.pBot + 36, '#b8691f', 9, 'left', { maxW: lay.panel.w, clampW: w });
             }
         };
 
