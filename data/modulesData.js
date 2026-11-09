@@ -49,8 +49,8 @@ const labMeta = {
     rainbow: { name: '彩虹：水滴中的光路與彩虹的形成', desc: '追蹤陽光在水滴中折射、反射、再折射的光路，看出為什麼光集中在 42°、為什麼紅在外紫在內，以及為什麼彩虹是以反日點為圓心的圓。' },
     lens: { name: '薄透鏡成像作圖', desc: '一條一條畫出三條主要光線（虛像畫反向延長線），自己找出像再對答案；另有共軛成像：移動透鏡找出兩個清晰的位置。' },
     optical_bench: { name: '3D 多元件光學工作臺', desc: '在格線光學桌上自由加入並拖曳凸透鏡、凹透鏡、反射鏡、分光鏡、光圈與屏幕；可切換 2D 光凳分析，並即時計算屏幕功率與光斑。' },
-    young: { name: '光的干涉實驗（楊氏雙狹縫）', desc: '從光源、單狹縫到雙狹縫的完整裝置與干涉場，並拖動屏幕上的 P 點看波程差 Δℓ = d sinθ 在整數與半整數倍波長之間變化。' },
-    diffraction: { name: '光的繞射實驗（單狹縫）', desc: '縫上眾多點光源的惠更斯子波、最大光程差 a sinθ，以及暗紋「等分成兩區成對抵消」的關鍵論證。' }
+    young: { name: '光的干涉實驗（楊氏雙狹縫）', desc: '從光源、單狹縫到雙狹縫的完整裝置與干涉場，拖動 P 點看波程差 Δℓ = d sinθ；多波長疊加比較雙色、白光與兩個獨立光源（強度相加、n₁λ₁ = n₂λ₂ 重合）；3D 立體模擬可旋轉觀察直條紋與多縫。' },
+    diffraction: { name: '光的繞射實驗（單狹縫）', desc: '縫上眾多點光源的惠更斯子波；多狹縫 → 單狹縫以箭頭（相量）相加說明 a sinθ = λ 為何是暗紋；最大光程差、成對抵消、雙色與白光疊加，以及可旋轉的 3D 立體模擬。' }
 };
 
 const modulesData = {
@@ -842,6 +842,13 @@ const modulesData = {
                 desc: '$\\Delta y \\propto \\lambda$、$\\Delta y \\propto L$、$\\Delta y \\propto 1/d$。<br>• 縫距 $d$ 愈小 $\\Rightarrow$ 條紋愈寬。<br>• 波長愈短（藍光）$\\Rightarrow$ 條紋愈窄。<br>• <b>白光光源</b>：中央仍為白色（各色光的 $n=0$ 亮紋重合），兩側則為彩色條紋。<br>• <b>浸在折射率 $n$ 的液體中</b>：$\\lambda_{\\text{液}} = \\lambda/n$ $\\Rightarrow$ 間距變為原來的 $1/n$ 倍。'
             },
             {
+                node: 'N19',
+                name: '多波長、多光源：強度相加',
+                formula: 'I = I_1 + I_2 \\quad(\\text{不同調}),\\qquad n_1\\lambda_1 = n_2\\lambda_2 \\;\\Rightarrow\\; \\text{亮紋重合}',
+                anchor: '不同顏色、不同光源之間沒有固定相位差，不會互相干涉；各自形成條紋，屏幕上把強度相加。',
+                desc: '• <b>雙色光</b>：各自 $\\Delta y = L\\lambda/d$；兩色亮紋重合處的光程差同時是兩波長的整數倍，$n_1\\lambda_1 = n_2\\lambda_2$。例：600 nm 與 450 nm，$3\\times600 = 4\\times450$。<br>• <b>白光</b>：中央白色；第 1 級內紫外紅；第 2 級紅光（1400 nm）已超過第 3 級紫光（1200 nm），級次重疊、愈外面愈模糊。<br>• <b>兩個獨立光源</b>：兩組條紋錯開後強度相加，亮暗對比變差；錯開半個 $\\Delta y$ 時條紋消失。光源太寬也是同樣原因，所以楊氏先用單狹縫 S₀。'
+            },
+            {
                 node: 'N20',
                 name: '單狹縫繞射的暗紋位置',
                 formula: 'a\\sin\\theta = m\\lambda \\quad\\Rightarrow\\quad y_m = m\\dfrac{L\\lambda}{a}\\quad(m = 1,2,3,\\dots)',
@@ -862,6 +869,13 @@ const modulesData = {
                 formula: '\\Delta y_{\\text{中央}} = \\dfrac{2L\\lambda}{a} = 2\\,\\Delta y_{\\text{其他}}',
                 anchor: '小角近似下，以相鄰暗紋為邊界，中央亮紋寬度是側亮紋的兩倍。',
                 desc: '中央亮紋介於兩側第一暗紋 $y=\\pm L\\lambda/a$ 之間，所以寬度為 $2L\\lambda/a$；側亮紋以相鄰暗紋為邊界，寬度約 $L\\lambda/a$。<br><b>縫寬愈窄，中央亮紋愈寬</b>；波長愈短，中央亮紋愈窄。側亮紋的峰值位置不是暗紋公式，初學不必另背近似式。<br>若整套裝置由空氣浸入折射率 $n$ 的透明液體，波長與條紋寬度約變為 $1/n$ 倍。'
+            },
+            {
+                node: 'N20',
+                name: '多狹縫 → 單狹縫（箭頭相加）',
+                formula: '\\delta = \\dfrac{2\\pi d\\sin\\theta}{\\lambda},\\quad d = \\dfrac{a}{N}\\;\\Rightarrow\\; N\\delta = \\dfrac{2\\pi a\\sin\\theta}{\\lambda}',
+                anchor: '把寬縫切成 N 條細縫，每條縫的波是一根箭頭；a sinθ = λ 時 N 根箭頭剛好繞一圈，合成為 0，所以是暗紋。',
+                desc: '• θ = 0：箭頭全部同向 → 中央最亮。<br>• $a\\sin\\theta = m\\lambda$：箭頭繞 m 整圈回到起點 → 第 m 暗紋，與 N 無關（N = 2 就是「分成兩半成對抵消」）。<br>• $a\\sin\\theta \\approx 1.5\\lambda$：繞一圈半，振幅約剩 1/5，強度約 4.5% → 側亮紋很暗。<br>• N → ∞：箭頭鏈變成圓弧，強度 $\\left(\\dfrac{\\sin\\beta}{\\beta}\\right)^2$，$\\beta = \\pi a\\sin\\theta/\\lambda$。<br>• 延伸：固定 d、增加 N 是光柵，主亮紋 $d\\sin\\theta = n\\lambda$ 變細，之間有 N − 1 個暗紋。'
             },
             {
                 node: 'N20',
@@ -917,6 +931,12 @@ const modulesData = {
                 feature: '題目把整套裝置浸入折射率為 $n$ 的液體中。',
                 bridge: '只有一個量改變：$\\lambda_{\\text{液}} = \\lambda/n$。於是所有條紋間距、中央亮紋寬度全部乘 $1/n$，頻率與顏色不變。',
                 trap: '提醒：不要去改 $L$ 或 $d$，它們是幾何長度不受介質影響。'
+            },
+            {
+                node: 'N19',
+                feature: '兩種波長同時照射雙狹縫，問兩色亮紋（或暗紋）第一次重合的位置。',
+                bridge: '重合處的光程差同時滿足兩色的條件：亮紋重合 $n_1\\lambda_1 = n_2\\lambda_2$，先把 $\\lambda_1 : \\lambda_2$ 化成最簡整數比，交叉相乘找最小的 $n_1$、$n_2$，再代 $y = n_1 L\\lambda_1/d$。',
+                trap: '提醒：兩色不會互相干涉，是強度相加；中央 $n = 0$ 永遠重合，題目問的通常是「中央以外第一次」。'
             },
             {
                 node: 'N20',
