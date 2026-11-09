@@ -64,11 +64,11 @@
     <script data-page-required src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css?v=steps_20261109">
 
-    <script data-page-required src="data/modulesData.js?v=slits_20261109b"></script>
+    <script data-page-required src="data/modulesData.js?v=slits_20261109c"></script>
     <script data-page-required src="data/learningGuide.js?v=swing_20261005"></script>
-    <script data-page-required src="data/questionBank.js?v=slits_20261109b"></script>
+    <script data-page-required src="data/questionBank.js?v=slits_20261109c"></script>
     <script data-page-required src="data/mediaData.js?v=resonance_20261005"></script>
-    <script data-page-required src="assets/js/slit-optics.js?v=slits_20261109b"></script>
+    <script data-page-required src="assets/js/slit-optics.js?v=slits_20261109c"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -11585,7 +11585,7 @@
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
                     { value: 'instant', label: '瞬間的波（動畫）' }, { value: 'average', label: '平均亮度（眼睛看到的）' }] },
                 { key: 'cam', label: '視角', value: 'oblique', only: ['view3d'], fmt: () => '', onChange: (v, p) => SlitOptics.setView(p, v), options: [
-                    { value: 'oblique', label: '斜上方' }, { value: 'top', label: '從上往下看' }, { value: 'screen', label: '正對屏幕' }, { value: 'side', label: '側面' }] },
+                    { value: 'oblique', label: '斜上方' }, { value: 'top', label: '從上往下看' }, { value: 'screen', label: '正對屏幕' }, { value: 'side', label: '側面' }, { value: 'slits', label: '看狹縫（放大）' }] },
                 { key: 'curve', label: '屏幕上方畫強度曲線', type: 'checkbox', value: true, only: ['view3d'] }
             ],
             readouts: (p) => {
@@ -11986,7 +11986,7 @@
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
                     { value: 'instant', label: '瞬間的波（動畫）' }, { value: 'average', label: '平均亮度（眼睛看到的）' }] },
                 { key: 'cam', label: '視角', value: 'oblique', only: ['view3d'], fmt: () => '', onChange: (v, p) => SlitOptics.setView(p, v), options: [
-                    { value: 'oblique', label: '斜上方' }, { value: 'top', label: '從上往下看' }, { value: 'screen', label: '正對屏幕' }, { value: 'side', label: '側面' }] },
+                    { value: 'oblique', label: '斜上方' }, { value: 'top', label: '從上往下看' }, { value: 'screen', label: '正對屏幕' }, { value: 'side', label: '側面' }, { value: 'slits', label: '看狹縫（放大）' }] },
                 { key: 'curve', label: '屏幕上方畫強度曲線', type: 'checkbox', value: true, only: ['view3d'] }
             ],
             readouts: (p) => {
