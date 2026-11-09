@@ -11600,7 +11600,7 @@
                     const bright = near(q) < 0.03, dark = Math.abs(Math.abs(q % 1) - 0.5) < 0.03;
                     return [
                         { label: 'Δℓ / λ', value: q.toFixed(2) },
-                        { label: 'P 點高度 y', value: `${(y * 100).toFixed(2)} cm` },
+                        { label: 'P 點高度 y（實際角度）', value: `${(y * 100).toFixed(2)} cm（θ = ${(Math.atan(Math.abs(y) / p.L) * 180 / Math.PI).toFixed(2)}°）` },
                         { label: '判定', value: bright ? `亮紋（n = ${Math.abs(Math.round(q))}）` : (dark ? `暗紋（m = ${Math.round(Math.abs(q) + 0.5)}）` : '介於亮紋與暗紋之間') },
                         { label: '條紋間距 Δy = Lλ/d', value: `${(dy * 1000).toFixed(2)} mm` }
                     ];
@@ -11748,13 +11748,14 @@
                 const y0 = 8, y1 = h - 74, cy = (y0 + y1) / 2, TH = y1 - y0;
                 const xSl = Math.max(70, w * 0.13);                        // 雙狹縫位置
                 const xS = Math.max(xSl + 160, w - 150);                   // 屏幕位置
-                const dPix = Math.min(TH * 0.34, 96);
+                /* L ≫ d：縫距畫得很小，兩條光線看起來幾乎平行；細節交給左下的放大圖 */
+                const dPix = Math.max(8, Math.min(18, 6 + p.d * 0.03));
                 const s1 = { x: xSl, y: cy + dPix / 2 };                   // 下方縫
                 const s2 = { x: xSl, y: cy - dPix / 2 };                   // 上方縫
                 const O = { x: xSl, y: cy };
                 const q = p.yn / 100;                                      // Δℓ / λ
                 const halfSpan = 3.4;                                      // 螢幕上半高＝3.4 個 Δy
-                const Py = cy - (q / halfSpan) * (TH * 0.46);
+                const Py = cy - (q / halfSpan) * (TH * 0.32);   // 垂直方向放大較少：θ 畫得小，更接近真實
                 const P = { x: xS, y: Math.max(y0 + 6, Math.min(y1 - 6, Py)) };
 
                 // 入射平行光
@@ -11779,7 +11780,7 @@
                  * 水平方向怎麼挪都會撞到其中一個。改成標在中央線的「另一側」——
                  * P 在線上方就標下方，反之亦然，射線永遠不會經過那裡。 */
                 const midSide = (P.y < O.y) ? 16 : -8;
-                label(ctx, '中央線', O.x + (xS - O.x) * 0.5, O.y + midSide, C.muted, 10, 'center');
+                label(ctx, '中央線', O.x + (xS - O.x) * 0.74, O.y + midSide, C.muted, 10, 'center');
 
                 // PS1、PS2
                 ctx.strokeStyle = col(0.9); ctx.lineWidth = 2;
@@ -11803,7 +11804,7 @@
                 dashed(ctx, near2.x, near2.y, A.x, A.y, 'rgba(107,70,193,0.85)');
                 ctx.fillStyle = C.violet;
                 ctx.beginPath(); ctx.arc(A.x, A.y, 3, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'A', A.x + 7, A.y + 14, C.violet, 11);
+                /* 主圖的 S₁S₂A 小到看不清楚，A 只標在放大圖裡 */
 
                 // 角度 θ（在 O 處，中央線與 OP 的夾角）
                 const thDraw = Math.atan2(O.y - P.y, P.x - O.x);
@@ -11812,21 +11813,21 @@
                 label(ctx, 'θ', O.x + 54, O.y - Math.sign(thDraw) * 10, C.ink, 12);
 
                 // 縫、d、O
-                [[s2, 'S₂'], [s1, 'S₁']].forEach(([s, nm]) => {
+                [[s2, 'S₂', -5], [s1, 'S₁', 14]].forEach(([s, nm, dy]) => {
                     ctx.fillStyle = C.orange;
-                    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, nm, s.x - 9, s.y + 4, C.orange, 12, 'right');
+                    ctx.beginPath(); ctx.arc(s.x, s.y, 3, 0, Math.PI * 2); ctx.fill();
+                    label(ctx, nm, s.x + 7, s.y + dy, C.orange, 12, 'left');
                 });
                 ctx.fillStyle = C.muted;
                 ctx.beginPath(); ctx.arc(O.x, O.y, 2.6, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'O', O.x - 9, O.y + 16, C.muted, 11, 'right');
+                label(ctx, 'O', O.x - 9, O.y + 4, C.muted, 11, 'right');
                 ctx.strokeStyle = C.orange; ctx.lineWidth = 1.2;
                 ctx.beginPath();
-                ctx.moveTo(xSl - 26, s2.y); ctx.lineTo(xSl - 26, s1.y);
-                ctx.moveTo(xSl - 31, s2.y); ctx.lineTo(xSl - 21, s2.y);
-                ctx.moveTo(xSl - 31, s1.y); ctx.lineTo(xSl - 21, s1.y);
+                ctx.moveTo(xSl - 30, s2.y); ctx.lineTo(xSl - 30, s1.y);
+                ctx.moveTo(xSl - 35, s2.y); ctx.lineTo(xSl - 25, s2.y);
+                ctx.moveTo(xSl - 35, s1.y); ctx.lineTo(xSl - 25, s1.y);
                 ctx.stroke();
-                label(ctx, 'd', xSl - 34, cy + 4, C.orange, 12, 'right');
+                label(ctx, 'd', xSl - 38, cy + 4, C.orange, 12, 'right');
 
                 // L 的標示
                 ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
@@ -11836,7 +11837,23 @@
                 ctx.moveTo(xSl, yy - 5); ctx.lineTo(xSl, yy + 5);
                 ctx.moveTo(xS, yy - 5); ctx.lineTo(xS, yy + 5);
                 ctx.stroke();
-                label(ctx, `L = ${p.L.toFixed(1)} m`, (xSl + xS) / 2, yy - 7, C.muted, 11, 'center');
+                label(ctx, `L = ${p.L.toFixed(1)} m`, (xSl + xS) / 2 + 40, yy - 7, C.muted, 11, 'left');
+
+                /* 中間省略：真實的 L 約是 d 的一萬倍，畫面放不下。挖掉一段、畫上斷開記號 */
+                {
+                    const xb = (xSl + xS) / 2 - 14, bw = 16;
+                    ctx.clearRect(xb, y0, bw, y1 - y0 + 12);
+                    ctx.strokeStyle = 'rgba(18,49,58,0.45)'; ctx.lineWidth = 1.2;
+                    [xb, xb + bw].forEach((x) => {
+                        ctx.beginPath();
+                        for (let k = 0, yk = y0; yk <= y1 + 12; k++, yk += 8) ctx.lineTo(x + (k % 2 ? 3 : -3), yk);
+                        ctx.stroke();
+                    });
+                    const ratio = p.L / dd;
+                    const rTxt = ratio >= 1e4 ? `${(ratio / 1e4).toFixed(1)} 萬` : `${Math.round(ratio / 100) * 100}`;
+                    labelFit(ctx, `中間省略：實際 L 約是 d 的 ${rTxt} 倍`, xb + bw / 2, y0 + 14, C.muted, 10, 'center',
+                        { plate: 'rgba(255,255,255,0.9)', clampW: w, maxW: Math.max(120, (xS - xSl) * 0.6), min: 9 });
+                }
 
                 // P 點與 y
                 ctx.fillStyle = '#ffb347';
@@ -11857,7 +11874,7 @@
                 ctx.fillStyle = 'rgba(255,255,255,0.95)';
                 ctx.strokeStyle = 'rgba(107,70,193,0.35)'; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.rect(ix, iy, iw2, ih2); ctx.fill(); ctx.stroke();
-                label(ctx, '🔍 放大：Δℓ = d sinθ', ix + 8, iy + 16, C.violet, 11);
+                labelFit(ctx, '🔍 放大狹縫：Δℓ = d sinθ（角度畫大）', ix + 8, iy + 16, C.violet, 11, 'left', { maxW: iw2 - 14, min: 9 });
                 const thD = rad(30);                                        // 插圖用的誇大角度
                 const dI = 62;
                 const b1 = { x: ix + 40, y: iy + 40 + dI / 2 };              // 較遠的縫
@@ -11896,12 +11913,13 @@
                     : (dark ? `暗紋（完全破壞性干涉，m = ${Math.round(Math.abs(q) + 0.5)}）`
                         : '介於亮紋與暗紋之間');
                 const vcol = bright ? C.green : (dark ? C.rose : C.muted);
-                const bw = Math.min(330, w - 16);
+                const bw = Math.min(420, w - 16);
                 ctx.fillStyle = 'rgba(255,255,255,0.93)';
                 ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
                 ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
                 label(ctx, `Δℓ = d sinθ ≈ d·y/L = ${q.toFixed(2)} λ`, 18, h - 48, C.ink, 12);
-                label(ctx, `y = ${(q * dy * 100).toFixed(2)} cm　　Δy = Lλ/d = ${(dy * 1000).toFixed(2)} mm`, 18, h - 31, C.muted, 11);
+                const thReal = Math.atan(Math.abs(q * dy) / p.L) * 180 / Math.PI;
+                labelFit(ctx, `y = ${(q * dy * 100).toFixed(2)} cm　θ 實際只有 ${thReal.toFixed(2)}°　Δy = ${(dy * 1000).toFixed(2)} mm`, 18, h - 31, C.muted, 11, 'left', { maxW: bw - 20, min: 9 });
                 label(ctx, `⇒ P 點為 ${verdict}`, 18, h - 13, vcol, 12);
                 /* 比例聲明放最後一行，與上方結論句錯開，窄畫布時自動縮字 */
                 labelFit(ctx, '遠屏、中央附近：L ≫ d，|y| ≪ L 才可小角近似', w - 8, h - 4, C.muted, 10, 'right',
