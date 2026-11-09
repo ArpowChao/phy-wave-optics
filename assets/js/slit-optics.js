@@ -1361,13 +1361,264 @@
         return out;
     }
 
+
+    /* ======================================================================
+     * 雙狹縫「幾何關係」：真實比例＋可一直放大
+     * 世界座標以公尺計：狹縫在 x = 0（S₁ 在 y = −d/2、S₂ 在 +d/2），屏幕在 x = L，P 在 (L, y)。
+     * 放大 1 倍時整個 L 放進畫面，d 不到一個像素，兩道光重疊成一條線；
+     * 以狹縫為中心一直放大，兩道光分開、看得出是平行的；再放大到 A 點附近，看得到多走的 Δℓ 以波長計。
+     * ====================================================================== */
+    const fmtZ = (z) => z < 10 ? z.toFixed(1) : z < 1e4 ? Math.round(z).toLocaleString('en-US') : `${(z / 1e4).toFixed(z < 1e5 ? 1 : 0)} 萬`;
+    function fmtLen(m) {
+        const a = Math.abs(m);
+        if (a >= 1) return `${+m.toFixed(2)} m`;
+        if (a >= 1e-3) return `${+(m * 1e3).toFixed(a >= 1e-2 ? 1 : 2)} mm`;
+        if (a >= 1e-6) return `${+(m * 1e6).toFixed(a >= 1e-5 ? 1 : 2)} μm`;
+        return `${+(m * 1e9).toFixed(0)} nm`;
+    }
+    /* 線段裁切到畫面範圍（Liang–Barsky）；超大座標不直接交給 canvas */
+    function clipSeg(x1, y1, x2, y2, W, H, pad = 40) {
+        let t0 = 0, t1 = 1;
+        const dx = x2 - x1, dy = y2 - y1;
+        const pq = [[-dx, x1 + pad], [dx, W + pad - x1], [-dy, y1 + pad], [dy, H + pad - y1]];
+        for (const [pp, qq] of pq) {
+            if (pp === 0) { if (qq < 0) return null; continue; }
+            const r = qq / pp;
+            if (pp < 0) { if (r > t1) return null; if (r > t0) t0 = r; }
+            else { if (r < t0) return null; if (r < t1) t1 = r; }
+        }
+        return [x1 + t0 * dx, y1 + t0 * dy, x1 + t1 * dx, y1 + t1 * dy];
+    }
+    function geomView(p, w, h) {
+        const d = p.d * 1e-6, L = p.L, lam = p.lam * 1e-9;
+        const dy = L * lam / d, q = p.yn / 100, yP = q * dy;
+        const top = 8, bot = h - 74, cyS = (top + bot) / 2;
+        const ax0 = Math.max(56, w * 0.08), s0 = (w - ax0 - 70) / L;
+        const g = p._gz || (p._gz = { panX: 0, panY: 0 });
+        const Z = Math.pow(10, Number(p.gz) || 0), s = s0 * Z;
+        const S1 = [0, -d / 2], S2 = [0, d / 2], P = [L, yP];
+        const far = yP >= 0 ? S1 : S2, nearS = yP >= 0 ? S2 : S1;
+        const ux = P[0] - far[0], uy = P[1] - far[1], ul = Math.hypot(ux, uy), ex = ux / ul, ey = uy / ul;
+        const pj = (nearS[0] - far[0]) * ex + (nearS[1] - far[1]) * ey;
+        const A = [far[0] + ex * pj, far[1] + ey * pj];
+        /* 放大的中心：先對準兩縫中點；放大到 d 夠大之後，慢慢移向 A（看 Δℓ） */
+        // d 撐到畫面高度的一半時開始移動，撐滿畫面時已完全對準 A（A 就在 S₁ 或 S₂ 旁邊）
+        const zd = 0.45 * (bot - top) / (d * s0), zf = 0.9 * (bot - top) / (d * s0);
+        const tA = Math.max(0, Math.min(1, (Math.log10(Z) - Math.log10(zd)) / Math.max(0.05, Math.log10(zf) - Math.log10(zd))));
+        const mid = [(far[0] + A[0]) / 2, (far[1] + A[1]) / 2];
+        const W0 = [mid[0] * tA, mid[1] * tA];
+        const axS = ax0 + (w * 0.42 - ax0) * tA, ayS = cyS;
+        const toS = (X, Y) => [axS + (X - W0[0]) * s + g.panX, ayS - (Y - W0[1]) * s + g.panY];
+        return { d, L, lam, dy, q, yP, Z, s, S1, S2, P, A, far, nearS, ex, ey, toS, top, bot, cyS };
+    }
+    function geomDraw(ctx, w, h, p) {
+        const V = geomView(p, w, h), { d, L, lam, q, s, toS, top, bot } = V;
+        ctx.fillStyle = '#f7f9fa'; ctx.fillRect(0, 0, w, h);
+        const line = (a, b, col, lw, dash) => {
+            const A = toS(a[0], a[1]), B = toS(b[0], b[1]);
+            const c = clipSeg(A[0], A[1], B[0], B[1], w, bot + 30);
+            if (!c) return;
+            ctx.save(); if (dash) ctx.setLineDash(dash);
+            ctx.strokeStyle = col; ctx.lineWidth = lw;
+            ctx.beginPath(); ctx.moveTo(c[0], c[1]); ctx.lineTo(c[2], c[3]); ctx.stroke(); ctx.restore();
+        };
+        const inView = (pt, m = 0) => pt[0] >= -m && pt[0] <= w + m && pt[1] >= top - m && pt[1] <= bot + m;
+        const ptS1 = toS(V.S1[0], V.S1[1]), ptS2 = toS(V.S2[0], V.S2[1]), ptP = toS(V.P[0], V.P[1]), ptA = toS(V.A[0], V.A[1]);
+        const dPx = d * s, dlPx = Math.hypot(ptA[0] - toS(V.far[0], V.far[1])[0], ptA[1] - toS(V.far[0], V.far[1])[1]), lamPx = lam * s;
+        const green = 'rgba(46,170,60,0.95)';
+
+        ctx.save(); ctx.beginPath(); ctx.rect(0, top, w, bot - top + 30); ctx.clip();
+        // 入射平行光（畫在擋板左側）
+        const xPlate = toS(0, 0)[0];
+        if (xPlate > 30) for (let i = 0; i < 5; i++) {
+            const yy = top + (bot - top) * (i + 0.5) / 5;
+            arrow(ctx, Math.max(4, xPlate - 160), yy, xPlate - 8, yy, 'rgba(46,170,60,0.55)', 1.3);
+        }
+        // 擋板與縫（縫寬取 d/5 示意）
+        if (xPlate > -10 && xPlate < w + 10) {
+            const a = d / 5, cut = [[-d / 2 - a / 2, -d / 2 + a / 2], [d / 2 - a / 2, d / 2 + a / 2]];
+            const yTop = top, yBot = bot;
+            const segs = [];
+            let cur = yTop;
+            cut.map(([lo, hi]) => [toS(0, hi)[1], toS(0, lo)[1]]).sort((m, n) => m[0] - n[0]).forEach(([ya, yb]) => {
+                if (yb - ya >= 1.5) { if (ya > cur) segs.push([cur, Math.min(ya, yBot)]); cur = Math.max(cur, yb); }
+            });
+            if (cur < yBot) segs.push([cur, yBot]);
+            ctx.fillStyle = '#3b5a66';
+            segs.forEach(([ya, yb]) => { if (yb > ya) ctx.fillRect(xPlate - 4, ya, 8, yb - ya); });
+        }
+        // 屏幕
+        const xScr = toS(L, 0)[0];
+        if (xScr > -10 && xScr < w + 10) { ctx.fillStyle = '#c9b79a'; ctx.fillRect(xScr, top, 7, bot - top); }
+        // 中央線
+        line([0, 0], [L, 0], 'rgba(18,49,58,0.45)', 1, [5, 5]);
+        // 兩道光
+        line(V.S1, V.P, green, 2);
+        line(V.S2, V.P, green, 2);
+        // 波長刻度：沿兩道光每 λ 一格（相位相同的位置），放大到看得見時才畫
+        if (lamPx >= 5) {
+            [[V.S1, 'rgba(46,170,60,0.9)'], [V.S2, 'rgba(46,170,60,0.9)']].forEach(([S]) => {
+                const ux = V.P[0] - S[0], uy = V.P[1] - S[1], ul = Math.hypot(ux, uy), ex = ux / ul, ey = uy / ul;
+                // 畫面範圍對應到這條光上的 t（公尺）
+                const c0 = toS(S[0], S[1]);
+                const tmin = Math.max(0, (-40 - c0[0]) / s - 2 * lam), tmax = Math.min(ul, (w + 40 - c0[0]) / s + 2 * lam);
+                let k0 = Math.ceil(tmin / lam), k1 = Math.floor(tmax / lam);
+                if (k1 - k0 > 400) return;
+                ctx.strokeStyle = 'rgba(46,170,60,0.85)'; ctx.lineWidth = 1.2;
+                for (let k = k0; k <= k1; k++) {
+                    const X = S[0] + ex * k * lam, Y = S[1] + ey * k * lam;
+                    const c = toS(X, Y);
+                    if (!inView(c, 10)) continue;
+                    ctx.beginPath(); ctx.moveTo(c[0] - ey * 7, c[1] - ex * 7); ctx.lineTo(c[0] + ey * 7, c[1] + ex * 7); ctx.stroke();
+                }
+            });
+        }
+        // S₁S₂A 三角形與 Δℓ
+        if (dPx >= 3) {
+            const F = toS(V.far[0], V.far[1]), N = toS(V.nearS[0], V.nearS[1]);
+            ctx.fillStyle = dPx > 600 ? 'rgba(107,70,193,0.07)' : 'rgba(107,70,193,0.18)';
+            ctx.beginPath(); ctx.moveTo(F[0], F[1]); ctx.lineTo(N[0], N[1]); ctx.lineTo(ptA[0], ptA[1]); ctx.closePath(); ctx.fill();
+            line(V.nearS, V.A, 'rgba(107,70,193,0.85)', 1.2, [4, 3]);
+            line(V.far, V.A, C.violet, 3);
+        }
+        ctx.restore();
+
+        // 點與標籤
+        const dot = (pt, col, r) => { if (!inView(pt, 6)) return; ctx.fillStyle = col; ctx.beginPath(); ctx.arc(pt[0], pt[1], r, 0, Math.PI * 2); ctx.fill(); };
+        dot(ptP, '#ffb347', 6);
+        if (inView(ptP)) labelFit(ctx, 'P', ptP[0] - 10, ptP[1] - 8, '#b06a00', 13, 'right', { clampW: w });
+        if (dPx >= 16) {
+            dot(ptS1, C.orange, 3.5); dot(ptS2, C.orange, 3.5);
+            if (inView(ptS2)) label(ctx, 'S₂', ptS2[0] + 8, ptS2[1] - 6, C.orange, 12);
+            if (inView(ptS1)) label(ctx, 'S₁', ptS1[0] + 8, ptS1[1] + 15, C.orange, 12);
+            // d 尺寸線
+            const xd = ptS1[0] - 22;
+            if (xd > 10 && Math.min(ptS1[1], ptS2[1]) < bot && Math.max(ptS1[1], ptS2[1]) > top) {
+                ctx.strokeStyle = C.orange; ctx.lineWidth = 1.2; ctx.beginPath();
+                ctx.moveTo(xd, ptS2[1]); ctx.lineTo(xd, ptS1[1]); ctx.moveTo(xd - 5, ptS2[1]); ctx.lineTo(xd + 5, ptS2[1]); ctx.moveTo(xd - 5, ptS1[1]); ctx.lineTo(xd + 5, ptS1[1]); ctx.stroke();
+                labelFit(ctx, `d = ${fmtLen(d)}`, xd - 6, Math.max(top + 80, Math.min(bot - 4, (ptS1[1] + ptS2[1]) / 2 + 4)), C.orange, 11, 'right', { clampW: w, plate: 'rgba(247,249,250,0.9)' });
+            }
+        } else {
+            const c = toS(0, 0);
+            dot(c, C.orange, 3.5);
+            if (inView(c)) labelFit(ctx, 'S₁、S₂ 疊在一起（d 不到 1 像素）', c[0] + 8, c[1] + 20, C.orange, 11, 'left', { plate: 'rgba(247,249,250,0.9)', clampW: w });
+        }
+        if (dPx >= 3 && dlPx >= 1 && inView(ptA)) {
+            dot(ptA, C.violet, 3);
+            label(ctx, 'A', ptA[0] + 6, ptA[1] + (V.yP >= 0 ? -7 : 15), C.violet, 11);   // 和 S 的標籤分在上下兩側
+            if (dlPx >= 14) {
+                const F = toS(V.far[0], V.far[1]);
+                labelFit(ctx, `Δℓ = d sinθ = ${q.toFixed(2)} λ`, (F[0] + ptA[0]) / 2, (F[1] + ptA[1]) / 2 + (V.yP >= 0 ? 36 : -24), C.violet, 12, 'center', { plate: 'rgba(247,249,250,0.9)', clampW: w });
+            }
+        }
+        // y 尺寸（屏幕附近）
+        const pO = toS(L, 0);
+        if (inView(pO, 0)) label(ctx, "O'", pO[0] - 6, pO[1] + 15, C.muted, 11, 'right');
+        if (inView(ptP) && Math.abs(ptP[1] - pO[1]) >= 8) {
+            const xx = ptP[0] + 18;
+            ctx.strokeStyle = 'rgba(176,106,0,0.8)'; ctx.lineWidth = 1.2; ctx.beginPath();
+            ctx.moveTo(xx, pO[1]); ctx.lineTo(xx, ptP[1]); ctx.moveTo(xx - 5, pO[1]); ctx.lineTo(xx + 5, pO[1]); ctx.moveTo(xx - 5, ptP[1]); ctx.lineTo(xx + 5, ptP[1]); ctx.stroke();
+            labelFit(ctx, `y = ${fmtLen(V.yP)}`, xx + 6, (pO[1] + ptP[1]) / 2 + 4, '#b06a00', 11, 'left', { clampW: w });
+        }
+        // L 尺寸
+        const l0 = toS(0, 0), l1 = toS(L, 0);
+        if (l1[0] - l0[0] < 4000 && l0[0] < w && l1[0] > 0) {
+            const yy = bot + 8;
+            ctx.strokeStyle = C.muted; ctx.lineWidth = 1; ctx.beginPath();
+            ctx.moveTo(Math.max(0, l0[0]), yy); ctx.lineTo(Math.min(w, l1[0]), yy); ctx.stroke();
+            labelFit(ctx, `L = ${p.L.toFixed(1)} m`, Math.max(60, Math.min(w - 60, (Math.max(0, l0[0]) + Math.min(w, l1[0])) / 2)), yy - 5, C.muted, 11, 'center', { clampW: w, plate: 'rgba(247,249,250,0.9)' });
+        }
+
+        // 比例尺
+        const target = 110 / s;
+        const e = Math.floor(Math.log10(target)), base = Math.pow(10, e);
+        const nice = [1, 2, 5, 10].map((k) => k * base).find((v) => v >= target * 0.6) || base * 10;
+        const sbPx = nice * s, sbX = w - 18 - sbPx, sbY = top + 18;
+        ctx.strokeStyle = C.ink; ctx.lineWidth = 2; ctx.beginPath();
+        ctx.moveTo(sbX, sbY); ctx.lineTo(sbX + sbPx, sbY); ctx.moveTo(sbX, sbY - 4); ctx.lineTo(sbX, sbY + 4); ctx.moveTo(sbX + sbPx, sbY - 4); ctx.lineTo(sbX + sbPx, sbY + 4); ctx.stroke();
+        labelFit(ctx, `${fmtLen(nice)}${nice < 5e-6 ? `（λ = ${p.lam} nm）` : ''}`, sbX + sbPx / 2, sbY + 16, C.ink, 11, 'center', { clampW: w });
+
+        // 說明：依放大程度提示下一步
+        const thDeg = Math.atan(Math.abs(V.yP) / L) * 180 / Math.PI;
+        const angleBetween = (d / L) * 180 / Math.PI;
+        const msg = dPx < 3
+            ? '真實比例：L 約是 d 的一萬倍，從這麼遠看，兩道光疊成一條線。往狹縫放大（滾輪、雙指或下方「放大倍率」）。'
+            : dlPx < 14
+                ? `兩道光分開了，而且看起來完全平行（夾角只有 d/L ≈ ${angleBetween.toExponential(1)}°），都朝 θ ≈ ${thDeg.toFixed(2)}° 前進。再放大到 A 點附近。`
+                : `從 S${V.yP >= 0 ? '₂' : '₁'} 作垂線到另一道光上得到 A：A 以後兩道光走的路一樣長，差別只在 Δℓ = d sinθ。綠色刻度每格 1 λ。`;
+        labelFit(ctx, `放大 ×${fmtZ(V.Z)}`, 10, top + 16, C.ink, 13, 'left', { plate: 'rgba(247,249,250,0.92)', clampW: w });
+        const msgW = Math.min(560, sbX - 24);   // 不要壓到右上角的比例尺
+        ctx.font = '11px Outfit, "Noto Sans TC", sans-serif';
+        const ml = wrapText(ctx, msg, msgW);
+        ml.forEach((t, i) => labelFit(ctx, t, 10, top + 34 + i * 15, C.muted, 11, 'left', { plate: 'rgba(247,249,250,0.92)', clampW: w, maxW: msgW }));
+
+        // 結論面板
+        const near = Math.abs(q - Math.round(q));
+        const bright = near < 0.03, dark = Math.abs(Math.abs(q % 1) - 0.5) < 0.03;
+        const verdict = bright ? `亮紋（完全建設性干涉，n = ${Math.abs(Math.round(q))}）` : (dark ? `暗紋（完全破壞性干涉，m = ${Math.round(Math.abs(q) + 0.5)}）` : '介於亮紋與暗紋之間');
+        const vcol = bright ? C.green : (dark ? C.rose : C.muted);
+        const bw = Math.min(420, w - 16);
+        ctx.fillStyle = 'rgba(255,255,255,0.93)'; ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
+        labelFit(ctx, `Δℓ = d sinθ ≈ d·y/L = ${q.toFixed(2)} λ`, 18, h - 48, C.ink, 12, 'left', { maxW: bw - 20, min: 9 });
+        labelFit(ctx, `y = ${fmtLen(V.yP)}　θ = ${thDeg.toFixed(2)}°　Δy = Lλ/d = ${fmtLen(V.dy)}`, 18, h - 31, C.muted, 11, 'left', { maxW: bw - 20, min: 9 });
+        labelFit(ctx, `⇒ P 點為 ${verdict}`, 18, h - 13, vcol, 12, 'left', { maxW: bw - 20, min: 9 });
+        labelFit(ctx, '真實比例・可一直放大', w - 8, h - 4, C.muted, 10, 'right', { clampW: w, maxW: Math.max(60, w - bw - 30), min: 8 });
+    }
+    /* 幾何模式的放大與拖曳：滾輪／雙指改變「放大倍率」滑桿，單指或滑鼠拖曳移動畫面 */
+    function bindGeom({ canvas, params, disposers, paint, host, syncOutputs }, isOn) {
+        const input = host ? host.querySelector('[id$="-gz"]') : null;
+        const setZ = (v) => {
+            const max = input ? Number(input.max) : 6.5, step = input ? Number(input.step) : 0.05;
+            params.gz = Math.max(0, Math.min(max, Math.round(v / step) * step));
+            if (input) input.value = params.gz;
+            if (syncOutputs) syncOutputs();
+            paint();
+        };
+        const pts = new Map();
+        let last = null, pinch = null;
+        const local = (e) => { const r = canvas.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+        const syncTouch = () => { if (isOn(params)) { canvas.style.touchAction = 'none'; canvas.style.cursor = 'grab'; } };
+        if (host) host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', syncTouch));
+        syncTouch();
+        disposers.addEventListener(canvas, 'wheel', (e) => {
+            if (!isOn(params)) return;
+            e.preventDefault();
+            setZ((Number(params.gz) || 0) - e.deltaY * 0.0025);
+        }, { passive: false });
+        disposers.addEventListener(canvas, 'pointerdown', (e) => {
+            if (!isOn(params)) return;
+            pts.set(e.pointerId, local(e));
+            if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a[0] - b[0], a[1] - b[1]), z: Number(params.gz) || 0 }; last = null; }
+            else last = local(e);
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* 不支援時略過 */ }
+        });
+        disposers.addEventListener(canvas, 'pointermove', (e) => {
+            if (!isOn(params) || !pts.has(e.pointerId)) return;
+            const pt = local(e); pts.set(e.pointerId, pt);
+            if (pts.size >= 2 && pinch) {
+                const [a, b] = [...pts.values()];
+                setZ(pinch.z + Math.log10(Math.hypot(a[0] - b[0], a[1] - b[1]) / Math.max(pinch.d, 1)));
+                return;
+            }
+            if (!last) { last = pt; return; }
+            const g = params._gz || (params._gz = { panX: 0, panY: 0 });
+            g.panX += pt[0] - last[0]; g.panY += pt[1] - last[1];
+            last = pt; paint();
+        });
+        const end = (e) => { pts.delete(e.pointerId); if (pts.size < 2) pinch = null; if (!pts.size) last = null; };
+        disposers.addEventListener(canvas, 'pointerup', end);
+        disposers.addEventListener(canvas, 'pointercancel', end);
+        disposers.addEventListener(canvas, 'dblclick', () => { if (!isOn(params)) return; params._gz = { panX: 0, panY: 0 }; paint(); });
+    }
+
     window.SlitOptics = {
         LAM0, LV, WV, PRESETS,
         pure, ink, css, enc, spectrum, coincide, gcd,
         draw2D, draw3D, bind3D,
         youngColors, youngColorReadouts, singleColors, singleColorReadouts,
         young3D, young3DReadouts, single3D, single3DReadouts,
-        multiDraw, multiReadouts,
+        multiDraw, multiReadouts, geomDraw, bindGeom, fmtZ,
         setView: (p, key) => { p._view = Object.assign({}, PRESETS[key] || PRESETS.oblique); }
     };
 })();

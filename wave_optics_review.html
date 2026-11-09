@@ -64,11 +64,11 @@
     <script data-page-required src="assets/js/wave-runtime.js"></script>
     <link rel="stylesheet" href="assets/css/interaction-runtime.css?v=steps_20261109">
 
-    <script data-page-required src="data/modulesData.js?v=slits_20261109c"></script>
+    <script data-page-required src="data/modulesData.js?v=slits_20261109d"></script>
     <script data-page-required src="data/learningGuide.js?v=swing_20261005"></script>
-    <script data-page-required src="data/questionBank.js?v=slits_20261109c"></script>
+    <script data-page-required src="data/questionBank.js?v=slits_20261109d"></script>
     <script data-page-required src="data/mediaData.js?v=resonance_20261005"></script>
-    <script data-page-required src="assets/js/slit-optics.js?v=slits_20261109c"></script>
+    <script data-page-required src="assets/js/slit-optics.js?v=slits_20261109d"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -11510,6 +11510,7 @@
             tag: 'N19',
             hint: '「實驗裝置」模式＝楊氏 1801 年的原始裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
             hintFor: (p) => ({
+                geometry: '<b>幾何關係（真實比例）</b>：L 約是 d 的一萬倍，一開始兩道光疊成一條線。用滾輪、雙指或「放大倍率」往狹縫放大：兩道光分開，看得出它們<b>平行</b>；再放大到 A 點，從 S₂ 作垂線，另一道光多走的 Δℓ = d sinθ，綠色刻度每格 1 λ。拖曳可移動畫面，雙擊回到中心。改「P 點高度」看 Δℓ 在整數倍與半整數倍波長之間變化。',
                 colors: '<b>不只一種顏色時，屏幕上會怎樣？</b>每一種波長各自形成一組條紋（Δy = Lλ/d），不同顏色之間沒有固定相位差，所以屏幕上是<b>強度相加</b>。選「雙色光」找兩色亮紋第一次重合的位置 n₁λ₁ = n₂λ₂；選「白光」看中央白、內紫外紅、外圈級次重疊；選「兩個獨立光源」看兩組條紋錯開時，亮暗對比怎麼消失。「顯示方式」可以先<b>分開</b>看每一色（每一個光源）各自的條紋，再看<b>合併</b>後的結果，上下對齊方便比較。',
                 view3d: '<b>3D 立體模擬</b>：拖曳畫面旋轉、滾輪或雙指縮放，「視角」可切到正對屏幕或從上往下看。狹縫沿上下方向很長，水平面上看得到兩縫發出的子波疊加，屏幕上則是與狹縫平行的直條紋。可改成多色光，「比例」預設是<b>遠看（L ≫ d）</b>：整排狹縫小到像一個點，從各縫到屏幕的光幾乎平行；切到<b>近看</b>才放大看得到每一道波。縫數 N 可以一路加到 150，看亮紋怎麼變細（光柵）。雙色光可切「只看 λ₁／只看 λ₂／兩色合併」；「只開 1 條縫」則可對照：同一道光通過兩條縫時，合併後<b>不是</b>亮度相加，而會出現干涉條紋。'
             })[p.mode] || '「實驗裝置」模式＝楊氏 1801 年的原始裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
@@ -11552,8 +11553,8 @@
                 { key: 'colors', label: '多波長疊加' },
                 { key: 'view3d', label: '3D 立體模擬' }
             ],
-            onReset: (p) => SlitOptics.setView(p, 'oblique'),
-            setup: (env) => SlitOptics.bind3D(env, (p) => p.mode === 'view3d'),
+            onReset: (p) => { SlitOptics.setView(p, 'oblique'); p._gz = { panX: 0, panY: 0 }; },
+            setup: (env) => { SlitOptics.bind3D(env, (p) => p.mode === 'view3d'); SlitOptics.bindGeom(env, (p) => p.mode === 'geometry'); },
             controls: [
                 { key: 'src', label: '光源', value: 'two', only: ['colors'], fmt: () => '', options: [
                     { value: 'mono', label: '單色光（對照組）' }, { value: 'two', label: '雙色光（λ₁ ＋ λ₂）' },
@@ -11575,6 +11576,7 @@
                 { key: 'd', label: '狹縫間距 d (μm)', min: 20, max: 400, step: 5, value: 120, fmt: (v) => `${v} μm`, only: ['setup', 'geometry', 'colors'] },
                 { key: 'L', label: '屏幕距離 L (m)', min: 0.3, max: 2.5, step: 0.1, value: 1.2, fmt: (v) => `${v.toFixed(1)} m`, only: ['setup', 'geometry', 'colors'] },
                 { key: 'yn', label: 'P 點高度（以 Δy 為單位）', min: -300, max: 300, step: 5, value: 100, fmt: (v) => `${(v / 100).toFixed(2)} Δy`, only: ['geometry'] },
+                { key: 'gz', label: '放大倍率（往狹縫放大）', min: 0, max: 6.5, step: 0.05, value: 0, fmt: (v) => `×${SlitOptics.fmtZ(Math.pow(10, v))}`, only: ['geometry'] },
                 { key: 'open3', label: '狹縫', value: 'all', only: ['view3d'], fmt: () => '', options: [
                     { value: 'all', label: '所有縫都打開' }, { value: 'one', label: '只開 1 條縫（其餘遮住）' }] },
                 { key: 'n3', label: '縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => v === 2 ? '2（雙狹縫）' : `${v} 條`, only: ['view3d'] },
@@ -11600,7 +11602,7 @@
                     const bright = near(q) < 0.03, dark = Math.abs(Math.abs(q % 1) - 0.5) < 0.03;
                     return [
                         { label: 'Δℓ / λ', value: q.toFixed(2) },
-                        { label: 'P 點高度 y', value: `${(y * 100).toFixed(2)} cm` },
+                        { label: 'P 點高度 y（實際角度）', value: `${(y * 100).toFixed(2)} cm（θ = ${(Math.atan(Math.abs(y) / p.L) * 180 / Math.PI).toFixed(2)}°）` },
                         { label: '判定', value: bright ? `亮紋（n = ${Math.abs(Math.round(q))}）` : (dark ? `暗紋（m = ${Math.round(Math.abs(q) + 0.5)}）` : '介於亮紋與暗紋之間') },
                         { label: '條紋間距 Δy = Lλ/d', value: `${(dy * 1000).toFixed(2)} mm` }
                     ];
@@ -11744,168 +11746,8 @@
                     return;
                 }
 
-                /* ================= 模式二：幾何關係與公式 ================= */
-                const y0 = 8, y1 = h - 74, cy = (y0 + y1) / 2, TH = y1 - y0;
-                const xSl = Math.max(70, w * 0.13);                        // 雙狹縫位置
-                const xS = Math.max(xSl + 160, w - 150);                   // 屏幕位置
-                const dPix = Math.min(TH * 0.34, 96);
-                const s1 = { x: xSl, y: cy + dPix / 2 };                   // 下方縫
-                const s2 = { x: xSl, y: cy - dPix / 2 };                   // 上方縫
-                const O = { x: xSl, y: cy };
-                const q = p.yn / 100;                                      // Δℓ / λ
-                const halfSpan = 3.4;                                      // 螢幕上半高＝3.4 個 Δy
-                const Py = cy - (q / halfSpan) * (TH * 0.46);
-                const P = { x: xS, y: Math.max(y0 + 6, Math.min(y1 - 6, Py)) };
-
-                // 入射平行光
-                for (let i = 0; i < 5; i++) {
-                    const yy = y0 + TH * (i + 0.5) / 5;
-                    arrow(ctx, 8, yy, xSl - 14, yy, col(0.7), 1.4);
-                }
-                // 屏與縫
-                ctx.fillStyle = '#3b5a66';
-                ctx.fillRect(xSl - 4, y0, 8, s2.y - y0 - 3);
-                ctx.fillRect(xSl - 4, s2.y + 3, 8, dPix - 6);
-                ctx.fillRect(xSl - 4, s1.y + 3, 8, y1 - s1.y - 3);
-                // 屏幕
-                ctx.fillStyle = '#c9b79a';
-                ctx.fillRect(xS, y0, 7, TH);
-                label(ctx, '屏幕', xS + 4, y1 + 16, C.muted, 10, 'center');
-
-                // 中央線 OO'
-                dashed(ctx, O.x, O.y, xS, O.y, 'rgba(18,49,58,0.45)');
-                label(ctx, "O'", xS - 12, O.y + 15, C.muted, 11, 'right');
-                /* 中央線標籤：θ 角標在起點附近、「往 P 點」標在射線中段，
-                 * 水平方向怎麼挪都會撞到其中一個。改成標在中央線的「另一側」——
-                 * P 在線上方就標下方，反之亦然，射線永遠不會經過那裡。 */
-                const midSide = (P.y < O.y) ? 16 : -8;
-                label(ctx, '中央線', O.x + (xS - O.x) * 0.5, O.y + midSide, C.muted, 10, 'center');
-
-                // PS1、PS2
-                ctx.strokeStyle = col(0.9); ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(s1.x, s1.y); ctx.lineTo(P.x, P.y); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(s2.x, s2.y); ctx.lineTo(P.x, P.y); ctx.stroke();
-
-                /* 離 P 較遠的那個縫，其光程多出 Δℓ。P 在中央線上方時 S₂ 較近 ⇒ 多出來的是 S₁ 這一段。
-                   作法：由較近的縫對「較遠的縫到 P」那條線作垂足 A，則 (較遠縫)A = Δℓ = d sinθ。 */
-                const far = (P.y <= O.y) ? s1 : s2;                        // 離 P 較遠的縫
-                const near2 = (P.y <= O.y) ? s2 : s1;                      // 離 P 較近的縫
-                const ux = P.x - far.x, uy = P.y - far.y;
-                const uLen = Math.max(Math.hypot(ux, uy), 1e-6);
-                const ex = ux / uLen, ey = uy / uLen;
-                const proj = (near2.x - far.x) * ex + (near2.y - far.y) * ey;
-                const A = { x: far.x + ex * proj, y: far.y + ey * proj };
-                ctx.fillStyle = 'rgba(107,70,193,0.20)';
-                ctx.beginPath();
-                ctx.moveTo(far.x, far.y); ctx.lineTo(near2.x, near2.y); ctx.lineTo(A.x, A.y); ctx.closePath(); ctx.fill();
-                ctx.strokeStyle = C.violet; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(far.x, far.y); ctx.lineTo(A.x, A.y); ctx.stroke();
-                dashed(ctx, near2.x, near2.y, A.x, A.y, 'rgba(107,70,193,0.85)');
-                ctx.fillStyle = C.violet;
-                ctx.beginPath(); ctx.arc(A.x, A.y, 3, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'A', A.x + 7, A.y + 14, C.violet, 11);
-
-                // 角度 θ（在 O 處，中央線與 OP 的夾角）
-                const thDraw = Math.atan2(O.y - P.y, P.x - O.x);
-                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.arc(O.x, O.y, 46, -thDraw, 0, thDraw < 0); ctx.stroke();
-                label(ctx, 'θ', O.x + 54, O.y - Math.sign(thDraw) * 10, C.ink, 12);
-
-                // 縫、d、O
-                [[s2, 'S₂'], [s1, 'S₁']].forEach(([s, nm]) => {
-                    ctx.fillStyle = C.orange;
-                    ctx.beginPath(); ctx.arc(s.x, s.y, 4, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, nm, s.x - 9, s.y + 4, C.orange, 12, 'right');
-                });
-                ctx.fillStyle = C.muted;
-                ctx.beginPath(); ctx.arc(O.x, O.y, 2.6, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'O', O.x - 9, O.y + 16, C.muted, 11, 'right');
-                ctx.strokeStyle = C.orange; ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.moveTo(xSl - 26, s2.y); ctx.lineTo(xSl - 26, s1.y);
-                ctx.moveTo(xSl - 31, s2.y); ctx.lineTo(xSl - 21, s2.y);
-                ctx.moveTo(xSl - 31, s1.y); ctx.lineTo(xSl - 21, s1.y);
-                ctx.stroke();
-                label(ctx, 'd', xSl - 34, cy + 4, C.orange, 12, 'right');
-
-                // L 的標示
-                ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
-                const yy = y1 + 6;
-                ctx.beginPath();
-                ctx.moveTo(xSl, yy); ctx.lineTo(xS, yy);
-                ctx.moveTo(xSl, yy - 5); ctx.lineTo(xSl, yy + 5);
-                ctx.moveTo(xS, yy - 5); ctx.lineTo(xS, yy + 5);
-                ctx.stroke();
-                label(ctx, `L = ${p.L.toFixed(1)} m`, (xSl + xS) / 2, yy - 7, C.muted, 11, 'center');
-
-                // P 點與 y
-                ctx.fillStyle = '#ffb347';
-                ctx.beginPath(); ctx.arc(P.x, P.y, 6, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'P', P.x + 10, P.y + 4, '#b06a00', 13);
-                ctx.strokeStyle = 'rgba(176,106,0,0.8)'; ctx.lineWidth = 1.2;
-                ctx.beginPath();
-                ctx.moveTo(xS + 16, O.y); ctx.lineTo(xS + 16, P.y);
-                ctx.moveTo(xS + 11, O.y); ctx.lineTo(xS + 21, O.y);
-                ctx.moveTo(xS + 11, P.y); ctx.lineTo(xS + 21, P.y);
-                ctx.stroke();
-                label(ctx, 'y', xS + 24, (O.y + P.y) / 2 + 4, '#b06a00', 12);
-
-                /* 放大插圖：把 S₁S₂A 這個極小的三角形放大（比照課本圖 b 的作法） */
-                const iw2 = Math.min(232, Math.max(150, w * 0.28)), ih2 = 132;
-                const ix = Math.min(w - iw2 - 10, xSl + 46);          // 放在左下的空白區，避免蓋住 P 點
-                const iy = y1 - ih2 - 6;
-                ctx.fillStyle = 'rgba(255,255,255,0.95)';
-                ctx.strokeStyle = 'rgba(107,70,193,0.35)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.rect(ix, iy, iw2, ih2); ctx.fill(); ctx.stroke();
-                label(ctx, '🔍 放大：Δℓ = d sinθ', ix + 8, iy + 16, C.violet, 11);
-                const thD = rad(30);                                        // 插圖用的誇大角度
-                const dI = 62;
-                const b1 = { x: ix + 40, y: iy + 40 + dI / 2 };              // 較遠的縫
-                const b2 = { x: ix + 40, y: iy + 40 - dI / 2 };              // 較近的縫
-                const uu = { x: Math.cos(thD), y: -Math.sin(thD) };
-                const pj = (b2.x - b1.x) * uu.x + (b2.y - b1.y) * uu.y;
-                const bA = { x: b1.x + uu.x * pj, y: b1.y + uu.y * pj };
-                ctx.strokeStyle = C.orange; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.stroke();
-                ctx.strokeStyle = col(0.85); ctx.lineWidth = 1.8;
-                ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(b1.x + uu.x * 150, b1.y + uu.y * 150); ctx.stroke();
-                ctx.beginPath(); ctx.moveTo(b2.x, b2.y); ctx.lineTo(b2.x + uu.x * 150, b2.y + uu.y * 150); ctx.stroke();
-                ctx.fillStyle = 'rgba(107,70,193,0.22)';
-                ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(b2.x, b2.y); ctx.lineTo(bA.x, bA.y); ctx.closePath(); ctx.fill();
-                ctx.strokeStyle = C.violet; ctx.lineWidth = 3;
-                ctx.beginPath(); ctx.moveTo(b1.x, b1.y); ctx.lineTo(bA.x, bA.y); ctx.stroke();
-                dashed(ctx, b2.x, b2.y, bA.x, bA.y, 'rgba(107,70,193,0.85)');
-                label(ctx, 'd', b1.x - 8, (b1.y + b2.y) / 2 + 4, C.orange, 11, 'right');
-                label(ctx, 'Δℓ', (b1.x + bA.x) / 2 - 4, (b1.y + bA.y) / 2 + 16, C.violet, 12);
-                /* 沿射線標「往 P 點」時會落到中央線那條水平線上，
-                 * 改成往射線的垂直方向偏移，兩者不會再重疊。 */
-                labelFit(ctx, '往 P 點',
-                         b2.x + uu.x * 150 - uu.y * 14,
-                         b2.y + uu.y * 150 + uu.x * 14 - 6,
-                         C.muted, 10, 'left', { clampW: w, plate: 1 });
-                ctx.strokeStyle = 'rgba(18,49,58,0.5)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.arc(b1.x, b1.y, 26, -thD, 0); ctx.stroke();
-                label(ctx, 'θ', b1.x + 31, b1.y - 6, C.ink, 11);
-                dashed(ctx, b1.x, b1.y, b1.x + 60, b1.y, 'rgba(18,49,58,0.3)');
-
-                // 判定面板
-                const near = Math.abs(q - Math.round(q));
-                const bright = near < 0.03;
-                const dark = Math.abs(Math.abs(q % 1) - 0.5) < 0.03;
-                const verdict = bright ? `亮紋（完全建設性干涉，n = ${Math.abs(Math.round(q))}）`
-                    : (dark ? `暗紋（完全破壞性干涉，m = ${Math.round(Math.abs(q) + 0.5)}）`
-                        : '介於亮紋與暗紋之間');
-                const vcol = bright ? C.green : (dark ? C.rose : C.muted);
-                const bw = Math.min(330, w - 16);
-                ctx.fillStyle = 'rgba(255,255,255,0.93)';
-                ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
-                label(ctx, `Δℓ = d sinθ ≈ d·y/L = ${q.toFixed(2)} λ`, 18, h - 48, C.ink, 12);
-                label(ctx, `y = ${(q * dy * 100).toFixed(2)} cm　　Δy = Lλ/d = ${(dy * 1000).toFixed(2)} mm`, 18, h - 31, C.muted, 11);
-                label(ctx, `⇒ P 點為 ${verdict}`, 18, h - 13, vcol, 12);
-                /* 比例聲明放最後一行，與上方結論句錯開，窄畫布時自動縮字 */
-                labelFit(ctx, '遠屏、中央附近：L ≫ d，|y| ≪ L 才可小角近似', w - 8, h - 4, C.muted, 10, 'right',
-                         { clampW: w, maxW: w - 16 });
+                /* ================= 模式二：幾何關係與公式（真實比例、可一直放大） ================= */
+                SlitOptics.geomDraw(ctx, w, h, p);
             }
         };
         /* 13. 光的繞射實驗（單狹縫） --------------------------------------- */
