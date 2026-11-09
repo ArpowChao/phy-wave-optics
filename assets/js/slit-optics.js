@@ -399,12 +399,77 @@
         return res;
     }
 
+    /* 遠看（L ≫ d）：整排狹縫相對於屏幕距離小到可視為一點，各點的亮度只由方向 θ 決定（夫朗和斐近似）。
+     * 以 u = sinθ 等間隔建表：I = [sin β / β]² · [sin(Nφ/2) / (N sin(φ/2))]²，β = π a u / λ、φ = 2π d u / λ。
+     * 縫很多時亮紋極細，比一個像素還窄：每個像素依它涵蓋的 u 範圍取平均（前綴和），細亮紋才不會消失。 */
+    function buildFar(cfg) {
+        const key = JSON.stringify(['far', cfg.N, cfg.dl, cfg.al, cfg.lines.map((L) => Math.round(L.lam * 10))]);
+        if (cfg.cache && cfg.cache.key === key) return cfg.cache;
+        const NT = 32768, lines = cfg.lines, n = lines.length, N = cfg.N;
+        const P = new Float64Array((NT + 1) * 3), Pl = lines.map(() => new Float64Array(NT + 1)), Pt = new Float64Array(NT + 1);
+        const lum = lines.map((L) => (n > 2 ? lumOf(L.c) : 1));
+        for (let i = 0; i < NT; i++) {
+            const u = -1 + 2 * (i + 0.5) / NT;
+            let r = 0, g = 0, b = 0, tot = 0;
+            for (let j = 0; j < n; j++) {
+                const k = 550 / lines[j].lam;
+                const env = cfg.al > 0 ? sinc2(Math.PI * cfg.al * u * k) : 1;
+                let gr = 1;
+                if (N > 1) {
+                    const h2 = Math.PI * cfg.dl * u * k, sd = Math.sin(h2);
+                    gr = Math.abs(sd) < 1e-9 ? 1 : (Math.sin(N * h2) / (N * sd)) ** 2;
+                }
+                const I = env * gr, c = lines[j].c;
+                r += c[0] * I; g += c[1] * I; b += c[2] * I; tot += lum[j] * I;
+                Pl[j][i + 1] = Pl[j][i] + I;
+            }
+            P[(i + 1) * 3] = P[i * 3] + r; P[(i + 1) * 3 + 1] = P[i * 3 + 1] + g; P[(i + 1) * 3 + 2] = P[i * 3 + 2] + b;
+            Pt[i + 1] = Pt[i] + tot;
+        }
+        const idx = (u) => Math.max(0, Math.min(NT, (u + 1) / 2 * NT));
+        const span = (u0, u1) => {
+            let a = idx(Math.min(u0, u1)), b = idx(Math.max(u0, u1));
+            if (b - a < 1) { const m = (a + b) / 2; a = Math.max(0, m - 0.5); b = Math.min(NT, m + 0.5); }
+            return [Math.floor(a), Math.max(Math.floor(a) + 1, Math.round(b))];
+        };
+        const avgRGB = (u0, u1, out) => {
+            const [a, b] = span(u0, u1), d = b - a;
+            out[0] = (P[b * 3] - P[a * 3]) / d; out[1] = (P[b * 3 + 1] - P[a * 3 + 1]) / d; out[2] = (P[b * 3 + 2] - P[a * 3 + 2]) / d;
+            return out;
+        };
+        // θ = 0 處每一色都最亮（I = 1），以那裡的最大色頻當亮度基準
+        const c0 = [0, 0, 0];
+        lines.forEach((L) => L.c.forEach((v, i) => { c0[i] += v; }));
+        const norm = Math.max(...c0, 1e-9);
+        /* 屏幕：320 個直條，每條取它涵蓋的 u 範圍平均 */
+        const NS = 320, scr = lines.map(() => new Float32Array(NS)), total = new Float32Array(NS), stripLin = new Float32Array(NS * 3);
+        const uY = (y) => y / Math.hypot(y, LV);
+        const tmp = [0, 0, 0];
+        for (let i = 0; i < NS; i++) {
+            const u0 = uY(-WV + 2 * WV * i / NS), u1 = uY(-WV + 2 * WV * (i + 1) / NS);
+            const [a, b] = span(u0, u1), d = b - a;
+            for (let j = 0; j < n; j++) scr[j][i] = (Pl[j][b] - Pl[j][a]) / d;
+            total[i] = (Pt[b] - Pt[a]) / d;
+            avgRGB(u0, u1, tmp);
+            stripLin[i * 3] = tmp[0]; stripLin[i * 3 + 1] = tmp[1]; stripLin[i * 3 + 2] = tmp[2];
+        }
+        const sMax = Math.max(...stripLin) || 1;
+        for (let i = 0; i < NS * 3; i++) stripLin[i] /= sMax;
+        const tMax = Math.max(...total) || 1;
+        for (let i = 0; i < NS; i++) total[i] /= tMax;
+        const lineMax = scr.map((a) => Math.max(...a) || 1);
+        const res = { key, far: true, NS, scr, total, stripLin, lineMax, avgRGB, norm };
+        if (cfg.store) cfg.store(res);
+        return res;
+    }
+
     function draw3D(ctx, w, h, p, t, cfg) {
         const v = viewOf(p);
         const cam = camera(v, w, h);
-        const F = buildField(cfg);
+        const far = !!cfg.far;
+        const F = far ? buildFar(cfg) : buildField(cfg);
         const lines = cfg.lines, n = lines.length;
-        const instant = cfg.show === 'instant' && n <= 2;
+        const instant = !far && cfg.show === 'instant' && n <= 2;
         const lamV = lines.map((L) => LAM0 * L.lam / 550);
         const om = lines.map((L) => 3.4 * 550 / L.lam);
         const cs = om.map((o) => Math.cos(o * t)), sn = om.map((o) => Math.sin(o * t));
@@ -437,7 +502,8 @@
 
         /* 狹縫板：扣掉狹縫後的直條 */
         const edges = [];
-        cfg.slits.forEach((yc) => edges.push([yc - cfg.a / 2, yc + cfg.a / 2]));
+        if (far) edges.push([-0.09, 0.09]);      // 遠看：整排狹縫小到只剩中間一道細縫（放大圖見左上）
+        else cfg.slits.forEach((yc) => edges.push([yc - cfg.a / 2, yc + cfg.a / 2]));
         edges.sort((a, b) => a[0] - b[0]);
         const plateFill = 'rgba(52,78,88,0.94)', plateEdge = 'rgba(18,49,58,0.6)';
         let ycur = -WV;
@@ -450,7 +516,7 @@
         if (ycur < WV) vpanel(0, ycur, WV, -PH, PH, plateFill, plateEdge);
 
         /* 屏幕：一條一條直條紋 */
-        const NS = F.NS, NSd = Math.min(NS, 160);
+        const NS = F.NS, NSd = far ? NS : Math.min(NS, 160);
         for (let i = 0; i < NSd; i++) {
             const ya = -WV + 2 * WV * i / NSd, yb = -WV + 2 * WV * (i + 1) / NSd + 0.002;
             const si = Math.min(NS - 1, Math.floor((i + 0.5) / NSd * NS));
@@ -502,19 +568,23 @@
         const kIn = lamV.map((l) => 2 * Math.PI / l);
         const gI = F.gainI;
         const vals = new Float32Array(n);
+        const rowU = new Float32Array(iw).fill(NaN), farTmp = [0, 0, 0];
+        let prevOk = false, prevU = 0;
         for (let j2 = 0; j2 < ih; j2++) {
             const py = (j2 + 0.5) * step;
+            prevOk = false;
             for (let i2 = 0; i2 < iw; i2++) {
                 const px = (i2 + 0.5) * step;
                 const ax = (px - cam.cx) / cam.F, ay = -(py - cam.cy) / cam.F;
                 const dz = cam.f[2] + ax * cam.r[2] + ay * cam.u[2];
-                if (dz >= -1e-6) continue;
+                if (dz >= -1e-6) { prevOk = false; rowU[i2] = NaN; continue; }
                 const tt = -cam.E[2] / dz;
                 const X = cam.E[0] + tt * (cam.f[0] + ax * cam.r[0] + ay * cam.u[0]);
                 const Y = cam.E[1] + tt * (cam.f[1] + ax * cam.r[1] + ay * cam.u[1]);
-                if (X < -XI || X > LV || Y < -WV || Y > WV) continue;
+                if (X < -XI || X > LV || Y < -WV || Y > WV) { prevOk = false; rowU[i2] = NaN; continue; }
                 let r = 0, g = 0, b = 0;
                 if (X < 0) {
+                    prevOk = false; rowU[i2] = NaN;
                     // 狹縫前：沿 +x 前進的平面波
                     for (let j = 0; j < n; j++) {
                         const c = lines[j].c;
@@ -522,6 +592,20 @@
                         const k = n > 2 ? 1 : 1;
                         r += c[0] * val * k; g += c[1] * val * k; b += c[2] * val * k;
                     }
+                } else if (far) {
+                    // 方向 u = sinθ；像素涵蓋的 u 範圍取平均，細亮紋才不會漏掉
+                    const rr = Math.hypot(X, Y);
+                    const u = rr > 1e-6 ? Y / rr : 0;
+                    let du = 2 / 32768;
+                    if (prevOk) du = Math.max(du, Math.abs(u - prevU));
+                    const up = rowU[i2];
+                    if (!Number.isNaN(up)) du = Math.max(du, Math.abs(u - up));
+                    prevOk = true; prevU = u; rowU[i2] = u;
+                    F.avgRGB(u - du / 2, u + du / 2, farTmp);
+                    const fade = Math.min(1, rr / 0.25);
+                    r = (1 - Math.exp(-2.6 * farTmp[0] / F.norm)) * fade;
+                    g = (1 - Math.exp(-2.6 * farTmp[1] / F.norm)) * fade;
+                    b = (1 - Math.exp(-2.6 * farTmp[2] / F.norm)) * fade;
                 } else {
                     const fx = X * sx, fy = (Y + WV) * sy;
                     const ix = Math.min(NX - 2, fx | 0), iy = Math.min(NY - 2, fy | 0);
@@ -581,7 +665,9 @@
         };
         // 縫距 d 或縫寬 a（畫在板子上緣之上）
         const zT = PH + 0.45;
-        if (cfg.slits.length >= 2) {
+        const nSl = far ? cfg.N : cfg.slits.length;
+        if (far) { /* 遠看：尺寸畫在左上的放大圖 */ }
+        else if (cfg.slits.length >= 2) {
             const ya = cfg.slits[0], yb = cfg.slits[cfg.slits.length - 1];
             seg([0, ya, zT], [0, yb, zT], C.orange, 1.6);
             seg([0, ya, zT - 0.25], [0, ya, zT + 0.25], C.orange, 1.6);
@@ -596,9 +682,16 @@
         }
         // L
         seg([0, -WV - 0.6, 0], [LV, -WV - 0.6, 0], C.muted, 1.2, [5, 4]);
-        tag([LV * 0.5, -WV - 0.6, 0], 'L（縮短示意）', C.muted, 0, 14);
+        tag([LV * 0.5, -WV - 0.6, 0], far ? 'L ≫ d（實際約一萬倍）' : 'L（縮短示意）', C.muted, 0, 14);
         tag([-XI - 0.15, 0, PH * 0.55 + 0.35], '平行光', C.ink, 0, -4);
-        tag([0, WV, PH], cfg.slits.length >= 2 ? (cfg.slits.length === 2 ? '雙狹縫' : `${cfg.slits.length} 條狹縫`) : '單狹縫', C.ink, 0, -6);
+        tag([0, WV, PH], nSl >= 2 ? (nSl === 2 ? '雙狹縫' : `${nSl} 條狹縫`) : '單狹縫', C.ink, 0, -6);
+        if (far) {
+            seg([0, 0, SH + 0.1], [0, 0, PH + 1.1], C.orange, 1.2);
+            tag([0, 0, PH + 1.3], '狹縫在這裡（太小，看左下放大圖）', C.orange, 0, -2);
+            ctx.font = '11px Outfit, "Noto Sans TC", sans-serif';
+            const nLines = [].concat(...(cfg.notes || []).map((t) => wrapText(ctx, t, w - 24))).length;
+            drawSlitInset(ctx, w, cfg, h - 8 - nLines * 14 - 8);
+        }
         tag([LV, -WV, -PH], '屏幕', C.ink, 0, 16);
         if (cfg.curve) tag([LV, WV, PH + 0.35 + 2.4], '強度', C.muted, 0, -6);
 
@@ -614,6 +707,47 @@
         ctx.fillStyle = 'rgba(238,243,245,0.92)';
         ctx.fillRect(6, ny - 13, w - 12, noteLines.length * 14 + 6);
         noteLines.forEach((ln) => { label(ctx, ln, 10, ny, C.ink, 11); ny += 14; });
+    }
+
+    /* 遠看時的狹縫放大圖：真實的 d、a 和 L 相比小到看不見，另外畫在左上角 */
+    function drawSlitInset(ctx, w, cfg, yBottom) {
+        // 放在左下角、底部說明的上方（那裡通常是空白，不會蓋住狹縫板與屏幕的標示）
+        const narrow = w < 560;
+        const N = cfg.N, bw = narrow ? 150 : Math.min(210, Math.max(160, w * 0.26)), bh = narrow ? 100 : 118, x0 = 10, y0 = Math.max(44, yBottom - bh);
+        ctx.fillStyle = 'rgba(255,255,255,0.94)'; ctx.fillRect(x0, y0, bw, bh);
+        ctx.strokeStyle = 'rgba(201,117,15,0.6)'; ctx.lineWidth = 1; ctx.strokeRect(x0, y0, bw, bh);
+        labelFit(ctx, '狹縫放大圖', x0 + 6, y0 + 14, C.orange, 11, 'left', { maxW: bw - 12, min: 9 });
+        const px = x0 + 46, top = y0 + 24, bot = y0 + bh - 26, span = bot - top;
+        for (let i = 0; i < 3; i++) arrow(ctx, x0 + 6, top + span * (i + 0.5) / 3, px - 8, top + span * (i + 0.5) / 3, 'rgba(11,111,146,0.55)', 1.2);
+        ctx.fillStyle = '#3b5a66'; ctx.fillRect(px - 3, top - 4, 6, span + 8);
+        const cy = (top + bot) / 2;
+        if (N <= 1) {
+            const g = Math.max(4, Math.min(span * 0.6, cfg.al * 10));
+            ctx.fillStyle = '#fff'; ctx.fillRect(px - 4, cy - g / 2, 8, g);
+        } else {
+            const gap = span * 0.9 / (N - 1), sw = Math.max(1, Math.min(gap * 0.5, (cfg.al / cfg.dl) * gap));
+            ctx.fillStyle = '#fff';
+            for (let i = 0; i < N; i++) ctx.fillRect(px - 4, cy - span * 0.45 + i * gap - sw / 2, 8, sw);
+            if (N <= 12) {
+                ctx.strokeStyle = C.orange; ctx.lineWidth = 1.1;
+                const ya = cy - span * 0.45, yb = ya + gap;
+                ctx.beginPath(); ctx.moveTo(px - 10, ya); ctx.lineTo(px - 10, yb); ctx.stroke();
+                label(ctx, 'd', px - 13, (ya + yb) / 2 + 4, C.orange, 10, 'right');
+            }
+        }
+        // 往屏幕的光：從每條縫出發、互相平行
+        const th = 0.32, L = bw - (px - x0) - 14;
+        ctx.save(); ctx.beginPath(); ctx.rect(px, y0 + 20, bw - (px - x0) - 4, bh - 38); ctx.clip();
+        ctx.strokeStyle = 'rgba(194,38,74,0.75)'; ctx.lineWidth = 1;
+        const k = Math.max(1, Math.ceil(N / 8));
+        for (let i = 0; i < Math.max(1, N); i += k) {
+            const y = N <= 1 ? cy : cy - span * 0.45 + i * span * 0.9 / (N - 1);
+            ctx.beginPath(); ctx.moveTo(px + 3, y); ctx.lineTo(px + 3 + L * Math.cos(th), y - L * Math.sin(th)); ctx.stroke();
+        }
+        ctx.restore();
+        const info = N <= 1 ? `a = ${cfg.al} λ₀` : `N = ${N}，d = ${cfg.dl} λ₀，a = ${cfg.al} λ₀`;
+        labelFit(ctx, info, x0 + 6, y0 + bh - 12, C.ink, 10, 'left', { maxW: bw - 12, min: 8 });
+        labelFit(ctx, '到屏幕的光幾乎平行', x0 + bw - 6, y0 + 14, 'rgba(194,38,74,0.9)', 10, 'right', { maxW: bw - 80, min: 8 });
     }
 
     /* 依寬度換行：優先在「，；→」之後斷開（不截字、不切斷數字） */
@@ -942,24 +1076,32 @@
     const lamText = (p) => p.src3 === 'white' ? '白光' : p.src3 === 'two'
         ? (p.comp3 === 'l1' ? `只看 λ₁ = ${p.lam1} nm` : p.comp3 === 'l2' ? `只看 λ₂ = ${p.lam2} nm` : `${p.lam1} + ${p.lam2} nm 合併`) : `${p.lam} nm`;
     function young3D(ctx, w, h, p, t, holder) {
-        const N = Math.max(2, Math.round(p.n3 || 2));
+        const far = p.scale3 !== 'near';
+        const Nset = Math.max(2, Math.round(p.n3 || 2));
+        const N = far ? Nset : Math.min(Nset, 8);           // 近看要逐點算波，縫太多算不動也放不下
         const dv = p.dl * LAM0, av = Math.min(p.al * LAM0, dv * 0.95);
         let slits = [];
         for (let i = 0; i < N; i++) slits.push((i - (N - 1) / 2) * dv);
         const oneOpen = p.open3 === 'one';
         if (oneOpen) slits = [slits[0]];
         const instantOk = p.src3 !== 'white';
-        const notes = [
+        const notes = far ? [
+            oneOpen ? '只開一條縫：只剩單縫繞射的寬亮帶。打開所有縫，同一道光振幅相加 → 寬亮帶裡出現亮紋。'
+                : `遠看：d 比 L 小很多，從各縫到屏幕同一點的光幾乎平行，所以亮紋只由方向決定：d sinθ = nλ。${Nset > 2 ? `N = ${Nset}：縫愈多，亮紋愈細愈銳利。` : ''}`,
+            '水平面畫的是平均亮度（波長太小，瞬間的波看不出來）；想看波怎麼疊加，「比例」切到「近看」。'
+        ] : [
             oneOpen ? '只開一條縫：屏幕上只有單縫繞射的寬亮帶，沒有細條紋。把縫都打開，亮度不是兩個單縫相加，而是振幅相加 → 出現亮暗條紋（同一道光、同調）。'
                 : '狹縫沿上下很長，每個高度的光干涉情形都一樣 → 屏幕上是與狹縫平行的「直條紋」。',
             !instantOk && p.show3 === 'instant' ? '白光各色頻率不同，瞬間圖沒有意義，這裡改畫平均亮度。'
                 : p.src3 === 'two' ? (p.comp3 && p.comp3 !== 'all' ? '分開看：這是其中一色單獨形成的條紋；切回「合併」，兩色的亮度直接相加。' : '兩色頻率不同、各走各的：各自形成條紋，亮度相加，不會互相干涉。')
                     : (p.show3 === 'instant' ? '水平面上：從縫放射出去、一直亮著的線是腹線，打到屏幕就是亮紋。' : '平均亮度：從縫放射出去的亮帶，就是屏幕上亮紋的來源。')
         ];
+        if (!far && Nset > 8) notes[1] = `近看最多畫 8 條縫（設定 ${Nset} 條）；要看 100 條縫，「比例」切到「遠看：L ≫ d」。`;
         draw3D(ctx, w, h, p, t, {
+            far, N: oneOpen ? 1 : N, dl: p.dl, al: Math.min(p.al, p.dl * 0.95),
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 6,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
-            title: `3D：${oneOpen ? '只開 1 條縫（其餘遮住）' : (N === 2 ? '雙' : N + ' 條') + '狹縫'}，${lamText(p)}（d = ${p.dl} λ₀、a = ${(av / LAM0).toFixed(1)} λ₀，尺寸放大示意）`,
+            title: `3D${far ? '（遠看：L ≫ d）' : '（近看：放大示意）'}：${oneOpen ? '只開 1 條縫' : (N === 2 ? '雙' : N + ' 條') + '狹縫'}，${lamText(p)}`,
             notes
         });
     }
@@ -974,16 +1116,21 @@
             { label: '條紋形狀', value: '直條紋（與狹縫平行）' },
             { label: `第 1 亮紋方向 d sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: th1 === null ? '無（d < λ）' : `θ₁ = ${th1.toFixed(1)}°` },
             { label: '單縫包絡第一暗紋 a sinθ = λ', value: env === null ? '無（a < λ）：包絡很寬' : `θ = ${env.toFixed(1)}°` },
-            { label: '縫數 N', value: p.open3 === 'one' ? '只開 1 條：單縫繞射，沒有細條紋' : N === 2 ? '2（雙狹縫）' : `${N}：主亮紋變細，之間有 ${N - 2} 個小亮紋` }
+            { label: '縫數 N', value: p.open3 === 'one' ? '只開 1 條：單縫繞射，沒有細條紋' : N === 2 ? '2（雙狹縫）' : `${N}：主亮紋寬約 2/N，之間有 ${N - 1} 個暗紋、${N - 2} 個小亮紋${p.scale3 === 'near' && N > 8 ? '（近看只畫 8 條）' : ''}` }
         ];
     }
     function single3D(ctx, w, h, p, t, holder) {
         const av = p.aw3 * LAM0;
+        const far = p.scale3 !== 'near';
         draw3D(ctx, w, h, p, t, {
+            far, N: 1, dl: 0, al: p.aw3,
             slits: [0], a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
-            title: `3D：單狹縫，${lamText(p)}（a = ${p.aw3} λ₀，尺寸放大示意）`,
-            notes: [
+            title: `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：單狹縫，${lamText(p)}（a = ${p.aw3} λ₀）`,
+            notes: far ? [
+                '遠看：縫寬 a 比 L 小很多，亮度只由方向決定；a sinθ = mλ 的方向是暗紋，中央亮帶最寬最亮。',
+                '水平面畫的是平均亮度；想看縫上各點的子波怎麼疊加，「比例」切到「近看」。'
+            ] : [
                 '縫上每一點都發出子波（惠更斯）；縫沿上下很長，所以屏幕上同樣是直條紋。',
                 p.src3 === 'white' && p.show3 === 'instant' ? '白光各色頻率不同，瞬間圖沒有意義，這裡改畫平均亮度。'
                     : 'a 愈小，中央亮帶張得愈開；a sinθ = λ 的方向子波成對抵消，是第一暗紋。'
@@ -1042,8 +1189,11 @@
         ctx.fillRect(xp - 4, 28, 8, sh - 52);
         ctx.fillStyle = '#f7f9fa';
         const slitH = Math.max(2, Math.min(6, gap * 0.35 || 6));
-        ys.forEach((y) => ctx.fillRect(xp - 5, y - slitH / 2, 10, slitH));
-        ys.forEach((y, i) => { ctx.fillStyle = hue(i); ctx.beginPath(); ctx.arc(xp, y, N > 14 ? 2 : 3, 0, Math.PI * 2); ctx.fill(); });
+        if (N > 60) { ctx.fillStyle = 'rgba(255,255,255,0.85)'; ctx.fillRect(xp - 5, ys[N - 1] - 1, 10, ys[0] - ys[N - 1] + 2); }
+        else {
+            ys.forEach((y) => ctx.fillRect(xp - 5, y - slitH / 2, 10, slitH));
+            ys.forEach((y, i) => { ctx.fillStyle = hue(i); ctx.beginPath(); ctx.arc(xp, y, N > 14 ? 2 : 3, 0, Math.PI * 2); ctx.fill(); });
+        }
         for (let i = 0; i < 4; i++) { const yy = 34 + (sh - 46) * (i + 0.5) / 4; arrow(ctx, 6, yy, xp - 10, yy, 'rgba(11,111,146,0.55)', 1.3); }
         // 光線：往 θ 方向（畫面上往右上為正）
         const th = p.mth * Math.PI / 180;
@@ -1052,7 +1202,9 @@
         ctx.save(); ctx.beginPath(); ctx.rect(0, 26, sw, sh - 44); ctx.clip();
         // 垂直於光線、通過最上方（i = N−1）或最下方縫的參考線：光程差從這裡量
         const iRef = s >= 0 ? N - 1 : 0;
+        const rayK = Math.max(1, Math.ceil(N / 30));           // 縫很多時只畫一部分光線
         ys.forEach((y, i) => {
+            if (i % rayK && i !== N - 1) return;
             const proj = (ys[iRef] - y) * uy;                 // 到參考波前多走的路（像素）
             ctx.strokeStyle = hue(i, N > 14 ? 0.55 : 0.85); ctx.lineWidth = N > 14 ? 1 : 1.6;
             ctx.beginPath(); ctx.moveTo(xp, y); ctx.lineTo(xp + ux * Lr, y + uy * Lr); ctx.stroke();
@@ -1107,7 +1259,10 @@
         for (let i = 0; i < N; i++) {
             const [x1, y1] = pts[i], [x2, y2] = pts[i + 1];
             const nx = 0, ny = back * (i % 2 ? -1 : 1);
-            arrow(ctx, ox + x1 + nx, oy + y1 + ny, ox + x2 + nx, oy + y2 + ny, hue(i), N > 16 ? 1.4 : 2);
+            if (N > 40) {
+                ctx.strokeStyle = hue(i); ctx.lineWidth = 1.6;
+                ctx.beginPath(); ctx.moveTo(ox + x1, oy + y1); ctx.lineTo(ox + x2, oy + y2); ctx.stroke();
+            } else arrow(ctx, ox + x1 + nx, oy + y1 + ny, ox + x2 + nx, oy + y2 + ny, hue(i), N > 16 ? 1.4 : 2);
         }
         const [xe, ye] = pts[N];
         const R = Math.hypot(xe, ye);
@@ -1137,9 +1292,12 @@
         const plot = (fn, col, lw, dash) => {
             ctx.save(); if (dash) ctx.setLineDash(dash);
             ctx.strokeStyle = col; ctx.lineWidth = lw; ctx.beginPath();
+            // 縫很多時亮紋比一個像素還細：每個像素取 8 個點的最大值，亮紋才不會漏畫
             const n = Math.round(gx1 - gx0);
             for (let i = 0; i <= n; i++) {
-                const v = -1 + 2 * i / n, Y = yOf(fn(v));
+                let m = 0;
+                for (let k = 0; k < 8; k++) m = Math.max(m, fn(-1 + 2 * (i + (k - 3.5) / 8) / n));
+                const Y = yOf(m);
                 i ? ctx.lineTo(gx0 + i, Y) : ctx.moveTo(gx0, Y);
             }
             ctx.stroke(); ctx.restore();
