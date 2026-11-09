@@ -282,7 +282,8 @@
         oblique: { yaw: -2.0, pitch: 0.50, zoom: 1, tx: LV * 0.42, D: 33 },
         top: { yaw: -Math.PI / 2, pitch: 1.45, zoom: 1, tx: LV * 0.42, D: 33 },
         screen: { yaw: Math.PI + 0.32, pitch: 0.22, zoom: 1.5, tx: LV, D: 13 },
-        side: { yaw: -Math.PI / 2, pitch: 0.16, zoom: 1, tx: LV * 0.42, D: 33 }
+        side: { yaw: -Math.PI / 2, pitch: 0.16, zoom: 1, tx: LV * 0.42, D: 33 },
+        slits: { yaw: -0.85, pitch: 0.3, zoom: 5, tx: 0, D: 33 }
     };
     const viewOf = (p) => p._view || (p._view = Object.assign({}, PRESETS[p.cam] || PRESETS.oblique));
 
@@ -502,8 +503,18 @@
 
         /* 狹縫板：扣掉狹縫後的直條 */
         const edges = [];
-        if (far) edges.push([-0.09, 0.09]);      // 遠看：整排狹縫小到只剩中間一道細縫（放大圖見左上）
-        else cfg.slits.forEach((yc) => edges.push([yc - cfg.a / 2, yc + cfg.a / 2]));
+        if (far) {
+            /* 遠看：真實的 d 比 L 小一萬倍，照比例畫會看不見。板子上仍照 N、d、a 的比例畫出每一條縫
+             * （整排寬度壓在約 1.6 個單位內），放大視角就看得到縫數與間距的變化。 */
+            const N = Math.max(1, cfg.N);
+            let dv = 0.07 * (cfg.dl || 1);
+            if (N > 1 && (N - 1) * dv > 1.6) dv = 1.6 / (N - 1);
+            const av = N > 1 ? Math.min(dv * 0.9, dv * cfg.al / cfg.dl) : 0.07 * cfg.al;
+            for (let i = 0; i < N; i++) {
+                const yc = (i - (N - 1) / 2) * dv;
+                edges.push([yc - av / 2, yc + av / 2]);
+            }
+        } else cfg.slits.forEach((yc) => edges.push([yc - cfg.a / 2, yc + cfg.a / 2]));
         edges.sort((a, b) => a[0] - b[0]);
         const plateFill = 'rgba(52,78,88,0.94)', plateEdge = 'rgba(18,49,58,0.6)';
         let ycur = -WV;
@@ -687,7 +698,7 @@
         tag([0, WV, PH], nSl >= 2 ? (nSl === 2 ? '雙狹縫' : `${nSl} 條狹縫`) : '單狹縫', C.ink, 0, -6);
         if (far) {
             seg([0, 0, SH + 0.1], [0, 0, PH + 1.1], C.orange, 1.2);
-            tag([0, 0, PH + 1.3], '狹縫在這裡（太小，看左下放大圖）', C.orange, 0, -2);
+            tag([0, 0, PH + 1.3], '狹縫在這裡（「視角」選「看狹縫」可放大）', C.orange, 0, -2);
             ctx.font = '11px Outfit, "Noto Sans TC", sans-serif';
             const nLines = [].concat(...(cfg.notes || []).map((t) => wrapText(ctx, t, w - 24))).length;
             drawSlitInset(ctx, w, cfg, h - 8 - nLines * 14 - 8);
@@ -725,12 +736,20 @@
             const g = Math.max(4, Math.min(span * 0.6, cfg.al * 10));
             ctx.fillStyle = '#fff'; ctx.fillRect(px - 4, cy - g / 2, 8, g);
         } else {
-            const gap = span * 0.9 / (N - 1), sw = Math.max(1, Math.min(gap * 0.5, (cfg.al / cfg.dl) * gap));
-            ctx.fillStyle = '#fff';
-            for (let i = 0; i < N; i++) ctx.fillRect(px - 4, cy - span * 0.45 + i * gap - sw / 2, 8, sw);
+            const gap = Math.min(span * 0.9 / (N - 1), 22), sw = Math.max(1, Math.min(gap * 0.5, (cfg.al / cfg.dl) * gap));
+            const y0s = cy - gap * (N - 1) / 2;
+            if (gap < 3) {
+                // 縫太密：畫成一段淺色的縫區，旁邊註明條數
+                ctx.fillStyle = 'rgba(255,255,255,0.8)'; ctx.fillRect(px - 4, y0s, 8, gap * (N - 1));
+                ctx.fillStyle = 'rgba(59,90,102,0.55)';
+                for (let i = 0; i < N; i += Math.max(1, Math.round(2 / gap))) ctx.fillRect(px - 4, y0s + i * gap, 8, 0.6);
+            } else {
+                ctx.fillStyle = '#fff';
+                for (let i = 0; i < N; i++) ctx.fillRect(px - 4, y0s + i * gap - sw / 2, 8, sw);
+            }
             if (N <= 12) {
                 ctx.strokeStyle = C.orange; ctx.lineWidth = 1.1;
-                const ya = cy - span * 0.45, yb = ya + gap;
+                const ya = y0s, yb = ya + gap;
                 ctx.beginPath(); ctx.moveTo(px - 10, ya); ctx.lineTo(px - 10, yb); ctx.stroke();
                 label(ctx, 'd', px - 13, (ya + yb) / 2 + 4, C.orange, 10, 'right');
             }
@@ -741,7 +760,8 @@
         ctx.strokeStyle = 'rgba(194,38,74,0.75)'; ctx.lineWidth = 1;
         const k = Math.max(1, Math.ceil(N / 8));
         for (let i = 0; i < Math.max(1, N); i += k) {
-            const y = N <= 1 ? cy : cy - span * 0.45 + i * span * 0.9 / (N - 1);
+            const gp = Math.min(span * 0.9 / Math.max(1, N - 1), 22);
+            const y = N <= 1 ? cy : cy - gp * (N - 1) / 2 + i * gp;
             ctx.beginPath(); ctx.moveTo(px + 3, y); ctx.lineTo(px + 3 + L * Math.cos(th), y - L * Math.sin(th)); ctx.stroke();
         }
         ctx.restore();
@@ -795,7 +815,7 @@
             if (pts.size >= 2 && pinch) {
                 const [a, b] = [...pts.values()];
                 const d = Math.hypot(a[0] - b[0], a[1] - b[1]);
-                v.zoom = Math.max(0.5, Math.min(2.6, pinch.z * d / Math.max(pinch.d, 1)));
+                v.zoom = Math.max(0.5, Math.min(12, pinch.z * d / Math.max(pinch.d, 1)));
                 paint(); return;
             }
             if (!last) { last = pt; return; }
@@ -814,7 +834,7 @@
             if (!isOn(params)) return;
             e.preventDefault();
             const v = viewOf(params);
-            v.zoom = Math.max(0.5, Math.min(2.6, v.zoom * Math.exp(-e.deltaY * 0.0012)));
+            v.zoom = Math.max(0.5, Math.min(12, v.zoom * Math.exp(-e.deltaY * 0.0012)));
             paint();
         }, { passive: false });
     }
