@@ -62,7 +62,7 @@
     <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
     <script data-page-required src="assets/js/wave-runtime.js"></script>
-    <link rel="stylesheet" href="assets/css/interaction-runtime.css">
+    <link rel="stylesheet" href="assets/css/interaction-runtime.css?v=steps_20261109">
 
     <script data-page-required src="data/modulesData.js?v=slits_20261109b"></script>
     <script data-page-required src="data/learningGuide.js?v=swing_20261005"></script>
@@ -1692,10 +1692,17 @@
                             <select id="${prefix}${id}-${c.key}" class="lab-select">${opts}</select>
                         </div>`;
                 }
+                /* 滑桿右邊的 ▲▼：一次只動一格（按住會連續調整），範圍很大的滑桿也能精準設定 */
                 return `
                     <div class="lab-control" id="${prefix}${id}-${c.key}-wrap">
                         <label for="${prefix}${id}-${c.key}">${c.label}<b id="${prefix}${id}-${c.key}-out"></b></label>
-                        <input type="range" id="${prefix}${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
+                        <div class="lab-range-row">
+                            <input type="range" id="${prefix}${id}-${c.key}" min="${c.min}" max="${c.max}" step="${c.step}" value="${c.value}">
+                            <span class="lab-stepper">
+                                <button type="button" class="lab-step" data-step-for="${prefix}${id}-${c.key}" data-dir="1" aria-label="${c.label}：增加一格">▲</button>
+                                <button type="button" class="lab-step" data-step-for="${prefix}${id}-${c.key}" data-dir="-1" aria-label="${c.label}：減少一格">▼</button>
+                            </span>
+                        </div>
                     </div>`;
             };
             const controls = (lab.controls || []).map(controlHtml).join('');
@@ -1865,6 +1872,35 @@
                         syncOutputs(); paint();
                     });
                 }
+            });
+
+            /* ▲▼ 微調：點一下動一格；按住 0.4 秒後連續調整、愈按愈快 */
+            host.querySelectorAll('.lab-step[data-step-for]').forEach((btn) => {
+                const input = document.getElementById(btn.dataset.stepFor);
+                if (!input) return;
+                const dir = Number(btn.dataset.dir) || 1;
+                const bump = () => {
+                    const step = Number(input.step) || 1, min = Number(input.min), max = Number(input.max);
+                    const dec = (String(input.step).split('.')[1] || '').length;
+                    const next = Math.min(max, Math.max(min, Number(input.value) + dir * step));
+                    if (next === Number(input.value)) return false;
+                    input.value = next.toFixed(dec);
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    return true;
+                };
+                let timer = null, hold = false;
+                const stop = () => { if (timer) clearTimeout(timer); timer = null; };
+                disposers.add(stop);
+                disposers.addEventListener(btn, 'pointerdown', (e) => {
+                    if (e.button !== undefined && e.button !== 0) return;
+                    hold = false; stop();
+                    let delay = 400;
+                    const tick = () => { hold = true; if (!bump()) { stop(); return; } delay = Math.max(35, delay * 0.82); timer = setTimeout(tick, delay); };
+                    timer = setTimeout(tick, delay);
+                });
+                ['pointerup', 'pointerleave', 'pointercancel'].forEach((ev) => disposers.addEventListener(btn, ev, stop));
+                // 一般點擊（含鍵盤 Enter／空白鍵）：若剛才是按住連續調整就不再多加一格
+                disposers.addEventListener(btn, 'click', () => { if (!hold) bump(); hold = false; });
             });
 
             (lab.extraButtons || []).forEach((b) => {

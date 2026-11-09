@@ -84,6 +84,44 @@
     cursor: pointer;
 }
 
+/* 滑桿＋右側 ▲▼ 微調鈕 */
+.lab-range-row {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+.lab-range-row input[type="range"] { flex: 1; min-width: 0; }
+.lab-stepper {
+    display: flex;
+    flex-direction: column;
+    flex: none;
+    border: 1px solid rgba(15, 60, 80, 0.2);
+    border-radius: 7px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.95);
+}
+.lab-step {
+    width: 30px;
+    height: 20px;
+    padding: 0;
+    border: 0;
+    background: transparent;
+    color: hsl(190, 95%, 28%);
+    font-size: 0.7rem;
+    line-height: 1;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.lab-step + .lab-step { border-top: 1px solid rgba(15, 60, 80, 0.14); }
+.lab-step:hover { background: rgba(14, 139, 147, 0.12); }
+.lab-step:active { background: rgba(14, 139, 147, 0.24); }
+.lab-step:focus-visible { outline: 2px solid hsl(190, 95%, 34%); outline-offset: -2px; }
+@media (pointer: coarse) {
+    .lab-step { width: 38px; height: 24px; font-size: 0.72rem; }
+}
+
 .lab-select {
     width: 100%;
     padding: 0.38rem 0.65rem;
