@@ -8162,9 +8162,10 @@
                 // 屏幕（共軛模式）
                 const scrX = conj ? sx(g.L) : null;
                 if (conj) {
-                    ctx.fillStyle = '#d9dee0'; ctx.fillRect(scrX, axisY - 80, 6, 160);
-                    ctx.strokeStyle = '#7d8c91'; ctx.lineWidth = 1; ctx.strokeRect(scrX, axisY - 80, 6, 160);
-                    labelFit(ctx, '屏幕', scrX + 3, axisY + 98, C.muted, 10, 'center', { clampW: w, plate: 1 });
+                    /* 屏幕畫滿整個圖區高度：放大的實像（|m| 大）也落得在屏幕上，不會畫到屏幕外面 */
+                    ctx.fillStyle = '#d9dee0'; ctx.fillRect(scrX, top, 6, bottom - top);
+                    ctx.strokeStyle = '#7d8c91'; ctx.lineWidth = 1; ctx.strokeRect(scrX, top, 6, bottom - top);
+                    labelFit(ctx, '屏幕', scrX + 3, bottom + 14, C.muted, 10, 'center', { clampW: w, plate: 1 });
                 }
 
                 // 光線：在圖區內裁切；虛線為反向延長線
@@ -8216,24 +8217,32 @@
                 label(ctx, '物', Ox - 16, Oy + 4, C.green, 12);
 
                 // 共軛模式：屏幕上的像（清楚或模糊）
+                /* 清楚時只畫一支清楚的像；不清楚時才畫一團模糊的光斑（兩者疊在一起會像抖動的殘影）。
+                 * 一律裁切在圖區內，像太大時就像真實的屏幕一樣只看得到一部分。 */
                 if (conj && q !== null && q > 0) {
-                    const blur = Math.min(40, Math.abs(q - g.s) / q * 70 * vScale / 6);
                     const Iy = sy(m * ho), hy = axisY + (Iy - axisY) * (g.s / q);
-                    ctx.save();
-                    const grd = ctx.createLinearGradient(0, Math.min(axisY, hy) - blur, 0, Math.max(axisY, hy) + blur);
-                    grd.addColorStop(0, 'rgba(18,128,92,0)'); grd.addColorStop(0.5, `rgba(18,128,92,${Math.max(0.15, 0.85 - blur / 50)})`); grd.addColorStop(1, 'rgba(18,128,92,0)');
-                    ctx.fillStyle = grd;
-                    ctx.fillRect(scrX - 2 - blur * 0.2, Math.min(axisY, hy) - blur, 10 + blur * 0.4, Math.abs(hy - axisY) + 2 * blur);
-                    ctx.restore();
-                    if (g.sharp) arrow(ctx, scrX + 3, axisY, scrX + 3, hy, C.green, 2.4);
+                    clip(() => {
+                        if (g.sharp) { arrow(ctx, scrX + 3, axisY, scrX + 3, hy, C.green, 2.6); return; }
+                        const blur = Math.min(40, Math.max(3, Math.abs(q - g.s) / q * 70 * vScale / 6));
+                        const grd = ctx.createLinearGradient(0, Math.min(axisY, hy) - blur, 0, Math.max(axisY, hy) + blur);
+                        grd.addColorStop(0, 'rgba(18,128,92,0)'); grd.addColorStop(0.5, `rgba(18,128,92,${Math.max(0.15, 0.85 - blur / 50)})`); grd.addColorStop(1, 'rgba(18,128,92,0)');
+                        ctx.fillStyle = grd;
+                        ctx.fillRect(scrX - 2 - blur * 0.2, Math.min(axisY, hy) - blur, 10 + blur * 0.4, Math.abs(hy - axisY) + 2 * blur);
+                    });
                 }
                 // 像（答案）
                 if (p.show) {
                     if (q === null) labelFit(ctx, '物在焦點上：折射光互相平行，無法成像', 14, 22, C.rose, 12, 'left', { clampW: w });
                     else {
                         const Ix = sx(lensCm + q), Iy = sy(m * ho), imgCol = q > 0 ? C.blue : C.violet;
-                        clip(() => arrow(ctx, Ix, axisY, Ix, Iy, imgCol, 2.8));
-                        if (Ix > 8 && Ix < w - 8) labelFit(ctx, q > 0 ? '實像' : '虛像', Ix + 8, Math.max(top + 14, Math.min(bottom - 4, Iy + (Iy < axisY ? -6 : 15))), imgCol, 12, 'left', { clampW: w, plate: 1 });
+                        // 共軛模式下像剛好落在屏幕上時，屏幕上的像就是答案，不再重疊畫第二支
+                        const onScreen = conj && g.sharp && Math.abs(Ix - scrX) < 10;
+                        if (!onScreen) clip(() => arrow(ctx, Ix, axisY, Ix, Iy, imgCol, 2.8));
+                        const tooTall = Iy < top || Iy > bottom;
+                        const lblY = onScreen ? (Iy > axisY ? axisY - 10 : axisY + 34)                       // 標在像的另一側，不壓到焦點標記
+                            : Math.max(top + 14, Math.min(bottom - 4, Iy + (Iy < axisY ? -6 : 15)));
+                        const lblTxt = (q > 0 ? (onScreen ? '實像（清楚成像在屏幕上）' : '實像') : '虛像') + (tooTall ? `，像高 ${Math.abs(m * ho).toFixed(1)} cm 超出畫面` : '');
+                        if (Ix > 8 && Ix < w - 8) labelFit(ctx, lblTxt, (onScreen ? scrX + 6 : Ix) + 8, lblY, imgCol, 12, 'left', { clampW: w, plate: 1 });
                         else labelFit(ctx, `${q > 0 ? '實像' : '虛像'}在畫面${Ix >= w - 8 ? '右' : '左'}方之外`, Ix >= w - 8 ? w - 10 : 10, axisY - 10, imgCol, 11, Ix >= w - 8 ? 'right' : 'left', { clampW: w, plate: 1 });
                         label(ctx, `p = ${po} cm　f = ${f} cm　q = ${q.toFixed(1)} cm　m = ${m.toFixed(2)}`, 14, 22, C.ink, 12);
                     }
