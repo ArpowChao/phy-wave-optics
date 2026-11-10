@@ -984,6 +984,445 @@
         ];
     }
 
+    /* ---- 單狹縫：用固定的實際屏幕座標比較參數 ---- */
+    const singleScreenHalf = (p) => Number(p.screenMm) || 40;
+    function singleScreen(p) {
+        const Lmm = p.L * 1000, ratio = p.lam / (p.a * 1000);
+        const qAt = (yMm) => sinT(yMm, Lmm) / ratio;
+        const darkAt = (m) => Lmm * Math.tan(Math.asin(m * ratio));
+        const order = Math.round(p.zones / 2);
+        const y = p.mode === 'cancel' ? darkAt(order) : p.yMm;
+        const q = qAt(y), nearest = Math.round(q);
+        const isDark = nearest >= 1 && Math.abs(q - nearest) < 0.04;
+        const verdict = isDark ? `第 ${nearest} 暗紋` : q < 1 ? '中央亮紋範圍內' : '亮暗之間';
+        return { halfMm: singleScreenHalf(p), qAt, darkAt, y, q, order, verdict, isDark,
+            intensity: sinc2(Math.PI * q), centralWidth: 2 * darkAt(1) };
+    }
+
+    /* 兩列同頻、等振幅波：A = cos(ωt)，B = cos(ωt + Δφ)。 */
+    const PHASE_TICKS = ['0', 'π/2', 'π', '3π/2', '2π'];
+    function phaseAngle(degrees) {
+        return degrees % 90 === 0 ? PHASE_TICKS[degrees / 90] : `${(degrees / 180).toFixed(3)}π`;
+    }
+    function wavePair(delta, a = 1, b = 1) {
+        const A = { re: a, im: 0 }, B = { re: b * Math.cos(delta), im: b * Math.sin(delta) };
+        const sum = { re: A.re + B.re, im: A.im + B.im };
+        const amplitude = Math.hypot(sum.re, sum.im);
+        return { A, B, sum, delta, amplitude, relative: (amplitude / 2) ** 2 };
+    }
+    function twoWavePhase(degrees) {
+        const result = degrees === 0 || degrees === 360 ? '完全相長' : degrees === 180 ? '完全相消' : '部分疊加';
+        return { ...wavePair(degrees * Math.PI / 180), result };
+    }
+    function phaseReadouts(p) {
+        const { amplitude, relative, result } = twoWavePhase(p.phaseDeg);
+        return [
+            { label: '相位差 Δφ', value: `${phaseAngle(p.phaseDeg)}（${p.phaseDeg}°）` },
+            { label: '合成振幅（單波 = 1）', value: amplitude.toFixed(3) },
+            { label: '相對強度（同相 = 100%）', value: `${(100 * relative).toFixed(1)}%` },
+            { label: '干涉結果', value: result }
+        ];
+    }
+
+    function wavePlotTools(ctx, w) {
+        const panel = (x, y, ww, hh) => {
+            ctx.fillStyle = '#fff'; ctx.fillRect(x, y, ww, hh);
+            ctx.strokeStyle = 'rgba(18,49,58,0.17)'; ctx.lineWidth = 1; ctx.strokeRect(x, y, ww, hh);
+        };
+        const textAt = (text, x, y, col, width, size = 11, align = 'left') =>
+            labelFit(ctx, text, x, y, col, size, align, { maxW: width, min: 9, clampW: w });
+        const dot = (x, y, r, color) => {
+            ctx.fillStyle = color; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
+        };
+        const line = (x1, y1, x2, y2, color, width = 1) => {
+            ctx.strokeStyle = color; ctx.lineWidth = width;
+            ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        };
+        return { panel, textAt, dot, line };
+    }
+
+    function drawPairWaves(ctx, w, waveTop, waveH, pair, phase, title, legends) {
+        const { panel, textAt, dot, line } = wavePlotTools(ctx, w);
+        const pad = 8, turn = 2 * Math.PI * phase;
+        const reAt = (z, a) => z.re * Math.cos(a) - z.im * Math.sin(a);
+        // 先看兩列波形；同一條時間游標標出 A、B 和合成波的瞬時值。
+        panel(pad, waveTop, w - 2 * pad, waveH);
+        textAt(title, pad + 8, waveTop + 20, C.ink, w - 32, 12);
+        const plotX = pad + 34, plotEnd = w - pad - 18, plotW = plotEnd - plotX;
+        const traces = [pair.A, pair.B, pair.sum], inks = [C.orange, C.blue, C.ink];
+        legends.forEach((txt, i) => textAt(txt, plotX + i * plotW / 3, waveTop + 40, inks[i], plotW / 3 - 8));
+        const gy0 = waveTop + 55, gy1 = waveTop + waveH - 34, mid = (gy0 + gy1) / 2, scale = (gy1 - gy0) / 4;
+        const yOf = (z, a) => mid - scale * reAt(z, a);
+        for (const [txt, y] of [['+2', gy0], ['0', mid], ['−2', gy1]]) {
+            line(plotX, y, plotEnd, y, 'rgba(18,49,58,0.16)');
+            textAt(txt, plotX - 6, y + 4, C.muted, 22, 10, 'right');
+        }
+        const sameAsSum = traces.findIndex((z, i) => i < 2 && (z.re !== 0 || z.im !== 0) && z.re === pair.sum.re && z.im === pair.sum.im);
+        const order = sameAsSum < 0 ? [0, 1, 2] : [2, 1 - sameAsSum, sameAsSum];
+        order.forEach((i) => {
+            const z = traces[i];
+            ctx.save();
+            if (i === 1 || i === sameAsSum) ctx.setLineDash([5, 3]);
+            ctx.strokeStyle = inks[i]; ctx.lineWidth = i === 2 ? (sameAsSum < 0 ? 2.5 : 3.4) : 1.7; ctx.beginPath();
+            for (let j = 0; j <= 120; j++) {
+                const u = j / 120, x = plotX + plotW * u, y = yOf(z, 2 * Math.PI * u);
+                if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+            }
+            ctx.stroke(); ctx.restore();
+        });
+        const cursorX = plotX + plotW * phase;
+        dashed(ctx, cursorX, gy0, cursorX, gy1, C.muted);
+        order.forEach((i) => dot(cursorX, yOf(traces[i], turn), i === 2 && sameAsSum >= 0 ? 4 : 3, inks[i]));
+        for (const [txt, u] of [['0', 0], ['半週期', 0.5], ['一週期', 1]]) {
+            textAt(txt, plotX + u * plotW, gy1 + 20, C.muted, 52, 10, u === 1 ? 'right' : 'center');
+        }
+    }
+
+    function phaseDraw(ctx, w, h, p, t, cycle) {
+        const pair = twoWavePhase(p.phaseDeg), { relative, result } = pair;
+        const { panel, textAt, dot, line } = wavePlotTools(ctx, w);
+        const pad = 8, waveH = w >= 640 ? 274 : 238, graphTop = pad + waveH + 10;
+        drawPairWaves(ctx, w, pad, waveH, pair, (t / cycle) % 1, '同一位置的波形：逐時刻相加', ['波 A', '波 B', '合成 A＋B']);
+        // 下方用 0～2π 刻度對照相位差和時間平均強度。
+        panel(pad, graphTop, w - 2 * pad, h - graphTop - pad);
+        textAt('相位差與相對強度', pad + 8, graphTop + 20, C.ink, w - 32, 12);
+        const ix0 = pad + 34, ix1 = w - pad - 18, iy0 = graphTop + 38, iy1 = h - 57;
+        const ix = (u) => ix0 + (ix1 - ix0) * u, iy = (v) => iy1 - (iy1 - iy0) * v;
+        for (const [txt, v] of [['100%', 1], ['50%', 0.5], ['0%', 0]]) {
+            line(ix0, iy(v), ix1, iy(v), 'rgba(18,49,58,0.18)');
+            textAt(txt, ix0 - 4, iy(v) + 3, C.muted, 26, 9, 'right');
+        }
+        PHASE_TICKS.forEach((txt, i) => {
+            const x = ix(i / 4);
+            line(x, iy1, x, iy1 + 4, C.muted);
+            textAt(txt, x, iy1 + 17, C.muted, 25, 10, 'center');
+        });
+        ctx.strokeStyle = C.violet; ctx.lineWidth = 2.3; ctx.beginPath();
+        for (let i = 0; i <= 120; i++) {
+            const u = i / 120, x = ix(u), y = iy(Math.cos(Math.PI * u) ** 2);
+            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        const mx = ix(p.phaseDeg / 360), my = iy(relative);
+        dashed(ctx, mx, my, mx, iy1, C.rose);
+        dot(mx, my, 4, C.rose);
+        textAt(`${result}・${(100 * relative).toFixed(1)}%`, pad + 8, h - 17, C.rose, w - 32);
+    }
+
+    const youngInquiryModels = {
+        parallel: { title: '直線模型・光沿直線前進', rule: '亮點在各狹縫的正後方', note: '縫距與落點間隔已放大' },
+        fan: { title: '分岔模型・每縫射出幾條直線', rule: '只有光線打到的位置才亮', note: '左右拖曳屏幕，數屏幕內的亮點' },
+        rope: { title: '繩波模型・看 P 處的位移疊加', rule: '波峰遇波谷，位移可以抵消', note: '三列波形使用相同的位移尺度' },
+        wifi: { title: 'Wi‑Fi 波穿過雙狹縫', rule: '各縫先繞射，兩道波重疊後干涉', note: '同一發射源・波前為示意' },
+        add: { title: '對照：每一縫都照亮整面屏幕', rule: '只加兩條縫各自的亮度', note: '每一縫都提供均勻照明' }
+    };
+    const youngInquiryStep = 0.0005; // mm；可表示控制項允許的縫距所對應的落點。
+    const youngFanSlopes = [-0.018, -0.011, -0.0037, 0.006, 0.014];
+    const youngFanSlitGap = 12; // mm，分岔示意的固定縫距
+    const youngFanNear = 0.3, youngFanFar = 2.5; // m，對應屏幕距離滑桿
+    const youngWifi = { half: 1000, separation: 450, wavelength: 125, slit: 60 }; // mm
+
+    /* 直線模型用離散的射線落點；波模型用兩路的振幅疊加。長度用 mm。 */
+    function youngInquiryState(p) {
+        const model = youngInquiryModels[p.inquiryModel] ? p.inquiryModel : 'parallel';
+        const info = youngInquiryModels[model];
+        const wifi = model === 'wifi', wave = wifi || model === 'rope';
+        const L = p.L * 1000, d = wifi ? youngWifi.separation : p.d * 0.001;
+        const lam = wifi ? youngWifi.wavelength : p.lam * 1e-6;
+        const half = wifi ? youngWifi.half : model === 'parallel' ? 0.25 : Number(p.inquiryMm);
+        const qAt = (y) => {
+            const r1 = Math.hypot(L, y - d / 2), r2 = Math.hypot(L, y + d / 2);
+            return 2 * y * d / ((r1 + r2) * lam);
+        };
+        const yAt = (q) => {
+            const diff = q * lam;
+            return diff / 2 * Math.hypot(1, 2 * L / Math.sqrt(d * d - diff * diff));
+        };
+        const y = p.inquiryPoint === 'manual' ? p.inquiryY : yAt(p.inquiryPoint === 'dark' ? 0.5 : p.inquiryPoint === 'bright' ? 1 : 0);
+        const sources = [d / 2, -d / 2].map((center, i) => ({
+            center,
+            open: p.inquirySlits !== (i ? 's1' : 's2'),
+            fanOrigin: (i ? -1 : 1) * youngFanSlitGap / 2,
+            points: model === 'fan' ? youngFanSlopes.map(slope => (i ? -1 : 1) * (youngFanSlitGap / 2 + L * slope))
+                : model === 'parallel' ? [center] : null
+        }));
+        const samePoint = (a, b) => Math.abs(a - b) < youngInquiryStep / 2;
+        const points = [];
+        for (const source of sources) {
+            if (!source.open || !source.points) continue;
+            for (const point of source.points) {
+                if (!points.some(other => samePoint(other, point))) points.push(point);
+            }
+        }
+        const reaches = (source, at) => source.open && (!source.points || source.points.some(point => samePoint(at, point)));
+        const amplitude = (source, at) => source.open
+            ? wifi ? Math.sqrt(sinc2(Math.PI * youngWifi.slit * sinT(at - source.center, L) / lam)) : 1
+            : 0;
+        const pairAt = (at) => wavePair(-2 * Math.PI * qAt(at), amplitude(sources[0], at), amplitude(sources[1], at));
+        const atP = sources.map(source => reaches(source, y));
+        const at = (position) => wave ? pairAt(position).relative
+            : sources.filter(source => reaches(source, position)).length / 2;
+        return { model, info, wifi, wave, half, y, sources, points, amplitude, pairAt, atP, at };
+    }
+
+    function youngInquiryReadouts(p) {
+        const s = youngInquiryState(p);
+        const count = s.atP.filter(Boolean).length;
+        const who = count === 2 ? 'S₁、S₂' : count === 0 ? '沒有光線打到' : s.atP[0] ? '只有 S₁' : '只有 S₂';
+        let pattern = '整面均勻受光';
+        if (s.sources[0].points) pattern = `${s.points.filter(point => Math.abs(point) <= s.half).length} 個亮點`;
+        else if (s.wifi) pattern = count === 2 ? '訊號強弱相間' : '單縫繞射';
+        else if (s.wave) pattern = count === 2 ? '亮暗紋相間' : '只剩單列波';
+        const intensity = s.at(s.y);
+        let result = ['暗・沒有光線打到', '亮・一條光線打到', '較亮・兩路同時到達'][count];
+        if (s.wifi) result = intensity < 0.001 ? '接收訊號極弱' : `相對接收強度 ${(100 * intensity).toFixed(0)}%`;
+        else if (s.wave) result = intensity < 0.001 ? '抵消・合成位移接近零' : count === 1 ? '只剩一列波' : `合成振幅 ${s.pairAt(s.y).amplitude.toFixed(2)}`;
+        else if (s.model === 'add') result = count === 2 ? '兩縫亮度相加' : '只有單縫亮度';
+        const yLabel = s.wifi ? `${(s.y / 10).toFixed(1)} cm` : `${s.y.toFixed(s.half <= 1 ? 4 : 2)} mm`;
+        return [
+            { label: 'P 的位置（中央為 0）', value: yLabel + (Math.abs(s.y) > s.half ? '（畫面外）' : '') },
+            { label: s.wave ? '到達 P 的波' : '到達 P 的來源', value: who },
+            { label: '所選模型對 P 的預測', value: result },
+            { label: s.model === 'fan' ? `固定屏幕內（±${s.half} mm）` : '屏幕上的圖樣', value: pattern }
+        ];
+    }
+
+    function youngInquiryLayout(w) {
+        const wide = w >= 640, x = 8, top = 8, gap = 10;
+        const leftW = wide ? Math.round((w - 2 * x - gap) * 0.42) : w - 2 * x;
+        const leftH = wide ? 242 : 158;
+        const sx = wide ? x + leftW + gap : x, sy = wide ? top : top + leftH + gap;
+        const sw = w - sx - x, sh = 242;
+        return { x, top, leftW, leftH, sx, sy, sw, sh, gx0: sx + 65, gx1: sx + sw - 24, stripY: sy + 48 };
+    }
+
+    function youngFanScreen(layout, distance) {
+        const { x, top, leftW, leftH } = layout;
+        const left = x + 43, far = x + leftW - 37;
+        const near = left + (far - left) * youngFanNear / youngFanFar;
+        const ratio = (distance - youngFanNear) / (youngFanFar - youngFanNear);
+        return { near, far, right: near + (far - near) * ratio, top: top + 43, bottom: top + leftH - 35 };
+    }
+
+    function youngInquiryDraw(ctx, w, h, p, t, cycle) {
+        const s = youngInquiryState(p);
+        const { panel, textAt, dot, line } = wavePlotTools(ctx, w);
+        const layout = youngInquiryLayout(w);
+        const { x, top, leftW, leftH, sx, sy, sw, sh, gx0, gx1, stripY } = layout;
+        const inks = [C.orange, C.blue];
+
+        panel(x, top, leftW, leftH);
+        textAt(s.info.title, x + 8, top + 19, C.ink, leftW - 16, 12);
+        const fan = s.model === 'fan';
+        const left = x + (s.wifi ? 78 : 43);
+        const right = fan ? youngFanScreen(layout, p.L).right : x + leftW - 37;
+        const y0 = top + 43, y1 = top + leftH - 35, mid = (y0 + y1) / 2;
+        const slitGap = (y1 - y0) * 0.18;
+        const extent = Math.max(54, s.half * 1.05);
+        const toEnd = (y) => mid - y / extent * (y1 - y0) / 2;
+        if (s.model === 'rope') {
+            const pair = s.pairAt(s.y), turn = 2 * Math.PI * ((t / cycle) % 1);
+            const plotLeft = x + 78, plotRight = x + leftW - 12;
+            const lane = (leftH - 54) / 3;
+            const rows = [pair.A, pair.B, pair.sum];
+            for (const [i, value] of rows.entries()) {
+                const center = top + 29 + (i + 0.5) * lane;
+                const ink = i < 2 ? inks[i] : C.ink;
+                const label = i < 2 ? (s.sources[i].open ? `繩波 ${i + 1}` : `來源 ${i + 1} 已遮`) : '合成位移';
+                textAt(label, plotLeft - 8, center + 4, ink, 62, 11, 'right');
+                line(plotLeft, center, plotRight, center, 'rgba(18,49,58,0.18)');
+                ctx.strokeStyle = ink; ctx.lineWidth = i === 2 ? 2.2 : 1.5; ctx.beginPath();
+                for (let j = 0; j <= 100; j++) {
+                    const angle = 4 * Math.PI * j / 100 - turn;
+                    const displacement = value.re * Math.cos(angle) - value.im * Math.sin(angle);
+                    const xx = plotLeft + (plotRight - plotLeft) * j / 100;
+                    const yy = center - displacement * lane * 0.19;
+                    if (j === 0) ctx.moveTo(xx, yy); else ctx.lineTo(xx, yy);
+                }
+                ctx.stroke();
+            }
+        } else {
+            line(right, fan ? toEnd(s.half) : y0, right, fan ? toEnd(-s.half) : y1, 'rgba(18,49,58,0.62)', 3);
+            const screenLabel = fan ? `屏幕 ${p.L.toFixed(1)} m` : s.wifi ? '接收面' : '屏幕';
+            textAt(screenLabel, right, y0 - 7, C.muted, 72, 10, 'center');
+            if (s.wifi) {
+                // 同一列入射波先到達兩個狹縫，窄縫後才畫出向外展開的波前。
+                for (let j = 1; j <= 4; j++) line(left - j * 11, y0 + 2, left - j * 11, y1 - 2, 'rgba(17,112,151,0.36)');
+                const upperGap = s.sources[0].open ? 5 : 0, lowerGap = s.sources[1].open ? 5 : 0;
+                line(left, y0, left, mid - slitGap - upperGap, C.ink, 3);
+                line(left, mid - slitGap + upperGap, left, mid + slitGap - lowerGap, C.ink, 3);
+                line(left, mid + slitGap + lowerGap, left, y1, C.ink, 3);
+            } else {
+                line(left, y0, left, y1, 'rgba(18,49,58,0.42)', 3);
+            }
+        }
+        for (const [i, source] of (s.model === 'rope' ? [] : s.sources).entries()) {
+            const y = fan ? toEnd(source.fanOrigin) : mid + (i ? 1 : -1) * slitGap, ink = inks[i];
+            const labelY = y + 4 + (fan ? i ? 7 : -7 : 0);
+            textAt(i ? 'S₂' : 'S₁', left - (s.wifi ? 48 : 8), labelY, source.open ? ink : C.muted, 28, 11, 'right');
+            if (!source.open) continue;
+            dot(left, y, 4, ink);
+            if (fan) {
+                for (const point of source.points) {
+                    const end = toEnd(point);
+                    const hit = Math.abs(point) <= s.half;
+                    line(left, y, right, end, hit ? ink : `${ink}85`, 1.45);
+                    if (hit) dot(right, end, 2.7, ink);
+                }
+            } else if (s.model === 'add') {
+                ctx.fillStyle = ink + '24'; ctx.beginPath();
+                ctx.moveTo(left, y); ctx.lineTo(right, y0); ctx.lineTo(right, y1); ctx.closePath(); ctx.fill();
+            } else if (s.model === 'parallel') {
+                line(left, y, right, y, ink, 1.65);
+                dot(right, y, 4, ink);
+            } else {
+                ctx.save(); ctx.beginPath(); ctx.rect(left, y0, right - left, y1 - y0); ctx.clip();
+                ctx.strokeStyle = ink; ctx.lineWidth = 1.45;
+                for (let j = 1; j <= 5; j++) {
+                    ctx.beginPath(); ctx.arc(left, y, (right - left) * j / 5, -Math.PI / 2, Math.PI / 2); ctx.stroke();
+                }
+                ctx.restore();
+            }
+        }
+        textAt(s.info.note, x + 8, top + leftH - 13, C.muted, leftW - 16, 11);
+
+        panel(sx, sy, sw, sh);
+        textAt(s.wifi ? '接收訊號強度・點選或拖曳 P' : '屏幕上的模型預測・點選或拖曳 P', sx + 8, sy + 19, C.ink, sw - 16, 12);
+        const toX = (y) => gx0 + (y / s.half + 1) * (gx1 - gx0) / 2;
+        const axisY = sy + 180;
+        const rgb = s.wifi ? [0.045, 0.75, 1] : pure(p.lam);
+        const lightColor = (v, color = rgb) => 'rgb(' + color.map(c => enc(0.006 * (1 - v) + c * v)).join(',') + ')';
+        const lightStrip = (yy, at, color) => {
+            for (let i = 0; i <= gx1 - gx0; i++) {
+                const y = (2 * i / (gx1 - gx0) - 1) * s.half;
+                ctx.fillStyle = lightColor(at(y), color);
+                ctx.fillRect(gx0 + i, yy, 1, 18);
+            }
+        };
+        const baseStrip = (yy) => {
+            ctx.fillStyle = '#202a30'; ctx.fillRect(gx0, yy, gx1 - gx0 + 1, 18);
+        };
+        const drawHit = (yy, point, fill) => {
+            if (Math.abs(point) <= s.half) dot(toX(point), yy + 9, 3.5, fill);
+        };
+        for (const [i, source] of s.sources.entries()) {
+            const yy = stripY + 35 * i;
+            const status = source.open ? (s.wave ? ' 單開' : ' 照射') : ' 已遮';
+            textAt((i ? 'S₂' : 'S₁') + status, gx0 - 7, yy + 13, source.open ? inks[i] : C.muted, 52, 11, 'right');
+            baseStrip(yy);
+            if (!source.open) continue;
+            if (source.points) {
+                for (const point of source.points) drawHit(yy, point, inks[i]);
+            } else if (s.wave) {
+                const color = i === 0 ? [0.95, 0.32, 0.04] : [0.04, 0.46, 0.72];
+                lightStrip(yy, at => s.amplitude(source, at) ** 2 / 4, color);
+            } else {
+                ctx.fillStyle = inks[i]; ctx.fillRect(gx0, yy, gx1 - gx0 + 1, 18);
+            }
+        }
+        const combinedY = stripY + 82;
+        textAt('模型結果', gx0 - 7, combinedY + 13, C.ink, 52, 11, 'right');
+        if (s.sources[0].points) {
+            baseStrip(combinedY);
+            for (const point of s.points) drawHit(combinedY, point, lightColor(s.at(point)));
+        } else {
+            lightStrip(combinedY, s.at);
+        }
+
+        line(gx0, axisY, gx1, axisY, C.muted);
+        for (const unit of [-1, -0.5, 0, 0.5, 1]) {
+            const xx = toX(unit * s.half);
+            line(xx, axisY, xx, axisY + 4, C.muted);
+            textAt(String(unit * s.half / (s.wifi ? 10 : 1)), xx, axisY + 17, C.muted, 38, 10, 'center');
+        }
+        textAt(s.wifi ? 'cm' : 'mm', gx1, axisY + 33, C.muted, 20, 10, 'center');
+        if (Math.abs(s.y) <= s.half) {
+            const xx = toX(s.y);
+            dashed(ctx, xx, stripY - 9, xx, axisY - 2, C.rose);
+            dot(xx, stripY - 9, 4, C.rose);
+        }
+        textAt(s.info.rule, sx + 8, sy + sh - 13, C.ink, sw - 16, 11);
+    }
+
+    function bindYoungInquiry({ canvas, host, params, disposers, getGeom, syncOutputs, paint }) {
+        const position = host.querySelector('[id$="young-inquiryY"]');
+        const point = host.querySelector('[id$="young-inquiryPoint"]');
+        const range = host.querySelector('[id$="young-inquiryMm"]');
+        const slits = host.querySelector('[id$="young-inquirySlits"]');
+        const model = host.querySelector('[id$="young-inquiryModel"]');
+        const distance = host.querySelector('[id$="young-L"]');
+        if (!position || !point || !range || !slits || !model || !distance) return;
+        const row = document.createElement('div');
+        row.className = 'lab-controls';
+        row.append(point.closest('.lab-control'), slits.closest('.lab-control'), model.closest('.lab-control'), position.closest('.lab-control'));
+        host.querySelector('.lab-stage').before(row);
+        const scrub = host.querySelector('.lab-scrub');
+        const play = host.querySelector('[data-role="toggle"]');
+        const syncMode = () => {
+            const active = params.mode === 'inquiry';
+            row.style.display = active ? '' : 'none';
+            if (scrub) scrub.style.display = active ? 'none' : '';
+            if (play) play.style.display = active && params.inquiryModel !== 'rope' ? 'none' : '';
+            if (active) { canvas.style.touchAction = 'pan-y'; canvas.style.cursor = 'crosshair'; }
+        };
+        host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', syncMode));
+        const syncRange = () => {
+            const extent = Math.max(youngInquiryState(params).half, Math.abs(params.inquiryY));
+            position.min = -extent; position.max = extent; position.value = params.inquiryY;
+        };
+        disposers.addEventListener(range, 'change', syncRange);
+        const syncModel = () => { syncRange(); syncMode(); };
+        disposers.addEventListener(model, 'change', syncModel);
+        const reset = host.querySelector('[data-role="reset"]');
+        if (reset) disposers.addEventListener(reset, 'click', syncModel);
+        syncModel();
+
+        let pointer = null;
+        const locate = (e) => {
+            const rect = canvas.getBoundingClientRect(), geom = getGeom();
+            return { x: (e.clientX - rect.left) * geom.width / rect.width,
+                y: (e.clientY - rect.top) * geom.height / rect.height, g: youngInquiryLayout(geom.width) };
+        };
+        const place = ({ x, g }) => {
+            const s = youngInquiryState(params);
+            const ratio = Math.min(1, Math.max(0, (x - g.gx0) / (g.gx1 - g.gx0)));
+            const y = (2 * ratio - 1) * s.half;
+            const near = 5 * (2 * s.half) / (g.gx1 - g.gx0);
+            const hits = s.points.filter(hit => Math.abs(hit) <= s.half && Math.abs(hit - y) <= near);
+            params.inquiryPoint = point.value = 'manual';
+            params.inquiryY = hits.length === 1 ? hits[0] : Math.round(y / youngInquiryStep) * youngInquiryStep;
+            syncRange(); syncOutputs(); paint();
+        };
+        const dragScreen = ({ x, g }) => {
+            const { near, far } = youngFanScreen(g, params.L);
+            const ratio = Math.min(1, Math.max(0, (x - near - pointer.offset) / (far - near)));
+            const value = (youngFanNear + (youngFanFar - youngFanNear) * ratio).toFixed(1);
+            if (Number(distance.value) === Number(value)) return;
+            distance.value = value;
+            distance.dispatchEvent(new Event('input', { bubbles: true }));
+        };
+        disposers.addEventListener(canvas, 'pointerdown', (e) => {
+            if (params.mode !== 'inquiry' || pointer !== null || e.button !== 0) return;
+            const pos = locate(e), { g } = pos;
+            const screen = youngFanScreen(g, params.L);
+            const onScreen = params.inquiryModel === 'fan' && Math.abs(pos.x - screen.right) <= 12 && pos.y >= screen.top - 14 && pos.y <= screen.bottom;
+            const onStrip = pos.x >= g.gx0 - 8 && pos.x <= g.gx1 + 8 && pos.y >= g.stripY - 14 && pos.y <= g.sy + g.sh - 44;
+            if (!onScreen && !onStrip) return;
+            pointer = { id: e.pointerId, move: onScreen ? dragScreen : place, offset: pos.x - screen.right };
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* 不支援時仍可點選 */ }
+            if (!onScreen) place(pos);
+        });
+        disposers.addEventListener(canvas, 'pointermove', (e) => {
+            if (params.mode === 'inquiry' && pointer?.id === e.pointerId) pointer.move(locate(e));
+        });
+        const end = (e) => { if (pointer?.id === e.pointerId) pointer = null; };
+        disposers.addEventListener(canvas, 'pointerup', (e) => {
+            if (params.mode === 'inquiry' && pointer?.id === e.pointerId) pointer.move(locate(e));
+            end(e);
+        });
+        for (const event of ['pointercancel', 'lostpointercapture']) disposers.addEventListener(canvas, event, end);
+    }
+
     /* ---- 單狹縫：多波長疊加（實際單位） ---- */
     function singleColorInfo(p) {
         const a = p.a * 1e-6, L = p.L;
@@ -997,6 +1436,7 @@
     }
     function singleColors(ctx, w, h, p) {
         const q = singleColorInfo(p), { a, L, y1 } = q;
+        const Y = singleScreenHalf(p) / 1000;
         const I = (l) => (y) => sinc2(Math.PI * a * sinT(y, L) / (l * 1e-9));
         const darks = (l, col, Y) => {
             const out = [];
@@ -1005,10 +1445,7 @@
         };
         let opt;
         if (q.src === 'two') {
-            const { l1, l2, co } = q, lmax = Math.max(l1, l2);
-            let Y = 3.4 * y1(lmax);
-            const cap = 8 * y1(lmax);
-            if (co && co.n1 * y1(l1) * 1.15 <= cap) Y = Math.max(Y, co.n1 * y1(l1) * 1.15);
+            const { l1, l2, co } = q;
             const I1 = I(l1), I2 = I(l2);
             const vl = [];
             if (co && co.n1 * y1(l1) <= Y) {
@@ -1038,7 +1475,7 @@
                 bands.push({ y0: Math.min(lo, hi), y1: Math.max(lo, hi), col: 'rgba(194,38,74,0.09)', text: sg > 0 ? '紫已暗、紅仍亮 → 偏紅' : '', tcol: C.rose });
             });
             opt = {
-                Y: 3.6 * y1(550), axisMax: 1, lines, bands, groups: whiteGroups(lines),
+                Y, axisMax: 1, lines, bands, groups: whiteGroups(lines),
                 total: { fn: (y) => sp.reduce((acc, s) => acc + lumOf(s.c) * I(s.lam)(y), 0) / Ysum },
                 legend: [{ text: '450／550／650 nm 各自的 I', col: 'rgba(18,49,58,0.45)', lw: 1.2 }, { text: '白光合成亮度', col: C.ink, lw: 2.6 }],
                 foot: [
@@ -1049,8 +1486,8 @@
         } else {
             const l = q.lam;
             opt = {
-                Y: 3.4 * y1(l), axisMax: 1, lines: [{ lam: l, c: pure(l), I: I(l), curve: 'solid' }],
-                marks: darks(l, ink(l), 3.4 * y1(l)),
+                Y, axisMax: 1, lines: [{ lam: l, c: pure(l), I: I(l), curve: 'solid' }],
+                marks: darks(l, ink(l), Y),
                 legend: [{ text: `λ = ${l} nm`, col: ink(l) }],
                 foot: ['對照組：三角形是暗紋 a sinθ = mλ；中央亮紋寬 2Lλ/a，是側亮紋的兩倍。改選雙色或白光比較。']
             };
@@ -1616,7 +2053,8 @@
         LAM0, LV, WV, PRESETS,
         pure, ink, css, enc, spectrum, coincide, gcd,
         draw2D, draw3D, bind3D,
-        youngColors, youngColorReadouts, singleColors, singleColorReadouts,
+        youngColors, youngColorReadouts, youngInquiryState, youngInquiryDraw, youngInquiryReadouts, bindYoungInquiry,
+        singleScreen, phaseAngle, twoWavePhase, phaseDraw, phaseReadouts, singleColors, singleColorReadouts,
         young3D, young3DReadouts, single3D, single3DReadouts,
         multiDraw, multiReadouts, geomDraw, bindGeom, fmtZ,
         setView: (p, key) => { p._view = Object.assign({}, PRESETS[key] || PRESETS.oblique); }

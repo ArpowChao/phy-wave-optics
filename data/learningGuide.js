@@ -388,9 +388,9 @@ const learningGuide = {
     },
     N19: {
         level: '核心',
-        goal: '從兩縫的波程差判斷亮暗，再計算條紋間距。',
+        goal: '用單縫、雙縫的觀察說明為什麼會亮或暗，再比較條紋間距。',
         prerequisites: ['N07', 'N13', 'N18'],
-        observe: '把兩縫間距 $d$ 調小，屏幕上的相鄰亮紋靠近還是分開？',
+        observe: '先用直線和分岔模型數亮點，再看繩波疊加與 Wi‑Fi 的接收強弱。把 P 固定在雙縫第一暗紋的位置，遮住一條縫，比較這裡的變化。',
         takeaway: '同相雙縫：亮紋 $\\Delta\\ell=n\\lambda$，暗紋為半整數倍；遠屏小角度時 $\\Delta y=L\\lambda/d$。',
         example: {
             title: '先把 nm、mm 都換成 m',
@@ -399,9 +399,9 @@ const learningGuide = {
             result: '相鄰亮紋間距 $\\Delta y=3.0\\times10^{-3}\\,\\mathrm{m}=3.0\\,\\mathrm{mm}$。'
         },
         check: {
-            q: '波長與屏距不變，縫距減半，條紋間距如何變？',
-            opts: ['減半', '不變', '加倍'], answer: 2,
-            explanation: '$\\Delta y=L\\lambda/d$ 與縫距成反比；用同一單位代入即可看出。'
+            q: '固定在雙縫的第一暗紋。為什麼遮住其中一條縫後，原本的暗點反而有光？',
+            opts: ['原本兩波在這裡抵消；剩下一波就不再抵消', '兩縫都開時，沒有光到達這裡', '遮住一縫使另一縫的波長變長'], answer: 0,
+            explanation: '原本兩道光都能到達暗點，但一個波峰遇到另一個波谷。遮住一縫只剩一道光，暗點便有亮度。'
         }
     },
     N20: {

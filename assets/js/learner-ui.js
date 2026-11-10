@@ -20,7 +20,7 @@ const LESSON_LABS = {
     N10:{id:'pipes',mode:'open',params:{idx:1}}, N11:{id:'timbre'}, N12:{id:'pipes',mode:'closed',params:{idx:1}},
     N13:{id:'snell',params:{n1:1,n2:1.5,th1:30}}, N14:{id:'apparent_depth',mode:'scene'},
     N15:{id:'snell',params:{n1:1.5,n2:1,th1:35}}, N16:{id:'lens'},N17:{id:'lens',params:{p:5,f:10}},
-    N18:{id:'young',mode:'setup'},N19:{id:'young',mode:'setup'},N20:{id:'diffraction',mode:'huygens'}
+    N18:{id:'young',mode:'setup'},N19:{id:'young',mode:'inquiry'},N20:{id:'diffraction',mode:'huygens'}
 };
 
 function readLearning() {
@@ -193,7 +193,7 @@ function renderNodeView(code) {
     const primaryLab = activity?.id;
     const featuredMedia = (guide?.resonanceCases || []).map(item => item.mediaKey);
     const remainingMedia = (animByNode[code] || []).filter(key => !featuredMedia.includes(key));
-    const activityLabel = code === 'N12' ? '觀察空氣柱的駐波 →' : '開啟實驗觀察 →';
+    const activityLabel = code === 'N12' ? '觀察空氣柱的駐波 →' : code === 'N19' ? '操作雙縫並比較模型 →' : '開啟實驗觀察 →';
     const activityButton = activity?.page ? `<a class="lesson-secondary" href="${activity.page}">${activityLabel}</a>` : primaryLab ? routeLink(`lab-${primaryLab}:${activity.mode || 'default'}:${code}`, activityLabel, 'lesson-secondary') : '';
     const observationActions = guide?.resonanceCases?.length
         ? `<div class="lesson-actions"><button type="button" class="lesson-primary" onclick="openSwingWork()">操作盪鞦韆 ↓</button><button type="button" class="lesson-secondary" onclick="openResonanceStudy()">看五段影片 ↓</button>${activityButton}</div>`

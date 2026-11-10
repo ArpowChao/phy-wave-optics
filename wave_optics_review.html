@@ -65,10 +65,10 @@
     <link rel="stylesheet" href="assets/css/interaction-runtime.css?v=steps_20261109">
 
     <script data-page-required src="data/modulesData.js?v=slits_20261109d"></script>
-    <script data-page-required src="data/learningGuide.js?v=swing_20261005"></script>
+    <script data-page-required src="data/learningGuide.js?v=young-ray-wave-models"></script>
     <script data-page-required src="data/questionBank.js?v=slits_20261109d"></script>
     <script data-page-required src="data/mediaData.js?v=resonance_20261005"></script>
-    <script data-page-required src="assets/js/slit-optics.js?v=slits_20261109d"></script>
+    <script data-page-required src="assets/js/slit-optics.js?v=young-ray-wave-models"></script>
     <style>
         :root {
             --bg-body: hsl(200, 30%, 98%);
@@ -1533,17 +1533,17 @@
         /* =====================================================================
          * 離屏畫布快取（確保 High-DPI / Retina / 縮放螢幕下像素對齊不跑版）
          * ===================================================================*/
-        let _offCanvas = null, _offCtx = null;
-        function getOffscreen(w, h) {
-            if (!_offCanvas) {
-                _offCanvas = document.createElement('canvas');
-                _offCtx = _offCanvas.getContext('2d');
+        const sharedOffscreen = {};
+        function getOffscreen(w, h, surface = sharedOffscreen) {
+            if (!surface.canvas) {
+                surface.canvas = document.createElement('canvas');
+                surface.ctx = surface.canvas.getContext('2d');
             }
-            if (_offCanvas.width !== w || _offCanvas.height !== h) {
-                _offCanvas.width = w;
-                _offCanvas.height = h;
+            if (surface.canvas.width !== w || surface.canvas.height !== h) {
+                surface.canvas.width = w;
+                surface.canvas.height = h;
             }
-            return { canvas: _offCanvas, ctx: _offCtx };
+            return surface;
         }
 
         /* =====================================================================
@@ -5748,9 +5748,9 @@
                 const key = `${e}|${plane}|${sec}|${Math.round(pw)}x${Math.round(ph)}`;
                 if (L._skyKey !== key) {
                     const W = Math.max(1, Math.round(pw)), Hh = Math.max(1, Math.round(ph));
-                    const cv = L._skyCanvas || (L._skyCanvas = document.createElement('canvas'));
-                    cv.width = W; cv.height = Hh;
-                    const c2 = cv.getContext('2d'), img = c2.createImageData(W, Hh), tbl = L.skyTable();
+                    // 天空像素會跨影格保留，避免被其他實驗的共用暫存畫布覆蓋。
+                    const off = getOffscreen(W, Hh, L._skySurface ??= {});
+                    const img = off.ctx.createImageData(W, Hh), tbl = L.skyTable();
                     const er = rad(e), pitch = plane ? rad(-(e + 8)) : rad(Math.max(6, Math.min(26, (42 - e) * 0.55)));
                     const fov = plane ? rad(130) : rad(112), Fp = (W / 2) / Math.tan(fov / 2);
                     const cp = Math.cos(pitch), sp = Math.sin(pitch), A = [0, Math.cos(er), -Math.sin(er)];
@@ -5776,12 +5776,12 @@
                         const o = (v * W + u) * 4;
                         img.data[o] = Math.min(255, r * 255); img.data[o + 1] = Math.min(255, g * 255); img.data[o + 2] = Math.min(255, b * 255); img.data[o + 3] = 255;
                     }
-                    c2.putImageData(img, 0, 0);
+                    off.ctx.putImageData(img, 0, 0);
                     // 地平線與反日點（地面看不到時標在畫面上）
                     L._skyKey = key;
                     L._skyGeo = { pitch, Fp, W, Hh };
                 }
-                ctx.drawImage(L._skyCanvas, x0, y0, pw, ph);
+                ctx.drawImage(L._skySurface.canvas, x0, y0, pw, ph);
                 const g = L._skyGeo, er = rad(e);
                 const toScreen = (elev) => {   // 正前方、仰角 elev 的方向在畫面上的位置
                     const d = [0, Math.cos(elev), Math.sin(elev)];
@@ -11544,16 +11544,36 @@
             tag: 'N19',
             hint: '「實驗裝置」模式＝楊氏 1801 年的原始裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
             hintFor: (p) => ({
+                inquiry: '<b>比較模型預測：</b>用直線和分岔模型數亮點，分岔模型可左右拖曳屏幕。切到繩波或 Wi‑Fi，在同一個 P 遮住一條縫，觀察兩列波疊加造成的變化。',
                 geometry: '<b>幾何關係（真實比例）</b>：L 約是 d 的一萬倍，一開始兩道光疊成一條線。用滾輪、雙指或「放大倍率」往狹縫放大：兩道光分開，看得出它們<b>平行</b>；再放大到 A 點，從 S₂ 作垂線，另一道光多走的 Δℓ = d sinθ，綠色刻度每格 1 λ。拖曳可移動畫面，雙擊回到中心。改「P 點高度」看 Δℓ 在整數倍與半整數倍波長之間變化。',
                 colors: '<b>不只一種顏色時，屏幕上會怎樣？</b>每一種波長各自形成一組條紋（Δy = Lλ/d），不同顏色之間沒有固定相位差，所以屏幕上是<b>強度相加</b>。選「雙色光」找兩色亮紋第一次重合的位置 n₁λ₁ = n₂λ₂；選「白光」看中央白、內紫外紅、外圈級次重疊；選「兩個獨立光源」看兩組條紋錯開時，亮暗對比怎麼消失。「顯示方式」可以先<b>分開</b>看每一色（每一個光源）各自的條紋，再看<b>合併</b>後的結果，上下對齊方便比較。',
                 view3d: '<b>3D 立體模擬</b>：拖曳畫面旋轉、滾輪或雙指縮放，「視角」可切到正對屏幕或從上往下看。狹縫沿上下方向很長，水平面上看得到兩縫發出的子波疊加，屏幕上則是與狹縫平行的直條紋。可改成多色光，「比例」預設是<b>遠看（L ≫ d）</b>：整排狹縫小到像一個點，從各縫到屏幕的光幾乎平行；切到<b>近看</b>才放大看得到每一道波。縫數 N 可以一路加到 150，看亮紋怎麼變細（光柵）。雙色光可切「只看 λ₁／只看 λ₂／兩色合併」；「只開 1 條縫」則可對照：同一道光通過兩條縫時，合併後<b>不是</b>亮度相加，而會出現干涉條紋。'
             })[p.mode] || '「實驗裝置」模式＝楊氏 1801 年的原始裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
             note: '圖中尺寸未按實際比例。遠屏條件 L ≫ d，加上中央附近 |y| ≪ L，才可用 sinθ ≈ tanθ ≈ y/L。兩同相點光源模型下，亮紋波程差為整數倍 λ，暗紋為半整數倍 λ；忽略單縫包絡時亮紋近似等亮。',
             noteFor: (p) => ({
+                inquiry: '<b>如何讀圖：</b>橙色對應 S₁，藍色對應 S₂。分岔模型用相隔 12 mm 的兩縫作示意，每縫五條固定方向的射線，只計落在固定大小屏幕內的亮點。繩波以位移相加表示增強或抵消。Wi‑Fi 用同一個 2.4 GHz 發射源，兩窄縫寬各 6 cm、相隔 45 cm，接收面上的顏色深淺代表相對接收強度。',
                 colors: '<b>為什麼是強度相加</b>：兩列波的合成強度 = I₁ + I₂ + 干涉項；干涉項取決於兩者的相位差。不同顏色頻率不同，相位差每秒變化約 10¹⁴ 次，眼睛看到的是平均值，干涉項平均為 0；兩盞各自發光的燈也一樣。只有同一光源分出來的光（例如穿過兩條縫的同一道光）才有固定相位差，才會干涉。<br><b>重合條件</b>：λ₁ 的第 n₁ 亮紋與 λ₂ 的第 n₂ 亮紋重合 ⇔ 光程差 d sinθ 同時是兩者的整數倍：n₁λ₁ = n₂λ₂。例：600 nm 與 450 nm，3 × 600 = 4 × 450 = 1800 nm。<br><b>白光</b>：只有中央亮紋是白色；第 1 級內紫外紅；第 2 級紅光已和第 3 級紫光重疊，愈外面顏色愈混雜。<br><b>光源要窄</b>：寬的光源 = 許多個彼此不同調的點光源，各自的條紋互相錯開，加起來就糊掉了，這也是楊氏要先讓光通過單狹縫 S₀ 的原因。本模式忽略單縫繞射包絡。',
                 view3d: '<b>比例</b>：「遠看」接近真實比例（L ≫ d），狹縫小到看不見，另附放大圖；「近看」為了看得到波，把波長放大、L 縮短，λ₀ 表示 550 nm 對應的示意長度。數值請用「實驗裝置」「多波長疊加」模式的實際單位。<br><b>屏幕條紋與水平面一致</b>：屏幕上的亮度和水平面用同一套計算，水平面上的亮帶一定打在屏幕的亮紋上。<br><b>縫寬 a</b>：每條縫本身也會繞射，亮紋亮度受單縫包絡 sin²β/β² 調節，a sinθ = λ 的方向附近，雙縫亮紋也會變暗。<br><b>縫數 N</b>：N 條等間距縫的主亮紋位置仍是 d sinθ = nλ，但 N 愈多亮紋愈細，兩主亮紋之間有 N − 1 個暗紋（光柵的原理）。遠看時最多 150 條；近看因為要逐點計算波，最多畫 8 條。<br><b>遠看與近看</b>：遠看用夫朗和斐近似（L ≫ d），亮度只由方向 θ 決定，亮紋細到小於一個像素時，依像素涵蓋的角度範圍取平均，所以細亮紋不會漏掉。'
             })[p.mode] || '圖中尺寸未按實際比例。遠屏條件 L ≫ d，加上中央附近 |y| ≪ L，才可用 sinθ ≈ tanθ ≈ y/L。兩同相點光源模型下，亮紋波程差為整數倍 λ，暗紋為半整數倍 λ；忽略單縫包絡時亮紋近似等亮。',
             teach: `
+                <h4>小組探究：用證據選模型</h4>
+                <p>搭配上方「操作與討論」模式。先各自畫出光通過一條縫後可能的樣子，再選一個小組模型，寫下它對雙縫的預測。</p>
+                <ol>
+                    <li><b>數亮點。</b>兩縫都開，先看直線模型的兩點。再切到分岔模型，固定屏幕範圍為 ±20 mm，比較屏幕在 0.6 m 與 2.0 m 時有幾個亮點。</li>
+                    <li><b>看位移疊加。</b>切到繩波，依序選屏幕中央和雙縫第一暗紋的位置。觀察兩列繩波疊加後的位移，再遮住一條縫，看抵消會怎麼變。</li>
+                    <li><b>看繞射再干涉。</b>切到 Wi‑Fi，先開一條縫，沿圓弧看波如何往外展開，再打開第二條縫，比較接收面上訊號強弱的分布。</li>
+                </ol>
+                <details class="lesson-disclosure"><summary>比對模型的證據（操作後再打開）</summary>
+                    <div class="disclosure-content">
+                    <ul>
+                        <li><b>直線模型。</b>兩條光路各在狹縫的正後方留一個亮點。</li>
+                        <li><b>分岔模型。</b>每條線打到屏幕才留一個亮點。固定屏幕往後移，部分光線的落點會移到屏幕外，亮點數就會變少。</li>
+                        <li><b>繩波模型。</b>兩列波可以到達同一處。波峰遇波峰會增強，波峰遇同樣大小的波谷會抵消。</li>
+                        <li><b>Wi‑Fi 模型。</b>波穿過各窄縫後繞射展開。同一發射源的兩道波重疊，接收面上會出現強弱相間的訊號。</li>
+                    </ul>
+                    <p>用「只加亮度」的規則，兩縫各自都照到的地方，合起來只會更亮。若雙縫同開反而變暗，就需要能說明抵消的規則。請用一個屏幕位置和整體圖樣作為證據。</p>
+                    <p>最後用一句話說清楚：「我們原先猜＿＿；當我們只改＿＿，看到＿＿；因此保留或修正＿＿模型。」若做實體實驗，請另記錄單縫亮帶的形狀與暗紋是否全暗。</p></div>
+                </details>
                 <h4>討論：多種波長、多個光源疊在一起時</h4>
                 <h5>1. 先問：這兩道光會不會干涉？</h5>
                 <p>兩列波疊加後的亮度 = I₁ + I₂ + <b>干涉項</b>；干涉項的正負由兩者的相位差決定。要看到穩定的亮暗紋，相位差必須固定不變（同調）。</p>
@@ -11580,23 +11600,42 @@
                 <p>狹縫沿上下方向很長，每一個高度的光都以同樣的方式干涉，所以屏幕上同一條鉛直線的亮度都相同 → 與狹縫平行的直條紋。3D 模式也可以把縫數一路加到 150 條：主亮紋的位置仍是 d sinθ = nλ，但縫愈多亮紋愈細愈銳利，之間多出 N − 1 個暗紋與 N − 2 個小亮紋，這就是光柵的原理（延伸）；白光加上 100 條縫，各色亮紋就分成一道道光譜。</p>
                 <h5>6. 3D：為什麼要「遠看」？</h5>
                 <p>真實實驗中 d 約 0.1 mm、L 約 1 m，L 大約是 d 的一萬倍。從屏幕上看，兩條縫幾乎在同一點，連到屏幕同一點的兩條光線幾乎<b>平行</b>，所以波程差可以寫成 d sinθ，亮紋只由<b>方向</b>決定：水平面上的亮帶都是從狹縫處射出去的直線。「近看」則把狹縫附近放大，讓你看得到每一道波怎麼疊加，但那時 L 只有 d 的幾倍，亮帶還帶點彎曲，屬於放大示意。</p>`,
-            height: (p, w) => p.mode === 'colors' ? (w >= 640 ? 600 : 680) : p.mode === 'view3d' ? (w >= 640 ? 520 : 440) : 470,
+            height: (p, w) => p.mode === 'inquiry' ? (w >= 640 ? 258 : 426) : p.mode === 'colors' ? (w >= 640 ? 600 : 680) : p.mode === 'view3d' ? (w >= 640 ? 520 : 440) : 470,
             modes: [
                 { key: 'setup', label: '實驗裝置與干涉場' },
+                { key: 'inquiry', label: '操作與討論' },
                 { key: 'geometry', label: '幾何關係與公式' },
                 { key: 'colors', label: '多波長疊加' },
                 { key: 'view3d', label: '3D 立體模擬' }
             ],
             onReset: (p) => { SlitOptics.setView(p, 'oblique'); p._gz = { panX: 0, panY: 0 }; },
-            setup: (env) => { SlitOptics.bind3D(env, (p) => p.mode === 'view3d'); SlitOptics.bindGeom(env, (p) => p.mode === 'geometry'); },
+            setup: (env) => {
+                SlitOptics.bind3D(env, (p) => p.mode === 'view3d');
+                SlitOptics.bindGeom(env, (p) => p.mode === 'geometry');
+                SlitOptics.bindYoungInquiry(env);
+            },
             controls: [
+                { key: 'inquiryPoint', label: '觀察點 P', value: 'center', fmt: () => '', only: ['inquiry'], options: [
+                    { value: 'center', label: '屏幕中央' }, { value: 'dark', label: '雙縫第一暗紋的位置' },
+                    { value: 'bright', label: '雙縫第一側亮紋的位置' }, { value: 'manual', label: '手動移動 P' }] },
+                { key: 'inquirySlits', label: '開哪條縫', value: 'both', fmt: () => '', only: ['inquiry'], options: [
+                    { value: 'both', label: 'S₁、S₂ 都開' }, { value: 's1', label: '只開 S₁（遮 S₂）' }, { value: 's2', label: '只開 S₂（遮 S₁）' }] },
+                { key: 'inquiryModel', label: '要檢驗的模型', value: 'parallel', fmt: () => '', only: ['inquiry'], options: [
+                    { value: 'parallel', label: '1. 直線模型' }, { value: 'fan', label: '2. 分岔模型' },
+                    { value: 'rope', label: '3. 繩波疊加' }, { value: 'wifi', label: '4. Wi‑Fi 繞射與干涉' },
+                    { value: 'add', label: '對照：均勻照明只加亮度' }] },
+                { key: 'inquiryY', label: 'P 的位置', min: -1000, max: 1000, step: 0.0005, value: 0,
+                  fmt: (v, p) => p.inquiryModel === 'wifi' ? `${(v / 10).toFixed(1)} cm` : `${v.toFixed(p.inquiryModel === 'parallel' || p.inquiryMm <= 1 ? 4 : 2)} mm`,
+                  only: ['inquiry'], showIf: (p) => p.inquiryPoint === 'manual' },
+                { key: 'inquiryMm', label: '固定屏幕範圍', value: 20, fmt: () => '', only: ['inquiry'], showIf: (p) => !['parallel', 'wifi'].includes(p.inquiryModel),
+                  options: [0.25, 1, 5, 10, 20, 40, 80, 160].map((v) => ({ value: v, label: `±${v} mm` })) },
                 { key: 'src', label: '光源', value: 'two', only: ['colors'], fmt: () => '', options: [
                     { value: 'mono', label: '單色光（對照組）' }, { value: 'two', label: '雙色光（λ₁ ＋ λ₂）' },
                     { value: 'white', label: '白光（400–700 nm）' }, { value: 'pair', label: '兩個同色、各自獨立的光源' }] },
                 { key: 'src3', label: '光源', value: 'mono', only: ['view3d'], fmt: () => '', options: [
                     { value: 'mono', label: '單色光' }, { value: 'two', label: '雙色光（λ₁ ＋ λ₂）' }, { value: 'white', label: '白光' }] },
                 { key: 'lam', label: '波長 λ (nm)', min: 400, max: 700, step: 5, value: 550, fmt: (v) => `${v} nm`,
-                  showIf: (p) => p.mode === 'colors' ? ['mono', 'pair'].includes(p.src) : p.mode === 'view3d' ? p.src3 === 'mono' : true },
+                  showIf: (p) => p.mode === 'colors' ? ['mono', 'pair'].includes(p.src) : p.mode === 'view3d' ? p.src3 === 'mono' : p.mode !== 'inquiry' || p.inquiryModel === 'rope' },
                 { key: 'layout', label: '顯示方式', value: 'both', only: ['colors'], fmt: () => '', showIf: (p) => p.src !== 'mono', options: [
                     { value: 'both', label: '分開＋合併（並列對照）' }, { value: 'split', label: '只看分開' }, { value: 'merge', label: '只看合併' }] },
                 { key: 'comp3', label: '分開／合併', value: 'all', only: ['view3d'], fmt: () => '', showIf: (p) => p.src3 === 'two', options: [
@@ -11607,8 +11646,9 @@
                   showIf: (p) => (p.mode === 'colors' ? p.src : p.src3) === 'two' },
                 { key: 'shift', label: '光源 B 的條紋相對 A 平移', min: 0, max: 1, step: 0.05, value: 0.25, fmt: (v) => `${v.toFixed(2)} Δy`, only: ['colors'],
                   showIf: (p) => p.src === 'pair' },
-                { key: 'd', label: '狹縫間距 d (μm)', min: 20, max: 400, step: 5, value: 120, fmt: (v) => `${v} μm`, only: ['setup', 'geometry', 'colors'] },
-                { key: 'L', label: '屏幕距離 L (m)', min: 0.3, max: 2.5, step: 0.1, value: 1.2, fmt: (v) => `${v.toFixed(1)} m`, only: ['setup', 'geometry', 'colors'] },
+                { key: 'd', label: '狹縫間距 d (μm)', min: 20, max: 400, step: 5, value: 120, fmt: (v) => `${v} μm`, only: ['setup', 'inquiry', 'geometry', 'colors'],
+                  showIf: (p) => p.mode !== 'inquiry' || ['parallel', 'rope'].includes(p.inquiryModel) },
+                { key: 'L', label: '屏幕距離 L (m)', min: 0.3, max: 2.5, step: 0.1, value: 1.2, fmt: (v) => `${v.toFixed(1)} m`, only: ['setup', 'inquiry', 'geometry', 'colors'] },
                 { key: 'yn', label: 'P 點高度（以 Δy 為單位）', min: -300, max: 300, step: 5, value: 100, fmt: (v) => `${(v / 100).toFixed(2)} Δy`, only: ['geometry'] },
                 { key: 'gz', label: '放大倍率（往狹縫放大）', min: 0, max: 6.5, step: 0.05, value: 0, fmt: (v) => `×${SlitOptics.fmtZ(Math.pow(10, v))}`, only: ['geometry'] },
                 { key: 'open3', label: '狹縫', value: 'all', only: ['view3d'], fmt: () => '', options: [
@@ -11625,6 +11665,7 @@
                 { key: 'curve', label: '屏幕上方畫強度曲線', type: 'checkbox', value: true, only: ['view3d'] }
             ],
             readouts: (p) => {
+                if (p.mode === 'inquiry') return SlitOptics.youngInquiryReadouts(p);
                 if (p.mode === 'colors') return SlitOptics.youngColorReadouts(p);
                 if (p.mode === 'view3d') return SlitOptics.young3DReadouts(p);
                 const lam = p.lam * 1e-9, d = p.d * 1e-6;
@@ -11649,6 +11690,7 @@
                 ];
             },
             draw: (ctx, w, h, p, t) => {
+                if (p.mode === 'inquiry') { SlitOptics.youngInquiryDraw(ctx, w, h, p, t, LABS.young.cycle); return; }
                 if (p.mode === 'colors') { SlitOptics.youngColors(ctx, w, h, p); return; }
                 if (p.mode === 'view3d') { SlitOptics.young3D(ctx, w, h, p, t, LABS.young); return; }
                 const lam = p.lam * 1e-9, dd = p.d * 1e-6;
@@ -11791,12 +11833,16 @@
             tag: 'N20',
             hint: '三段推理：① 縫上排滿點光源，子波互相干涉而擴散（惠更斯原理）；② 最大光程差 Δℓ_AB = a sinθ ≈ a·y/L；③ 把縫等分成偶數區，區與區成對抵消 ⇒ 暗紋。第三個模式就是「為什麼 a sinθ = mλ 是暗紋而不是亮紋」的完整論證。',
             hintFor: (p) => ({
+                pathdiff: '保持屏幕範圍不變，改變波長 λ、縫寬 a 或距離 L，觀察中央亮紋寬度和暗紋位置。P 點可用下方滑桿調整；調整光學參數時，P 保持在原來的毫米位置。',
+                cancel: 'P 跟隨指定級次的暗紋。保持屏幕範圍不變，改變 λ、a 或 L，看暗紋與 P 一起移動。如果 P 超出畫面，可調大屏幕範圍。',
+                phase: '拖動相位差滑桿，看橙色和藍色的波峰怎麼錯開。試試 0：波峰對波峰；再試 π：波峰對波谷，黑色合成波變成一條平線。',
                 multi: '<b>為什麼單狹縫長這樣？</b>把寬 a 的狹縫想成 <b>N 條等間距的細縫</b>。往 θ 方向看，相鄰兩縫的光程差 d sinθ，相位差 δ。右邊把每條縫送來的波畫成一根箭頭：長度是振幅、方向是相位，相鄰兩根轉 δ，頭尾相接後的<b>合成箭頭</b>就是總振幅。從 N = 2 開始慢慢加（最多 200 條）：a sinθ = λ 時，N 根箭頭剛好轉一整圈繞回起點 → 暗紋，不管 N 是多少都一樣。N 愈大，藍色曲線愈接近單狹縫（紅虛線）。切到「固定縫距」則是光柵：縫愈多，主亮紋愈細。',
-                colors: '<b>不只一種顏色時</b>：每一種波長各自形成一組單狹縫圖案（暗紋 a sinθ = mλ），顏色之間不同調，屏幕上<b>強度相加</b>。選「雙色光」找兩色暗紋重合 m₁λ₁ = m₂λ₂；選「白光」看中央白、邊緣偏紅。「顯示方式」可分開看每一色、再看合併。',
+                colors: '<b>不只一種顏色時</b>：每一種波長各自形成一組單狹縫圖案（暗紋 a sinθ = mλ），顏色之間不同調，屏幕上<b>強度相加</b>。選「雙色光」找兩色暗紋重合 m₁λ₁ = m₂λ₂；選「白光」看中央白、邊緣偏紅。保持屏幕範圍不變，比較不同縫寬或距離的條紋。',
                 view3d: '<b>3D 立體模擬</b>：拖曳旋轉、滾輪或雙指縮放，「視角」可切到正對屏幕或從上往下看。縫上每一點都發出子波，水平面上看得到它們疊加後向前展開；縫沿上下很長，屏幕上是直條紋。調整 a 看中央亮帶的張角。'
             })[p.mode] || '三段推理：① 縫上排滿點光源，子波互相干涉而擴散（惠更斯原理）；② 最大光程差 Δℓ_AB = a sinθ ≈ a·y/L；③ 把縫等分成偶數區，區與區成對抵消 ⇒ 暗紋。第三個模式就是「為什麼 a sinθ = mλ 是暗紋而不是亮紋」的完整論證。',
             note: '先用「惠更斯子波」的無單位 a/λ 比例模型觀察展開趨勢；右側顯示遠場角度分布的示意，第一暗紋滿足 sinθ₁ = λ/a。再切換「最大光程差」或「成對抵消」，輸入實際 λ、a、L 數值。暗紋方向可將狹縫等分成 2m 區，相鄰對應點差 λ/2 而抵消；遠屏、中央附近的小角近似下，暗紋位置 yₘ ≈ mLλ/a，中央亮紋寬度約 2Lλ/a。',
             noteFor: (p) => ({
+                phase: '<b>相位差是週期的錯開量：</b>2π 是一整週期，所以 0 和 2π 一樣同相；π 是半週期，一個波峰剛好碰到另一個波谷。<br><b>先加振幅，再算強度：</b>黑線是每個時刻的 A＋B。若每一波的振幅為 1，合成振幅是 2|cos(Δφ/2)|，相對強度 I/Iₘₐₓ = cos²(Δφ/2)。因此 π/2 和 3π/2 都是 50% 強度。',
                 multi: '<b>相量（箭頭）是什麼</b>：同頻率的波可以用一根旋轉的箭頭代表，長度 = 振幅、角度 = 相位；兩個波疊加就是箭頭頭尾相接（和向量相加一樣）。<br><b>N 條縫的強度</b>：I/I_max = [sin(Nδ/2) / (N sin(δ/2))]²。δ = 0、2π… 時箭頭全部同向，是主亮紋；Nδ = 2π 的整數倍（但 δ 不是 2π 的整數倍）時箭頭繞成封閉多邊形，是暗紋。<br><b>固定總寬 a</b>：d = a/N，所以 Nδ = 2π a sinθ / λ。<b>a sinθ = mλ 時一定是暗紋</b>，和 N 無關；N = 2 時這就是「等分成兩區、成對抵消」。N → ∞ 時箭頭變成一段圓弧，強度趨近單狹縫的 sin²β/β²（β = π a sinθ / λ），這就是單狹縫圖案的由來：中央最亮、側亮紋是「箭頭繞了一圈半、兩圈半…」的地方，所以一個比一個暗。<br><b>固定縫距 d</b>（光柵）：主亮紋仍在 d sinθ = nλ，但 N 愈大愈細，兩個主亮紋之間有 N − 1 個暗紋、N − 2 個小亮紋。本模式的每條細縫視為極窄（點波源）。',
                 colors: '<b>為什麼是強度相加</b>：不同顏色頻率不同，相位差不斷變化，干涉項的平均為 0，各色的強度直接相加。<br><b>暗紋重合</b>：λ₁ 的第 m₁ 暗紋與 λ₂ 的第 m₂ 暗紋重合 ⇔ m₁λ₁ = m₂λ₂；某一色的暗紋處只剩另一色的光，所以那裡看起來是另一色。<br><b>白光</b>：中央白色，紫光最先變暗（第一暗紋 Lλ/a 最小），中央亮紋邊緣偏紅；側亮紋暗又彼此錯開，看起來是淡淡的彩色。',
                 view3d: '<b>比例</b>：「遠看」接近真實比例（L ≫ a），亮度只由方向決定；「近看」把波長放大、L 縮短，看得到縫上各點的子波。λ₀ 表示 550 nm；數值請用實際單位的模式。<br><b>屏幕條紋與水平面一致</b>：屏幕亮度取自縫上同一組子波在屏幕位置的疊加。<br>a 小於 λ 時沒有暗紋，光幾乎向前方半個平面都展開；a 愈大，中央亮帶愈窄、愈接近直線前進。'
@@ -11819,17 +11865,48 @@
                 <p>若縫距 d 固定、縫數 N 增加，主亮紋仍在 d sinθ = nλ（所有箭頭同向），但只要偏離一點點，N 根箭頭就迅速繞成一圈 → 主亮紋變得又細又亮，兩個主亮紋之間有 N − 1 個暗紋。光碟、光譜儀的分光就是靠這個。</p>
                 <h5>4. 白光與雙色光</h5>
                 <p>不同顏色不同調，各自形成單狹縫圖案，強度相加。中央每一色都最亮 → 白色；紫光的第一暗紋 Lλ/a 最靠近中央，紅光最遠，所以中央亮紋邊緣偏紅。兩色的暗紋重合條件是 m₁λ₁ = m₂λ₂。</p>`,
-            height: (p, w) => p.mode === 'multi' ? (w >= 640 ? 500 : 640) : p.mode === 'colors' ? (w >= 640 ? 600 : 680) : p.mode === 'view3d' ? (w >= 640 ? 520 : 440) : 470,
+            height: (p, w) => p.mode === 'phase' ? (w >= 640 ? 510 : 455) : p.mode === 'multi' ? (w >= 640 ? 500 : 640) : p.mode === 'colors' ? (w >= 640 ? 600 : 680) : p.mode === 'view3d' ? (w >= 640 ? 520 : 440) : p.mode === 'huygens' ? 470 : 520,
             modes: [
                 { key: 'huygens', label: '惠更斯子波' },
                 { key: 'multi', label: '多狹縫 → 單狹縫' },
                 { key: 'pathdiff', label: '最大光程差' },
                 { key: 'cancel', label: '暗紋：成對抵消' },
+                { key: 'phase', label: '兩波相位差動畫' },
                 { key: 'colors', label: '多波長疊加' },
                 { key: 'view3d', label: '3D 立體模擬' }
             ],
             onReset: (p) => SlitOptics.setView(p, 'oblique'),
-            setup: (env) => SlitOptics.bind3D(env, (p) => p.mode === 'view3d'),
+            setup: (env) => {
+                SlitOptics.bind3D(env, (p) => p.mode === 'view3d');
+                const { host, params, disposers } = env;
+                const height = host.querySelector('[id$="diffraction-yMm"]');
+                const range = host.querySelector('[id$="diffraction-screenMm"]');
+                if (!height || !range) return;
+                const fitSlider = () => {
+                    // 縮放屏幕也保留 P 的實際位置，即使暫時看不到 P。
+                    height.max = Math.max(params.screenMm, params.yMm);
+                    height.value = params.yMm;
+                };
+                disposers.addEventListener(range, 'change', fitSlider);
+                const reset = host.querySelector('[data-role="reset"]');
+                if (reset) disposers.addEventListener(reset, 'click', fitSlider);
+                fitSlider();
+                const angle = host.querySelector('[id$="diffraction-phaseDeg"]');
+                const preset = host.querySelector('[id$="diffraction-phasePreset"]');
+                if (angle && preset) {
+                    disposers.addEventListener(preset, 'change', () => { angle.value = params.phaseDeg; });
+                    disposers.addEventListener(angle, 'input', () => { preset.value = params.phasePreset; });
+                    // 把相位滑桿放在圖上方，拖曳時也能看到波形和強度曲線。
+                    const row = document.createElement('div');
+                    row.className = 'lab-controls';
+                    row.style.gridTemplateColumns = 'repeat(auto-fit, minmax(min(100%, 240px), 1fr))';
+                    row.append(angle.closest('.lab-control'), preset.closest('.lab-control'));
+                    host.querySelector('.lab-stage').before(row);
+                    const showPhaseControls = () => { row.style.display = params.mode === 'phase' ? '' : 'none'; };
+                    host.querySelectorAll('[data-mode]').forEach((b) => disposers.addEventListener(b, 'click', showPhaseControls));
+                    showPhaseControls();
+                }
+            },
             controls: [
                 { key: 'mkind', label: '怎麼增加縫數', value: 'fill', only: ['multi'], fmt: () => '', options: [
                     { value: 'fill', label: '固定總寬 a（→ 單狹縫）' }, { value: 'grating', label: '固定縫距 d（→ 光柵）' }] },
@@ -11851,9 +11928,18 @@
                   showIf: (p) => (p.mode === 'colors' ? p.src : p.src3) === 'two' },
                 { key: 'lam2', label: '波長 λ₂ (nm)', min: 400, max: 700, step: 5, value: 400, fmt: (v) => `${v} nm`, only: ['colors', 'view3d'],
                   showIf: (p) => (p.mode === 'colors' ? p.src : p.src3) === 'two' },
+                { key: 'phaseDeg', label: '相位差 Δφ（0～2π）', min: 0, max: 360, step: 1, value: 0, only: ['phase'],
+                  fmt: (v) => `${SlitOptics.phaseAngle(v)}（${v}°）`, onChange: (v, p) => { p.phasePreset = v % 90 === 0 ? v : 'manual'; } },
+                { key: 'phasePreset', label: '快速比較', value: 0, fmt: () => '', only: ['phase'],
+                  onChange: (v, p) => { if (v !== 'manual') p.phaseDeg = v; }, options: [
+                    { value: 'manual', label: '自訂角度（使用滑桿）' }, { value: 0, label: '0（同相）' },
+                    { value: 90, label: 'π/2' }, { value: 180, label: 'π（反相）' },
+                    { value: 270, label: '3π/2' }, { value: 360, label: '2π（同相）' }] },
                 { key: 'a', label: '狹縫寬度 a (μm)', min: 10, max: 200, step: 2, value: 60, fmt: (v) => `${v} μm`, only: ['pathdiff', 'cancel', 'colors'] },
                 { key: 'L', label: '屏幕距離 L (m)', min: 0.3, max: 2.5, step: 0.1, value: 1.2, fmt: (v) => `${v.toFixed(1)} m`, only: ['pathdiff', 'cancel', 'colors'] },
-                { key: 'yn', label: 'P 點高度（以 Lλ/a 為單位）', min: 0, max: 320, step: 5, value: 100, fmt: (v) => `${(v / 100).toFixed(2)} Lλ/a`, only: ['pathdiff'] },
+                { key: 'screenMm', label: '屏幕範圍（以中央為 0）', value: 40, fmt: () => '', only: ['pathdiff', 'cancel', 'colors'],
+                  options: [5, 10, 20, 40, 80, 160, 320, 640].map((v) => ({ value: v, label: `±${v} mm` })) },
+                { key: 'yMm', label: 'P 點高度 y (mm)', min: 0, max: 640, step: 0.1, value: 11, fmt: (v) => `${v.toFixed(1)} mm`, only: ['pathdiff'] },
                 { key: 'zones', label: '把狹縫等分成幾區', min: 2, max: 6, step: 2, value: 2, fmt: (v) => `${v} 區（第 ${v / 2} 暗紋）`, only: ['cancel'] },
                 { key: 'aw', label: '縫寬／波長 a/λ（無單位比例）', min: 0.5, max: 8, step: 0.25, value: 2.5, fmt: (v) => `a / λ = ${v.toFixed(2)}`, only: ['huygens'] },
                 { key: 'aw3', label: '縫寬 a（λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
@@ -11867,6 +11953,7 @@
             ],
             readouts: (p) => {
                 if (p.mode === 'multi') return SlitOptics.multiReadouts(p);
+                if (p.mode === 'phase') return SlitOptics.phaseReadouts(p);
                 if (p.mode === 'colors') return SlitOptics.singleColorReadouts(p);
                 if (p.mode === 'view3d') return SlitOptics.single3DReadouts(p);
                 if (p.mode === 'huygens') {
@@ -11878,34 +11965,30 @@
                         { label: '觀察趨勢', value: 'a/λ 越小，展開角越大' }
                     ];
                 }
-                const lam = p.lam * 1e-9, a = p.a * 1e-6;
-                const dy = p.L * lam / a;
+                const s = SlitOptics.singleScreen(p);
+                const pHeight = `${s.y.toFixed(2)} mm${s.y > s.halfMm ? '（超出屏幕範圍）' : ''}`;
                 if (p.mode === 'cancel') {
-                    const m = Math.round(p.zones / 2);
                     return [
                         { label: '等分區數', value: `${Math.round(p.zones)} 區 ⇒ 兩兩成對抵消` },
-                        { label: '最大光程差', value: `Δℓ_AB = ${m}λ` },
-                        { label: '結果', value: `第 ${m} 暗紋（y = ${m}·Lλ/a）` },
-                        { label: '暗紋位置', value: `y_${m} = ${(m * dy * 1000).toFixed(2)} mm` }];
+                        { label: '最大光程差', value: `Δℓ_AB = ${s.order}λ` },
+                        { label: `第 ${s.order} 暗紋位置`, value: pHeight },
+                        { label: '中央亮紋寬度', value: `${s.centralWidth.toFixed(2)} mm` }];
                 }
                 if (p.mode === 'pathdiff') {
-                    const q = p.yn / 100;
-                    const near = Math.abs(q - Math.round(q));
-                    const isDark = q >= 0.5 && near < 0.04;
                     return [
-                        { label: 'Δℓ_AB / λ', value: q.toFixed(2) },
-                        { label: 'P 點高度 y', value: `${(q * dy * 1000).toFixed(2)} mm` },
-                        { label: '判定', value: q < 1 ? '中央亮紋範圍內' : (isDark ? `第 ${Math.round(q)} 暗紋` : '亮暗之間（亮度已大幅衰減）') },
-                        { label: '暗紋間距 Lλ/a', value: `${(dy * 1000).toFixed(2)} mm` }];
+                        { label: 'Δℓ_AB / λ', value: s.q.toFixed(2) },
+                        { label: 'P 點高度 y', value: pHeight },
+                        { label: 'P 點相對強度 I/I₀', value: `${(s.intensity * 100).toFixed(1)}%（${s.verdict}）` },
+                        { label: '中央亮紋寬度', value: `${s.centralWidth.toFixed(2)} mm` }];
                 }
                 return [];
             },
             draw: (ctx, w, h, p, t) => {
                 if (p.mode === 'multi') { SlitOptics.multiDraw(ctx, w, h, p); return; }
+                if (p.mode === 'phase') { SlitOptics.phaseDraw(ctx, w, h, p, t, LABS.diffraction.cycle); return; }
                 if (p.mode === 'colors') { SlitOptics.singleColors(ctx, w, h, p); return; }
                 if (p.mode === 'view3d') { SlitOptics.single3D(ctx, w, h, p, t, LABS.diffraction); return; }
-                const lam = p.lam * 1e-9, aa = p.a * 1e-6;
-                const dyR = p.L * lam / aa;
+                const screen = p.mode === 'huygens' ? null : SlitOptics.singleScreen(p);
                 const wl = p.mode === 'huygens' ? 550 : p.lam;
                 let rgb;
                 if (wl < 440) rgb = [130, 0, 200];
@@ -11915,22 +11998,21 @@
                 else if (wl < 645) rgb = [235, 160, 0];
                 else rgb = [225, 40, 40];
                 const col = (al) => `rgba(${rgb[0]},${rgb[1]},${rgb[2]},${al})`;
-                const y0 = 8, y1 = h - 74, cy = (y0 + y1) / 2, TH = y1 - y0;
+                const y0 = screen ? 30 : 8, y1 = h - (screen ? 94 : 74), cy = (y0 + y1) / 2, TH = y1 - y0;
                 const xSl = Math.max(60, w * 0.14);
                 const xS = Math.max(xSl + 150, w - 148);
-                const QMAX = 3.4;                                   // 螢幕上半高＝3.4 個 Lλ/a
+                const mmToY = (mm) => cy - mm / screen.halfMm * TH / 2;
                 const sinc2 = (q) => {
                     const b = Math.PI * q;
                     if (Math.abs(b) < 1e-7) return 1;
                     const s = Math.sin(b) / b;
                     return s * s;
                 };
-                const yToQDefault = (py) => (cy - py) / (TH * 0.5) * QMAX;
 
                 /* 螢幕上的條紋帶與強度曲線（三個模式共用；由真實的 sinc² 分布繪製）
                    mapQ 可覆寫「螢幕高度 → Δℓ_AB/λ」的對應，讓條紋與畫面上的繞射場一致。 */
                 const drawScreen = (mapQ) => {
-                    const yToQ = mapQ || yToQDefault;
+                    const yToQ = mapQ || ((py) => screen.qAt((cy - py) / (TH / 2) * screen.halfMm));
                     for (let py = y0; py <= y1; py++) {
                         const I = sinc2(yToQ(py));
                         ctx.fillStyle = `rgb(${Math.round(rgb[0] * I + 12 * (1 - I))},${Math.round(rgb[1] * I + 18 * (1 - I))},${Math.round(rgb[2] * I + 24 * (1 - I))})`;
@@ -11938,8 +12020,8 @@
                     }
                     ctx.strokeStyle = 'rgba(18,49,58,0.3)'; ctx.lineWidth = 1;
                     ctx.strokeRect(xS, y0, 22, TH);
-                    labelFit(ctx, '屏幕', xS + 11, y0 + 12, '#f4fafb', 10, 'center', { maxW: 22, min: 10, clampW: w });
-                    const cw = w - (xS + 30) - 6;
+                    labelFit(ctx, '屏幕', xS + 11, screen ? y0 - 9 : y0 + 12, screen ? C.ink : '#f4fafb', 10, 'center', { maxW: 22, min: 10, clampW: w });
+                    const cw = w - (xS + 30) - (screen ? 45 : 6);
                     if (cw > 30) {
                         ctx.strokeStyle = col(0.95); ctx.lineWidth = 2;
                         ctx.beginPath();
@@ -11951,21 +12033,36 @@
                         // 暗紋位置標記：沿螢幕掃描，找 |q| 通過整數的位置
                         for (let m = 1; m <= 3; m++) {
                             [-1, 1].forEach((sg) => {
-                                let py = null;
-                                for (let yy = y0 + 1; yy <= y1; yy++) {
+                                let py = screen ? mmToY(sg * screen.darkAt(m)) : null;
+                                if (!screen) for (let yy = y0 + 1; yy <= y1; yy++) {
                                     const qa = yToQ(yy), qb = yToQ(yy - 1);
                                     if ((qa - sg * m) * (qb - sg * m) <= 0) { py = yy; break; }
                                 }
-                                if (py === null || py < y0 + 2 || py > y1 - 2) return;
-                                dashed(ctx, xS + 24, py, w - 6, py, 'rgba(18,49,58,0.22)');
-                                label(ctx, `暗${m}`, w - 8, py - 3, C.muted, 9, 'right');
+                                if (py === null || py < y0 + 3 || py > y1 - 3) return;
+                                const edge = screen ? xS + 30 + cw : w - 8;
+                                dashed(ctx, xS + 24, py, edge, py, 'rgba(18,49,58,0.22)');
+                                if (!screen || Math.abs(mmToY(screen.darkAt(1)) - cy) >= 16) label(ctx, `暗${m}`, edge, py - 3, C.muted, 9, 'right');
                             });
                         }
-                        label(ctx, '強度', xS + 30, y0 + 12, C.muted, 10);
+                        label(ctx, '強度', xS + 30, screen ? y0 - 9 : y0 + 12, C.muted, 10);
+                    }
+                    if (screen) {
+                        const axisX = w - 42;
+                        labelFit(ctx, 'y (mm)', w - 6, y0 - 9, C.muted, 10, 'right');
+                        ctx.fillStyle = C.muted;
+                        ctx.fillRect(axisX, y0, 1, TH);
+                        for (const tick of [-1, -0.5, 0, 0.5, 1]) {
+                            const mm = tick * screen.halfMm, py = mmToY(mm);
+                            ctx.fillRect(axisX, py, 4, 1);
+                            labelFit(ctx, `${mm}`, axisX + 6, py + 3, C.muted, 10, 'left', { maxW: 32, clampW: w });
+                        }
                     }
                     // 只在圖示實際包含 q = ±1 時標示中央亮紋範圍。
                     let pA = null, pB = null;
-                    for (let yy = y0 + 1; yy <= y1; yy++) {
+                    if (screen && screen.darkAt(1) <= screen.halfMm) {
+                        pA = mmToY(screen.darkAt(1)); pB = mmToY(-screen.darkAt(1));
+                    }
+                    if (!screen) for (let yy = y0 + 1; yy <= y1; yy++) {
                         if ((yToQ(yy) - 1) * (yToQ(yy - 1) - 1) <= 0) pA = yy;
                         if ((yToQ(yy) + 1) * (yToQ(yy - 1) + 1) <= 0) pB = yy;
                     }
@@ -11976,7 +12073,7 @@
                         ctx.moveTo(xS - 15, pA); ctx.lineTo(xS - 5, pA);
                         ctx.moveTo(xS - 15, pB); ctx.lineTo(xS - 5, pB);
                         ctx.stroke();
-                        label(ctx, p.mode === 'huygens' ? '中央亮紋' : '2Lλ/a', xS - 18, cy + 4, C.rose, 10, 'right');
+                        if (!screen) label(ctx, '中央亮紋', xS - 18, cy + 4, C.rose, 10, 'right');
                     }
                 };
 
@@ -12059,14 +12156,37 @@
                     return;
                 }
 
+                // 光路用放大示意；P 點與強度曲線共用右側的實際毫米刻度。
+                const aPix = TH * (0.17 + 0.34 * (p.a - 10) / 190);
+                const A = { x: xSl, y: cy - aPix / 2 };
+                const B = { x: xSl, y: cy + aPix / 2 };
+                const P = { x: xS, y: mmToY(screen.y) };
+                const showP = screen.y <= screen.halfMm;
+                const drawP = () => {
+                    if (!showP) return;
+                    ctx.fillStyle = screen.isDark ? '#3a3a3a' : '#ffb347';
+                    ctx.beginPath(); ctx.arc(P.x, P.y, 6, 0, Math.PI * 2); ctx.fill();
+                    labelFit(ctx, 'P', P.x - 10, Math.max(y0 + 12, P.y - 8), C.orange, 12, 'right', { clampW: w });
+                };
+                const drawFooter = (lines) => {
+                    const bw = Math.min(410, w - 16), lineH = 18;
+                    ctx.fillStyle = 'rgba(255,255,255,0.93)';
+                    ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
+                    lines.forEach(([text, color], i) => labelFit(ctx, text, 18, h - 48 + i * lineH, color, 12, 'left', { maxW: bw - 20, min: 9, clampW: w }));
+                };
+                const drawDistance = () => {
+                    const yy = y1 + 8;
+                    ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
+                    ctx.beginPath(); ctx.moveTo(xSl, yy); ctx.lineTo(xS, yy);
+                    for (const x of [xSl, xS]) { ctx.moveTo(x, yy - 4); ctx.lineTo(x, yy + 4); }
+                    ctx.stroke();
+                    labelFit(ctx, `L = ${p.L.toFixed(1)} m`, (xSl + xS) / 2, yy + 14, C.muted, 11, 'center', { clampW: w });
+                };
+                labelFit(ctx, '光路與狹縫放大示意', 8, y0 - 9, C.muted, 11, 'left', { maxW: xS - 22, clampW: w });
+
                 /* ================= 模式二：最大光程差 ================= */
                 if (p.mode === 'pathdiff') {
-                    const q = p.yn / 100;
-                    const aPix = Math.min(TH * 0.42, 120);
-                    const A = { x: xSl, y: cy - aPix / 2 };
-                    const B = { x: xSl, y: cy + aPix / 2 };
-                    const P = { x: xS, y: Math.max(y0 + 6, Math.min(y1 - 6, cy - (q / QMAX) * (TH * 0.46))) };
-
                     for (let i = 0; i < 6; i++) {
                         const yy = y0 + TH * (i + 0.5) / 6;
                         arrow(ctx, 8, yy, xSl - 14, yy, col(0.7), 1.4);
@@ -12075,30 +12195,30 @@
                     ctx.fillRect(xSl - 5, y0, 10, A.y - y0);
                     ctx.fillRect(xSl - 5, B.y, 10, y1 - B.y);
                     dashed(ctx, xSl, cy, xS, cy, 'rgba(18,49,58,0.45)');
-                    label(ctx, "O'", xS - 10, cy + 15, C.muted, 11, 'right');
-                    label(ctx, '中央線', (xSl + xS) / 2, cy - 6, C.muted, 10, 'center');
 
                     // 縫上多點到 P 的光線
-                    for (let i = 0; i <= 6; i++) {
+                    if (showP) for (let i = 0; i <= 6; i++) {
                         const yy = A.y + (B.y - A.y) * i / 6;
                         ctx.strokeStyle = col(i === 0 || i === 6 ? 0.95 : 0.4);
                         ctx.lineWidth = (i === 0 || i === 6) ? 2 : 1.1;
                         ctx.beginPath(); ctx.moveTo(xSl, yy); ctx.lineTo(P.x, P.y); ctx.stroke();
                     }
-                    // 由 A 對 BP 作垂足 C ⇒ BC = Δℓ_AB
-                    const ux = P.x - B.x, uy = P.y - B.y;
-                    const uLen = Math.max(Math.hypot(ux, uy), 1e-6);
-                    const ex = ux / uLen, ey = uy / uLen;
-                    const pj = (A.x - B.x) * ex + (A.y - B.y) * ey;
-                    const Cc = { x: B.x + ex * pj, y: B.y + ey * pj };
-                    ctx.fillStyle = 'rgba(107,70,193,0.22)';
-                    ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(Cc.x, Cc.y); ctx.closePath(); ctx.fill();
-                    ctx.strokeStyle = C.violet; ctx.lineWidth = 3;
-                    ctx.beginPath(); ctx.moveTo(B.x, B.y); ctx.lineTo(Cc.x, Cc.y); ctx.stroke();
-                    dashed(ctx, A.x, A.y, Cc.x, Cc.y, 'rgba(107,70,193,0.85)');
-                    ctx.fillStyle = C.violet;
-                    ctx.beginPath(); ctx.arc(Cc.x, Cc.y, 3, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, 'C', Cc.x + 7, Cc.y + 14, C.violet, 11);
+                    // 用遠場共同方向作垂足；P 在中央時 Δℓ 為零。
+                    if (showP && screen.y > 0) {
+                        const ux = P.x - xSl, uy = P.y - cy;
+                        const uLen = Math.hypot(ux, uy);
+                        const ex = ux / uLen, ey = uy / uLen;
+                        const pj = -aPix * ey;
+                        const Cc = { x: B.x + ex * pj, y: B.y + ey * pj };
+                        ctx.fillStyle = 'rgba(107,70,193,0.22)';
+                        ctx.beginPath(); ctx.moveTo(A.x, A.y); ctx.lineTo(B.x, B.y); ctx.lineTo(Cc.x, Cc.y); ctx.closePath(); ctx.fill();
+                        ctx.strokeStyle = C.violet; ctx.lineWidth = 3;
+                        ctx.beginPath(); ctx.moveTo(B.x, B.y); ctx.lineTo(Cc.x, Cc.y); ctx.stroke();
+                        dashed(ctx, A.x, A.y, Cc.x, Cc.y, 'rgba(107,70,193,0.85)');
+                        ctx.fillStyle = C.violet;
+                        ctx.beginPath(); ctx.arc(Cc.x, Cc.y, 3, 0, Math.PI * 2); ctx.fill();
+                        labelFit(ctx, 'C', Cc.x + 7, Cc.y + 14, C.violet, 11, 'left', { clampW: w });
+                    }
 
                     [[A, 'A'], [B, 'B']].forEach(([s, nm]) => {
                         ctx.fillStyle = C.orange;
@@ -12118,39 +12238,17 @@
 
                     ctx.fillStyle = '#c9b79a'; ctx.fillRect(xS, y0, 7, TH);
                     drawScreen();
-                    ctx.fillStyle = '#ffb347';
-                    ctx.beginPath(); ctx.arc(P.x, P.y, 6, 0, Math.PI * 2); ctx.fill();
-                    label(ctx, 'P', P.x + 10, P.y - 6, '#b06a00', 13);
-
-                    ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
-                    const yy2 = y1 + 4;
-                    ctx.beginPath();
-                    ctx.moveTo(xSl, yy2); ctx.lineTo(xS, yy2);
-                    ctx.moveTo(xSl, yy2 - 5); ctx.lineTo(xSl, yy2 + 5);
-                    ctx.moveTo(xS, yy2 - 5); ctx.lineTo(xS, yy2 + 5);
-                    ctx.stroke();
-                    label(ctx, `L = ${p.L.toFixed(1)} m`, (xSl + xS) / 2, yy2 - 7, C.muted, 11, 'center');
-
-                    const near = Math.abs(q - Math.round(q));
-                    const isDark = q >= 0.5 && near < 0.04;
-                    const verdict = q < 1 ? '仍在中央亮紋範圍內' : (isDark ? `第 ${Math.round(q)} 暗紋` : '亮暗之間');
-                    const bw = Math.min(340, w - 16);
-                    ctx.fillStyle = 'rgba(255,255,255,0.93)';
-                    ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
-                    ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
-                    label(ctx, `最大光程差 Δℓ_AB = BC = a sinθ ≈ a·y/L = ${q.toFixed(2)} λ`, 18, h - 48, C.ink, 12);
-                    labelFit(ctx, `y = ${(q * dyR * 1000).toFixed(2)} mm；Lλ/a = ${(dyR * 1000).toFixed(2)} mm`, 18, h - 31, C.muted, 11, 'left', { maxW: w - 36, min: 10, clampW: w });
-                    label(ctx, `⇒ P 點：${verdict}`, 18, h - 13, isDark ? C.rose : C.muted, 12);
+                    drawP(); drawDistance();
+                    drawFooter([
+                        [`最大光程差 Δℓ_AB = a sinθ = ${screen.q.toFixed(2)} λ`, C.ink],
+                        [`P：y = ${screen.y.toFixed(2)} mm；中央亮紋寬 ${screen.centralWidth.toFixed(2)} mm`, C.muted],
+                        [showP ? `P 點：${screen.verdict}（相對強度 ${(screen.intensity * 100).toFixed(1)}%）` : 'P 超出畫面，請調大屏幕範圍', C.rose]
+                    ]);
                     return;
                 }
 
                 /* ================= 模式三：暗紋的成對抵消 ================= */
                 const Z = Math.max(2, Math.round(p.zones / 2) * 2);        // 偶數區
-                const m = Z / 2;                                            // 第 m 暗紋
-                const aPix = Math.min(TH * 0.58, 190);
-                const A = { x: xSl, y: cy - aPix / 2 };
-                const B = { x: xSl, y: cy + aPix / 2 };
-                const P = { x: xS, y: Math.max(y0 + 8, cy - (m / QMAX) * (TH * 0.46)) };
                 const zoneCols = ['rgba(11,111,146,0.20)', 'rgba(194,38,74,0.20)', 'rgba(18,128,92,0.20)'];
 
                 for (let i = 0; i < 6; i++) {
@@ -12176,7 +12274,7 @@
 
                 // 成對抵消：第 2j 區的每一點，與第 2j+1 區對應點的光程差恰為 λ/2
                 const pairPhase = (t * 0.6) % 1;
-                for (let j = 0; j < Z / 2; j++) {
+                if (showP) for (let j = 0; j < Z / 2; j++) {
                     const top = A.y + (2 * j) * zh;
                     const c1 = top + zh * (0.2 + 0.6 * pairPhase);
                     const c2 = c1 + zh;
@@ -12201,17 +12299,12 @@
                     label(ctx, nm, s.x - 16, s.y + 4, C.orange, 12, 'right');
                 });
                 drawScreen();
-                ctx.fillStyle = '#3a3a3a';
-                ctx.beginPath(); ctx.arc(P.x, P.y, 6, 0, Math.PI * 2); ctx.fill();
-                label(ctx, 'P（暗）', P.x + 10, P.y - 6, C.rose, 12);
-
-                const bw = Math.min(400, w - 16);
-                ctx.fillStyle = 'rgba(255,255,255,0.93)';
-                ctx.strokeStyle = 'rgba(18,49,58,0.16)'; ctx.lineWidth = 1;
-                ctx.beginPath(); ctx.rect(8, h - 66, bw, 60); ctx.fill(); ctx.stroke();
-                labelFit(ctx, `等分 ${Z} 區：相鄰對應點差 λ/2，抵消`, 18, h - 48, C.ink, 12, 'left', { maxW: w - 36, min: 10, clampW: w });
-                labelFit(ctx, `最大光程差 a sinθ = ${m}λ`, 18, h - 31, C.violet, 12, 'left', { maxW: w - 36, min: 10, clampW: w });
-                labelFit(ctx, `第 ${m} 暗紋：y = ${m}Lλ/a = ${(m * dyR * 1000).toFixed(2)} mm`, 18, h - 13, C.rose, 12, 'left', { maxW: w - 36, min: 10, clampW: w });
+                drawP(); drawDistance();
+                drawFooter([
+                    [`等分 ${Z} 區：相鄰對應點差 λ/2，抵消`, C.ink],
+                    [`第 ${screen.order} 暗紋：y = ${screen.y.toFixed(2)} mm`, C.violet],
+                    [showP ? `最大光程差 a sinθ = ${screen.order}λ` : '暗紋超出畫面，請調大屏幕範圍', C.rose]
+                ]);
             }
         };
         /* 3. 波的疊加原理與獨立性 ------------------------------------------ */
@@ -12649,6 +12742,6 @@
         });
     </script>
     <script data-page-required src="assets/js/swing-work.js?v=swing_20261005"></script>
-    <script data-page-required src="assets/js/learner-ui.js?v=swing_20261005"></script>
+    <script data-page-required src="assets/js/learner-ui.js?v=young-inquiry"></script>
 </body>
 </html>
