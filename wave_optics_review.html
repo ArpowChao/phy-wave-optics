@@ -1767,6 +1767,44 @@
                         ${lab.note ? `<div class="lab-note"><details><summary>觀察後的補充說明</summary>${lab.note}</details></div>` : ''}
                     </div>`;
             }
+            if (lab.floating) {
+                /* 必歐式版面：畫布占滿整塊舞台，說明／讀值／控制做成可收合的浮動面板 */
+                const fold = (open) => `<button type="button" class="lf-fold" aria-expanded="${open}" aria-label="${open ? '收合' : '展開'}">${open ? '▾' : '▸'}</button>`;
+                return `
+                <div class="lab-shell lab-float" id="${prefix}lab-${id}">
+                    <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
+                    <div class="lf-wrap">
+                        <div class="lab-stage"><canvas id="${prefix}${id}-canvas"></canvas></div>
+                        <div class="lf-left">
+                            <section class="lf-panel lf-info is-folded">
+                                <header><strong>說明</strong><span>怎麼看這個模擬</span>${fold(false)}</header>
+                                <div class="lf-body">
+                                    <div class="lab-hint">${lab.hint}</div>
+                                    ${lab.note ? `<div class="lab-note"><details><summary>觀察後的補充說明</summary>${lab.note}</details></div>` : ''}
+                                </div>
+                            </section>
+                            <section class="lf-panel lf-read is-folded">
+                                <header><strong>即時讀值</strong>${fold(false)}</header>
+                                <div class="lf-body"><div class="lab-readout" id="${prefix}${id}-readout"></div></div>
+                            </section>
+                        </div>
+                        <section class="lf-panel lf-ctrl">
+                            <header><strong>控制</strong><button type="button" class="lf-full" data-role="full">⛶ 全螢幕</button>${fold(true)}</header>
+                            <div class="lf-body">
+                                ${modes ? `<div class="lab-buttons" data-role="modes">${modes}</div>` : ''}
+                                ${scrub}
+                                <div class="lab-controls">${controls}</div>
+                                <div class="lab-buttons">
+                                    <button type="button" class="lab-btn" data-role="toggle">⏸ 暫停</button>
+                                    <button type="button" class="lab-btn" data-role="reset">↺ 回到預設值</button>
+                                    ${extraBtns}
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                    ${lab.teach ? `<section class="lab-teach">${lab.teach}</section>` : ''}
+                </div>`;
+            }
             return `
                 <div class="lab-shell" id="${prefix}lab-${id}">
                     <div class="lab-title"><h4>${lab.name}</h4><span class="lab-tag">${lab.tag}</span></div>
@@ -1821,7 +1859,10 @@
             let simTime = 0;
             let playbackRate = 1;
             /* lab.height 可為數字，或依模式與畫布寬度決定的函式 (params, cssWidth) => px */
+            const floatWrap = host.querySelector('.lf-wrap');
+            const floatWide = () => !!floatWrap && window.matchMedia('(min-width: 761px)').matches;
             const labHeight = () => {
+                if (floatWide()) return Math.max(320, floatWrap.clientHeight);
                 if (typeof lab.height !== 'function') return lab.height || 320;
                 const cw = canvas.clientWidth || canvas.parentElement?.clientWidth || 640;
                 return lab.height(params, cw);
@@ -1859,10 +1900,22 @@
                 }
             };
 
+            /* 浮動版面：控制面板展開時，圖畫在它左邊的區域，不被面板蓋住 */
+            const drawWidth = () => {
+                if (!floatWide()) return geom.width;
+                const ctrl = host.querySelector('.lf-ctrl');
+                if (!ctrl || ctrl.classList.contains('is-folded')) return geom.width;
+                return Math.max(320, geom.width - ctrl.offsetWidth - 20);
+            };
             const paint = () => {
                 const ctx = canvas.getContext('2d');
                 ctx.clearRect(0, 0, geom.width, geom.height);
-                lab.draw(ctx, geom.width, geom.height, params, simTime);
+                const dw = drawWidth();
+                if (dw < geom.width) {
+                    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, dw, geom.height); ctx.clip();
+                    lab.draw(ctx, dw, geom.height, params, simTime);
+                    ctx.restore();
+                } else lab.draw(ctx, geom.width, geom.height, params, simTime);
             };
 
             (lab.controls || []).forEach((c) => {
@@ -2024,10 +2077,56 @@
                     disposers,
                     syncOutputs,
                     paint,
-                    getGeom: () => geom,
+                    getGeom: () => Object.assign({}, geom, { drawWidth: drawWidth() }),
                     isPaused: () => !running,
                     pause: pausePlayback
                 });
+            }
+
+            if (floatWrap) {
+                // setup 插在舞台前的控制列，在浮動版面裡移進「控制」面板
+                const ctrlBody = host.querySelector('.lf-ctrl .lf-body');
+                const firstControls = ctrlBody.querySelector('.lab-controls');
+                floatWrap.querySelectorAll(':scope > .lab-controls').forEach((row) => ctrlBody.insertBefore(row, firstControls));
+                const refit = () => { geom = WaveRuntime.fitCanvas(canvas, labHeight()); paint(); };
+                host.querySelectorAll('.lf-fold').forEach((b) => {
+                    disposers.addEventListener(b, 'click', () => {
+                        const panel = b.closest('.lf-panel');
+                        const folded = panel.classList.toggle('is-folded');
+                        b.textContent = folded ? '▸' : '▾';
+                        b.setAttribute('aria-expanded', String(!folded));
+                        b.setAttribute('aria-label', folded ? '展開' : '收合');
+                        if (panel.classList.contains('lf-ctrl')) paint();
+                    });
+                });
+                const fullBtn = host.querySelector('[data-role="full"]');
+                const setFull = (on) => {
+                    host.classList.toggle('is-full', on);
+                    document.documentElement.classList.toggle('lab-full-open', on);
+                    if (fullBtn) fullBtn.textContent = on ? '✕ 結束全螢幕' : '⛶ 全螢幕';
+                    requestAnimationFrame(refit);
+                };
+                if (fullBtn) disposers.addEventListener(fullBtn, 'click', () => {
+                    const on = !host.classList.contains('is-full');
+                    setFull(on);
+                    try {
+                        if (on && host.requestFullscreen) host.requestFullscreen().catch(() => {});
+                        else if (!on && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+                    } catch (_) { /* 不支援全螢幕 API 時，仍以占滿視窗呈現 */ }
+                });
+                disposers.addEventListener(document, 'fullscreenchange', () => {
+                    if (!document.fullscreenElement && host.classList.contains('is-full')) setFull(false);
+                });
+                disposers.addEventListener(document, 'keydown', (e) => {
+                    if (e.key === 'Escape' && host.classList.contains('is-full') && !document.fullscreenElement) setFull(false);
+                });
+                disposers.add(() => document.documentElement.classList.remove('lab-full-open'));
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(() => { if (Math.abs(floatWrap.clientHeight - geom.height) > 1 || Math.abs(canvas.clientWidth - geom.width) > 1) refit(); });
+                    ro.observe(floatWrap);
+                    disposers.add(() => ro.disconnect());
+                }
+                refit();
             }
 
             syncOutputs();
@@ -11587,6 +11686,7 @@
         /* 12. 光的干涉實驗（楊氏雙狹縫） ------------------------------------ */
         LABS.young = {
             name: '光的干涉實驗（楊氏雙狹縫）',
+            floating: true,
             cycle: 1.85,
             tag: 'N19',
             hint: '「實驗裝置」模式＝楊氏 1801 年的原始裝置：平行光先過單狹縫 S₀ 成為新線光源，使 S₁、S₂ 落在同一波前上而成為同相同調光。「幾何與公式」模式則把課本圖 (a) 畫出來——拖動 P 點，看波程差 Δℓ = d sinθ 在整數倍與半整數倍波長之間變化，即時判定亮紋或暗紋。',
@@ -11704,6 +11804,7 @@
                 { key: 'dl', label: '縫距 d（λ₀ = 550 nm 的倍數）', min: 2, max: 20, step: 0.5, value: 18, fmt: (v) => `${v} λ₀`, only: ['view3d'] },
                 { key: 'al', label: '縫寬 a（λ₀ 的倍數；a 夠大才看得到單縫包絡）', min: 0.3, max: 6, step: 0.1, value: 3, fmt: (v, p) => `${v.toFixed(1)} λ₀${v > p.dl * 0.95 ? `（不能超過 d，以 ${(p.dl * 0.95).toFixed(1)} λ₀ 計）` : ''}`, only: ['view3d'] },
                 { key: 'L3', label: '屏幕距離 L（示意；愈小，屏幕涵蓋的角度愈大）', min: 6, max: 26, step: 1, value: 8, fmt: (v) => `${v}`, only: ['view3d'] },
+                { key: 'gain3', label: '亮度增強（像拍照曝光；上方強度曲線仍是真實比例）', min: 1, max: 60, step: 1, value: 1, fmt: (v) => v === 1 ? '1×（真實比例）' : `${v}×`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
                     { value: 'far', label: '遠看：L ≫ d（接近真實比例）' }, { value: 'near', label: '近看：放大看波怎麼疊加' }] },
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
@@ -11876,6 +11977,7 @@
         };
         /* 13. 光的繞射實驗（單狹縫） --------------------------------------- */
         LABS.diffraction = {
+            floating: true,
             name: '光的繞射實驗（單狹縫）',
             cycle: 1.96,
             tag: 'N20',
@@ -11996,6 +12098,7 @@
                 { key: 'nc3', label: '細縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => `${v} 條`, only: ['view3d'], showIf: (p) => p.cut3 === 'cut' },
                 { key: 'aw3', label: '縫寬 a（切開時為總寬；λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
                 { key: 'L3', label: '屏幕距離 L（示意；愈小，屏幕涵蓋的角度愈大）', min: 6, max: 26, step: 1, value: 10, fmt: (v) => `${v}`, only: ['view3d'] },
+                { key: 'gain3', label: '亮度增強（像拍照曝光；上方強度曲線仍是真實比例）', min: 1, max: 60, step: 1, value: 1, fmt: (v) => v === 1 ? '1×（真實比例）' : `${v}×`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
                     { value: 'far', label: '遠看：L ≫ d（接近真實比例）' }, { value: 'near', label: '近看：放大看波怎麼疊加' }] },
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
