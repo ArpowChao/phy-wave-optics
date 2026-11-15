@@ -12093,10 +12093,12 @@
                 { key: 'zones', label: '把狹縫等分成幾區', min: 2, max: 6, step: 2, value: 2, fmt: (v) => `${v} 區（第 ${v / 2} 暗紋）`, only: ['cancel'] },
                 { key: 'aw', label: '縫寬／波長 a/λ（無單位比例）', min: 0.5, max: 8, step: 0.25, value: 2.5, fmt: (v) => `a / λ = ${v.toFixed(2)}`, only: ['huygens'] },
                 { key: 'cut3', label: '狹縫', value: 'whole', only: ['view3d'], fmt: () => '',
-                  onChange: (v, p) => { if (v === 'cut' && p.aw3 < 6) p.aw3 = 8; }, options: [
-                    { value: 'whole', label: '一條寬縫（單狹縫）' }, { value: 'cut', label: '切成 N 條細縫（總寬 a 不變）' }] },
-                { key: 'nc3', label: '細縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => `${v} 條`, only: ['view3d'], showIf: (p) => p.cut3 === 'cut' },
-                { key: 'aw3', label: '縫寬 a（切開時為總寬；λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
+                  onChange: (v, p) => { if (v === 'cut' && p.aw3 < 6) p.aw3 = 8; if (v === 'grat' && p.aw3 > 4) p.aw3 = 2; }, options: [
+                    { value: 'whole', label: '一條寬縫（單狹縫）' }, { value: 'cut', label: '切成 N 條細縫（總寬 a 不變）' },
+                    { value: 'grat', label: 'N 條縫，固定縫距 d（→ 光柵）' }] },
+                { key: 'nc3', label: '縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => `${v} 條`, only: ['view3d'], showIf: (p) => p.cut3 === 'cut' || p.cut3 === 'grat' },
+                { key: 'dd3', label: '縫距 d（λ₀ 的倍數；d 愈大，看得到的級數愈多）', min: 1.5, max: 20, step: 0.5, value: 8, fmt: (v) => `${v} λ₀`, only: ['view3d'], showIf: (p) => p.cut3 === 'grat' },
+                { key: 'aw3', label: '縫寬 a（切開時為總寬；光柵時為每條縫的寬；λ₀ 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
                 { key: 'L3', label: '屏幕距離 L（示意；愈小，屏幕涵蓋的角度愈大）', min: 6, max: 26, step: 1, value: 10, fmt: (v) => `${v}`, only: ['view3d'] },
                 { key: 'gain3', label: '亮度增強（像拍照曝光；上方強度曲線仍是真實比例）', min: 1, max: 60, step: 1, value: 1, fmt: (v) => v === 1 ? '1×（真實比例）' : `${v}×`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
