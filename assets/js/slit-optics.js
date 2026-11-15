@@ -1610,24 +1610,34 @@
      * 看 N 增加時圖樣怎麼從多狹縫變成單狹縫。 */
     const CUT_FILL = 0.4;
     const cutInfo = (p) => {
-        const cut = p.cut3 === 'cut';
+        const grat = p.cut3 === 'grat', cut = p.cut3 === 'cut' || grat;
         const N = cut ? Math.max(2, Math.round(p.nc3 || 2)) : 1;
-        const d = cut ? p.aw3 / N : 0, w = cut ? d * CUT_FILL : p.aw3;
-        return { cut, N, d, w };
+        // 切開：d = a/N、每條細縫寬 0.4 d；光柵：d 自己調，每條縫寬 a（不超過 0.95 d）
+        const d = grat ? Number(p.dd3) || 6 : cut ? p.aw3 / N : 0;
+        const w = grat ? Math.min(p.aw3, d * 0.95) : cut ? d * CUT_FILL : p.aw3;
+        return { cut, grat, N, d, w };
     };
     function single3D(ctx, w, h, p, t, holder) {
         const far = p.scale3 !== 'near';
         const q = cutInfo(p);
         const nNear = Math.min(q.N, 8);
         const N = far ? q.N : nNear;
-        const dv = q.cut ? (p.aw3 * LAM0) / N : 0;
+        const dv = q.cut ? q.d * LAM0 : 0;
         const slits = q.cut ? Array.from({ length: N }, (_, i) => (i - (N - 1) / 2) * dv) : [0];
-        const av = q.cut ? dv * CUT_FILL : p.aw3 * LAM0;
+        const av = q.w * LAM0;
         const k0 = 550 / (p.src3 === 'white' ? 550 : p.src3 === 'two' ? Number(p.lam1) : Number(p.lam));
-        const ref = q.cut && p.src3 !== 'white' ? (u) => sinc2(Math.PI * p.aw3 * u * k0) : null;
+        const ref = q.cut && p.src3 !== 'white' ? (u) => sinc2(Math.PI * (q.grat ? q.w : p.aw3) * u * k0) : null;
         const f2 = (v) => String(+v.toFixed(2));
         let notes;
-        if (q.cut) {
+        if (q.grat) {
+            const nMax = Math.floor(q.d * k0 + 1e-9);
+            const uEdge = WV / Math.hypot(WV, Math.max(6, Math.min(30, Number(p.L3) || LV0)));
+            const nScreen = Math.floor(uEdge * q.d * k0 + 1e-9);
+            notes = [
+                `${q.N} 條縫、縫距 d = ${f2(q.d)} λ₀（每條縫寬 ${f2(q.w)} λ₀）：主亮紋在 d sinθ = nλ。d 愈大，亮紋愈密，sinθ ≤ 1 內最多到第 ${nMax} 級；屏幕上看得到到第 ${nScreen} 級。`,
+                `紅色虛線是每條縫的單縫包絡（縫寬 ${f2(q.w)} λ₀）：亮紋被它包住，包絡外的級數很暗 → 把縫寬 a 調小，包絡變寬，看得到的級數更多；N 愈大，主亮紋愈細愈亮。`
+            ];
+        } else if (q.cut) {
             const uOrder = 1 / q.d / k0;   // 第一主亮紋 sinθ = λ/d
             notes = far ? [
                 `把寬 a = ${p.aw3} λ₀ 的縫切成 N = ${q.N} 條細縫（總寬不變，d = a/N = ${f2(q.d)} λ₀）。紅色虛線是同寬的單狹縫。`,
@@ -1651,9 +1661,11 @@
             Lv: p.L3, gain: p.gain3,
             far, N, dl: q.cut ? q.d : 0, al: q.w,
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
-            inset: q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
+            inset: q.grat ? `N = ${q.N}，d = ${f2(q.d)} λ₀，縫寬 ${f2(q.w)} λ₀` : q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
-            title: q.cut
+            title: q.grat
+                ? `3D${far ? '（遠看：L ≫ d）' : '（近看：放大示意）'}：${q.N} 條縫（光柵），d = ${f2(q.d)} λ₀，${lamText(p)}`
+                : q.cut
                 ? `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：寬 a = ${p.aw3} λ₀ 的縫切成 ${q.N} 條細縫，${lamText(p)}`
                 : `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：單狹縫，${lamText(p)}（a = ${p.aw3} λ₀）`,
             notes
@@ -1666,9 +1678,17 @@
         const q = cutInfo(p);
         const out = [
             { label: '條紋形狀', value: '直條紋（與狹縫平行）' },
-            { label: `${q.cut ? '單狹縫（同寬 a）' : ''}第一暗紋 a sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: th === null ? '無：a < λ，光幾乎向各方向展開' : `θ₁ = ${th.toFixed(1)}°` }
+            (() => {
+                const aw = q.grat ? q.w : p.aw3, rr = lam / 550 / aw, t1 = rr <= 1 ? Math.asin(rr) * 180 / Math.PI : null;
+                return { label: `${q.grat ? '每條縫的包絡' : q.cut ? '單狹縫（同寬 a）' : ''}第一暗紋 a sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: t1 === null ? '無：a < λ，光幾乎向各方向展開' : `θ = ${t1.toFixed(1)}°` };
+            })()
         ];
-        if (q.cut) {
+        if (q.grat) {
+            const s1 = (lam / 550) / q.d;
+            out.push({ label: `N = ${q.N} 條縫，縫距 d`, value: `${(+q.d.toFixed(2))} λ₀（縫寬 ${(+q.w.toFixed(2))} λ₀）` });
+            out.push({ label: '第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°` : '不存在（d < λ）' });
+            out.push({ label: 'sinθ ≤ 1 內最多到第幾級', value: `第 ${Math.floor(q.d / (lam / 550) + 1e-9)} 級（d 愈大，級數愈多）` });
+        } else if (q.cut) {
             const s1 = (lam / 550) / q.d;
             out.push({ label: `細縫 N = ${q.N}，d = a/N`, value: `${(+q.d.toFixed(3))} λ₀` });
             out.push({ label: '多狹縫第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°（還看得到）` : `sinθ = ${s1.toFixed(2)} > 1：不存在 → 只剩單狹縫圖樣` });
