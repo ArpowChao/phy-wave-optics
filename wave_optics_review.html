@@ -11701,9 +11701,9 @@
                 { key: 'open3', label: '狹縫', value: 'all', only: ['view3d'], fmt: () => '', options: [
                     { value: 'all', label: '所有縫都打開' }, { value: 'one', label: '只開 1 條縫（其餘遮住）' }] },
                 { key: 'n3', label: '縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => v === 2 ? '2（雙狹縫）' : `${v} 條`, only: ['view3d'] },
-                { key: 'dl', label: '縫距 d（λ₀ = 550 nm 的倍數）', min: 2, max: 10, step: 0.5, value: 4, fmt: (v) => `${v} λ₀`, only: ['view3d'] },
-                { key: 'al', label: '縫寬 a（λ₀ 的倍數；a 夠大才看得到單縫包絡）', min: 0.3, max: 5, step: 0.1, value: 1.5, fmt: (v, p) => `${v.toFixed(1)} λ₀${v > p.dl * 0.95 ? `（不能超過 d，以 ${(p.dl * 0.95).toFixed(1)} λ₀ 計）` : ''}`, only: ['view3d'] },
-                { key: 'L3', label: '屏幕距離 L（示意）', min: 8, max: 26, step: 1, value: 16, fmt: (v) => `${v}`, only: ['view3d'] },
+                { key: 'dl', label: '縫距 d（λ₀ = 550 nm 的倍數）', min: 2, max: 20, step: 0.5, value: 18, fmt: (v) => `${v} λ₀`, only: ['view3d'] },
+                { key: 'al', label: '縫寬 a（λ₀ 的倍數；a 夠大才看得到單縫包絡）', min: 0.3, max: 6, step: 0.1, value: 3, fmt: (v, p) => `${v.toFixed(1)} λ₀${v > p.dl * 0.95 ? `（不能超過 d，以 ${(p.dl * 0.95).toFixed(1)} λ₀ 計）` : ''}`, only: ['view3d'] },
+                { key: 'L3', label: '屏幕距離 L（示意；愈小，屏幕涵蓋的角度愈大）', min: 6, max: 26, step: 1, value: 8, fmt: (v) => `${v}`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
                     { value: 'far', label: '遠看：L ≫ d（接近真實比例）' }, { value: 'near', label: '近看：放大看波怎麼疊加' }] },
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
@@ -11995,7 +11995,7 @@
                     { value: 'whole', label: '一條寬縫（單狹縫）' }, { value: 'cut', label: '切成 N 條細縫（總寬 a 不變）' }] },
                 { key: 'nc3', label: '細縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => `${v} 條`, only: ['view3d'], showIf: (p) => p.cut3 === 'cut' },
                 { key: 'aw3', label: '縫寬 a（切開時為總寬；λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
-                { key: 'L3', label: '屏幕距離 L（示意）', min: 8, max: 26, step: 1, value: 16, fmt: (v) => `${v}`, only: ['view3d'] },
+                { key: 'L3', label: '屏幕距離 L（示意；愈小，屏幕涵蓋的角度愈大）', min: 6, max: 26, step: 1, value: 10, fmt: (v) => `${v}`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
                     { value: 'far', label: '遠看：L ≫ d（接近真實比例）' }, { value: 'near', label: '近看：放大看波怎麼疊加' }] },
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
