@@ -1397,7 +1397,7 @@
         const locate = (e) => {
             const rect = canvas.getBoundingClientRect(), geom = getGeom();
             return { x: (e.clientX - rect.left) * geom.width / rect.width,
-                y: (e.clientY - rect.top) * geom.height / rect.height, g: youngInquiryLayout(geom.width) };
+                y: (e.clientY - rect.top) * geom.height / rect.height, g: youngInquiryLayout(geom.drawWidth || geom.width) };
         };
         const place = ({ x, g }) => {
             const s = youngInquiryState(params);
