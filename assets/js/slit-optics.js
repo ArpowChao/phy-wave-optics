@@ -279,6 +279,7 @@
      * ====================================================================== */
     const LV0 = 16, WV = 7.5, XI = 3.6, PH = 4.2, SH = 3.2, LAM0 = 0.6;
     let LV = LV0;   // 屏幕位置（示意距離 L），每次畫 3D 前由 cfg.Lv 設定
+    let LAMV = LAM0; // 近看時 550 nm 畫成幾個單位；縫很寬時把波長畫小，縫才放得進畫面
     /* 相機：txf = 看向 x = txf × L（屏幕位置會隨 L 改變）；fit = 整個裝置隨 L 縮放到差不多大 */
     const PRESETS = {
         oblique: { yaw: -2.0, pitch: 0.50, zoom: 1, txf: 0.42, fit: true, D: 33 },
@@ -318,7 +319,7 @@
 
     /* 各波長在一點的複數振幅（2D 柱面波：振幅 ∝ 1/√r）。白光的波數等間隔，用旋轉遞推省下三角函數。 */
     function makeAmp(lines, srcs) {
-        const ks = lines.map((L) => 2 * Math.PI / (LAM0 * L.lam / 550));
+        const ks = lines.map((L) => 2 * Math.PI / (LAMV * L.lam / 550));
         const n = ks.length;
         const uniform = n > 2;
         const dk = uniform ? ks[1] - ks[0] : 0;
@@ -342,10 +343,10 @@
 
     /* 平面光場的貼圖與屏幕強度：只在參數改變時重算（旋轉視角不用重算） */
     function buildField(cfg) {
-        const key = JSON.stringify([cfg.slits, cfg.a, LV, cfg.lines.map((L) => Math.round(L.lam * 10))]);
+        const key = JSON.stringify([cfg.slits, cfg.a, LV, LAMV, cfg.lines.map((L) => Math.round(L.lam * 10))]);
         if (cfg.cache && cfg.cache.key === key) return cfg.cache;
         const lines = cfg.lines, n = lines.length;
-        const lamMin = LAM0 * Math.min(...lines.map((L) => L.lam)) / 550;
+        const lamMin = LAMV * Math.min(...lines.map((L) => L.lam)) / 550;
         const srcs = sources(cfg, lamMin);
         const amp = makeAmp(lines, srcs);
         const re = new Float64Array(n), im = new Float64Array(n);
@@ -470,14 +471,15 @@
 
     function draw3D(ctx, w, h, p, t, cfg) {
         LV = Math.max(6, Math.min(30, Number(cfg.Lv) || LV0));
-        const gain = Math.max(1, Number(cfg.gain) || 1);   // 亮度增強（像曝光）：只影響屏幕與水平面的亮度，強度曲線不變
+        const gain = Math.max(1, Number(cfg.gain) || 1);
+        LAMV = LAM0 * (Number(cfg.lamScale) || 1);   // 亮度增強（像曝光）：只影響屏幕與水平面的亮度，強度曲線不變
         const v = viewOf(p);
         const cam = camera(v, w, h);
         const far = !!cfg.far;
         const F = far ? buildFar(cfg) : buildField(cfg);
         const lines = cfg.lines, n = lines.length;
         const instant = !far && cfg.show === 'instant' && n <= 2;
-        const lamV = lines.map((L) => LAM0 * L.lam / 550);
+        const lamV = lines.map((L) => LAMV * L.lam / 550);
         const om = lines.map((L) => 3.4 * 550 / L.lam);
         const cs = om.map((o) => Math.cos(o * t)), sn = om.map((o) => Math.sin(o * t));
 
@@ -1624,7 +1626,11 @@
         const N = far ? q.N : nNear;
         const dv = q.cut ? q.d * LAM0 : 0;
         const slits = q.cut ? Array.from({ length: N }, (_, i) => (i - (N - 1) / 2) * dv) : [0];
-        const av = q.w * LAM0;
+        // 近看：縫最寬畫 12 個單位；再寬就把波長畫小（a/λ 最多照 40 倍畫，再大算不動）
+        const NEAR_MAX = 12, NEAR_RATIO = 40;
+        const nearRatio = !far && !q.cut ? Math.min(p.aw3, NEAR_RATIO) : p.aw3;
+        const lamScale = !far && !q.cut && p.aw3 * LAM0 > NEAR_MAX ? NEAR_MAX / nearRatio / LAM0 : 1;
+        const av = !far && !q.cut ? nearRatio * LAM0 * lamScale : q.w * LAM0;
         const k0 = 550 / (p.src3 === 'white' ? 550 : p.src3 === 'two' ? Number(p.lam1) : Number(p.lam));
         const ref = q.cut && p.src3 !== 'white' ? (u) => sinc2(Math.PI * (q.grat ? q.w : p.aw3) * u * k0) : null;
         const f2 = (v) => String(+v.toFixed(2));
@@ -1647,6 +1653,15 @@
                 `近看：把縫切成 ${N} 條細縫${q.N > 8 ? `（設定 ${q.N} 條，近看最多畫 8 條；看 N 很大請切到「遠看」）` : ''}；每條細縫都是一個子波源。`,
                 '細縫愈多、愈密，就愈接近「縫上每一點都發出子波」的單狹縫。'
             ];
+        } else if (p.aw3 / k0 >= 10) {
+            const half = Math.asin(Math.min(1, 1 / (p.aw3 * k0))) * 180 / Math.PI;
+            notes = far ? [
+                `縫很寬（a = ${p.aw3} λ₀，λ/a = ${(1 / (p.aw3 * k0)).toFixed(3)} ≪ 1）：中央亮紋的半角寬只有 ${half.toFixed(1)}°，光幾乎直線前進 → 看不出繞射。`,
+                '「比例」切到「近看」：可以看到光直直穿過縫，屏幕上是約 a 寬的亮帶、兩旁是清楚的影子。'
+            ] : [
+                `縫很寬（a = ${p.aw3} λ₀ ≫ λ）：光幾乎直線穿過縫，屏幕上是寬度約等於 a 的亮帶、兩旁是影子；只有亮帶邊緣有一點點條紋 → 繞射不明顯。${lamScale < 1 ? `（為了放進畫面，波長畫小了，水平面改畫平均亮度${p.aw3 > NEAR_RATIO ? `；近看最多照 a = ${NEAR_RATIO} λ 的比例畫，遠看照 ${p.aw3} λ₀ 算` : ''}）` : ''}`,
+                '把 a 調小到和 λ 差不多：光就會往兩旁的影子區散開，繞射變明顯。'
+            ];
         } else {
             notes = far ? [
                 '遠看：縫寬 a 比 L 小很多，亮度只由方向決定；a sinθ = mλ 的方向是暗紋，中央亮帶最寬最亮。',
@@ -1658,9 +1673,9 @@
             ];
         }
         draw3D(ctx, w, h, p, t, {
-            Lv: p.L3, gain: p.gain3,
+            Lv: p.L3, gain: p.gain3, lamScale,
             far, N, dl: q.cut ? q.d : 0, al: q.w,
-            slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
+            slits, a: av, lines: src3Lines(p), show: lamScale < 1 ? 'average' : p.show3, curve: !!p.curve, nsMax: q.cut ? 26 : 90, ref,
             inset: q.grat ? `N = ${q.N}，d = ${f2(q.d)} λ₀，縫寬 ${f2(q.w)} λ₀` : q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
             title: q.grat
@@ -1694,6 +1709,8 @@
             out.push({ label: '多狹縫第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°（還看得到）` : `sinθ = ${s1.toFixed(2)} > 1：不存在 → 只剩單狹縫圖樣` });
         } else {
             out.push({ label: '中央亮紋的角寬', value: th === null ? '—' : `2θ₁ = ${(2 * th).toFixed(1)}°` });
+            const ratio = lam / 550 / p.aw3;
+            out.push({ label: 'λ / a', value: `${ratio.toFixed(3)}（${ratio >= 1 ? 'λ ≥ a：繞射非常明顯' : ratio >= 0.3 ? '接近 1：繞射明顯' : ratio >= 0.1 ? '繞射看得出來' : '≪ 1：幾乎直線前進，繞射不明顯'}）` });
             out.push({ label: '屏幕距離 L（示意）', value: `${p.L3 || 16}：屏幕兩端到 sinθ = ±${(WV / Math.hypot(WV, p.L3 || 16)).toFixed(2)}；L 愈大，中央亮紋在屏幕上愈寬（2Lλ/a），但看得到的角度範圍愈小` });
         }
         return out;
