@@ -470,6 +470,7 @@
 
     function draw3D(ctx, w, h, p, t, cfg) {
         LV = Math.max(6, Math.min(30, Number(cfg.Lv) || LV0));
+        const gain = Math.max(1, Number(cfg.gain) || 1);   // 亮度增強（像曝光）：只影響屏幕與水平面的亮度，強度曲線不變
         const v = viewOf(p);
         const cam = camera(v, w, h);
         const far = !!cfg.far;
@@ -538,7 +539,7 @@
             const si = Math.min(NS - 1, Math.floor((i + 0.5) / NSd * NS));
             const c = [F.stripLin[si * 3], F.stripLin[si * 3 + 1], F.stripLin[si * 3 + 2]];
             const base = 0.05;
-            const fill = css(c.map((q) => base + (1 - base) * q));
+            const fill = css(c.map((q) => base + (1 - base) * Math.min(1, q * gain)));
             vpanel(LV, ya, yb, -PH, PH, fill, null);
         }
         quad([[LV + 0.01, -WV, -PH], [LV + 0.01, WV, -PH], [LV + 0.01, WV, 0], [LV + 0.01, -WV, 0]], null, 'rgba(18,49,58,0.5)', 1.2);
@@ -629,9 +630,9 @@
                     prevOk = true; prevU = u; rowU[i2] = u;
                     F.avgRGB(u - du / 2, u + du / 2, farTmp);
                     const fade = Math.min(1, rr / 0.25);
-                    r = (1 - Math.exp(-2.6 * farTmp[0] / F.norm)) * fade;
-                    g = (1 - Math.exp(-2.6 * farTmp[1] / F.norm)) * fade;
-                    b = (1 - Math.exp(-2.6 * farTmp[2] / F.norm)) * fade;
+                    r = (1 - Math.exp(-2.6 * gain * farTmp[0] / F.norm)) * fade;
+                    g = (1 - Math.exp(-2.6 * gain * farTmp[1] / F.norm)) * fade;
+                    b = (1 - Math.exp(-2.6 * gain * farTmp[2] / F.norm)) * fade;
                 } else {
                     const fx = X * sx, fy = (Y + WV) * sy;
                     const ix = Math.min(NX - 2, fx | 0), iy = Math.min(NY - 2, fy | 0);
@@ -655,6 +656,7 @@
                         b = A[i00 * 3 + 2] * w00 + A[i01 * 3 + 2] * w01 + A[i10 * 3 + 2] * w10 + A[i11 * 3 + 2] * w11;
                     }
                 }
+                if (!far && X >= 0 && gain > 1) { r *= gain; g *= gain; b *= gain; }
                 const o = (j2 * iw + i2) * 4;
                 // 暗底（深藍綠）＋光
                 d8[o] = enc(0.004 + r); d8[o + 1] = enc(0.010 + g); d8[o + 2] = enc(0.016 + b); d8[o + 3] = 255;
@@ -1580,7 +1582,7 @@
             : `單縫包絡的暗紋在 sinθ = ${uEnv.toFixed(2)}，超出屏幕（屏幕兩端只到 ±${uEdge.toFixed(2)}）→ 把 L 調小或 a 調大，才看得到。`;
         else if (ref) notes[1] = `紅色虛線＝單縫包絡（只開一條縫的亮度）：縫有寬度 a，亮紋被它「包住」；a sinθ = λ 處沒有亮紋${Number.isInteger(ratio) ? `（d/a = ${ratio}，第 ${ratio} 級缺級）` : ''}。`;
         draw3D(ctx, w, h, p, t, {
-            Lv: p.L3, ref,
+            Lv: p.L3, ref, gain: p.gain3,
             far, N: oneOpen ? 1 : N, dl: p.dl, al: aEff,
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 6,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
@@ -1646,7 +1648,7 @@
             ];
         }
         draw3D(ctx, w, h, p, t, {
-            Lv: p.L3,
+            Lv: p.L3, gain: p.gain3,
             far, N, dl: q.cut ? q.d : 0, al: q.w,
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
             inset: q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
