@@ -553,6 +553,16 @@
             if (base.every((q) => q[2] > 0.4)) upper.push({ type: 'line', P: base, col: 'rgba(18,49,58,0.35)', lw: 1, zc: (base[0][2] + base[1][2]) / 2 });
             if (n <= 2) F.scr.forEach((a, j) => add(a, 1 / F.lineMax[j], ink(lines[j].lam), 2));
             if (n !== 1) add(F.total, 1, C.ink, n > 2 ? 2.4 : 1.6);
+            if (cfg.ref) {
+                // 對照曲線（例如單狹縫 sinc²）：取每條直條中心的方向 u
+                const pts = [];
+                for (let i = 0; i < NS; i += 2) {
+                    const y = -WV + 2 * WV * (i + 0.5) / NS, u = y / Math.hypot(y, LV);
+                    pts.push([LV, y, z0 + cfg.ref(u) * Hc]);
+                }
+                const P = pts.map(cam.project);
+                if (P.every((q) => q[2] > 0.4)) upper.push({ type: 'line', P, col: 'rgba(194,38,74,0.9)', lw: 1.6, dash: [6, 4], zc: P.reduce((s2, q) => s2 + q[2], 0) / P.length - 0.02 });
+            }
         }
 
         const paintList = (list) => {
@@ -564,7 +574,7 @@
                     ctx.closePath();
                     if (o.fill) { ctx.fillStyle = o.fill; ctx.fill(); }
                     if (o.stroke) { ctx.strokeStyle = o.stroke; ctx.lineWidth = o.lw || 0.8; ctx.stroke(); }
-                } else { ctx.strokeStyle = o.col; ctx.lineWidth = o.lw; ctx.stroke(); }
+                } else { ctx.save(); if (o.dash) ctx.setLineDash(o.dash); ctx.strokeStyle = o.col; ctx.lineWidth = o.lw; ctx.stroke(); ctx.restore(); }
             });
         };
         paintList(lower);
@@ -765,7 +775,8 @@
             ctx.beginPath(); ctx.moveTo(px + 3, y); ctx.lineTo(px + 3 + L * Math.cos(th), y - L * Math.sin(th)); ctx.stroke();
         }
         ctx.restore();
-        const info = N <= 1 ? `a = ${cfg.al} λ₀` : `N = ${N}，d = ${cfg.dl} λ₀，a = ${cfg.al} λ₀`;
+        const f2 = (v) => String(+(+v).toFixed(2));
+        const info = cfg.inset || (N <= 1 ? `a = ${f2(cfg.al)} λ₀` : `N = ${N}，d = ${f2(cfg.dl)} λ₀，a = ${f2(cfg.al)} λ₀`);
         labelFit(ctx, info, x0 + 6, y0 + bh - 12, C.ink, 10, 'left', { maxW: bw - 12, min: 8 });
         labelFit(ctx, '到屏幕的光幾乎平行', x0 + bw - 6, y0 + 14, 'rgba(194,38,74,0.9)', 10, 'right', { maxW: bw - 80, min: 8 });
     }
@@ -1576,34 +1587,76 @@
             { label: '縫數 N', value: p.open3 === 'one' ? '只開 1 條：單縫繞射，沒有細條紋' : N === 2 ? '2（雙狹縫）' : `${N}：主亮紋寬約 2/N，之間有 ${N - 1} 個暗紋、${N - 2} 個小亮紋${p.scale3 === 'near' && N > 8 ? '（近看只畫 8 條）' : ''}` }
         ];
     }
+    /* 單狹縫 3D：可把寬 a 的縫「切成 N 條細縫」（總寬 a 不變、d = a/N、每條細縫寬 0.4 d），
+     * 看 N 增加時圖樣怎麼從多狹縫變成單狹縫。 */
+    const CUT_FILL = 0.4;
+    const cutInfo = (p) => {
+        const cut = p.cut3 === 'cut';
+        const N = cut ? Math.max(2, Math.round(p.nc3 || 2)) : 1;
+        const d = cut ? p.aw3 / N : 0, w = cut ? d * CUT_FILL : p.aw3;
+        return { cut, N, d, w };
+    };
     function single3D(ctx, w, h, p, t, holder) {
-        const av = p.aw3 * LAM0;
         const far = p.scale3 !== 'near';
-        draw3D(ctx, w, h, p, t, {
-            far, N: 1, dl: 0, al: p.aw3,
-            slits: [0], a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26,
-            cache: holder._f3, store: (r) => { holder._f3 = r; },
-            title: `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：單狹縫，${lamText(p)}（a = ${p.aw3} λ₀）`,
-            notes: far ? [
+        const q = cutInfo(p);
+        const nNear = Math.min(q.N, 8);
+        const N = far ? q.N : nNear;
+        const dv = q.cut ? (p.aw3 * LAM0) / N : 0;
+        const slits = q.cut ? Array.from({ length: N }, (_, i) => (i - (N - 1) / 2) * dv) : [0];
+        const av = q.cut ? dv * CUT_FILL : p.aw3 * LAM0;
+        const k0 = 550 / (p.src3 === 'white' ? 550 : p.src3 === 'two' ? Number(p.lam1) : Number(p.lam));
+        const ref = q.cut && p.src3 !== 'white' ? (u) => sinc2(Math.PI * p.aw3 * u * k0) : null;
+        const f2 = (v) => String(+v.toFixed(2));
+        let notes;
+        if (q.cut) {
+            const uOrder = 1 / q.d / k0;   // 第一主亮紋 sinθ = λ/d
+            notes = far ? [
+                `把寬 a = ${p.aw3} λ₀ 的縫切成 N = ${q.N} 條細縫（總寬不變，d = a/N = ${f2(q.d)} λ₀）。紅色虛線是同寬的單狹縫。`,
+                uOrder <= 1 ? `N 還小：d sinθ = λ 的主亮紋（sinθ = ${uOrder.toFixed(2)}）還在屏幕範圍內 → 看起來像多狹縫。把 N 加大，主亮紋被推出去。`
+                    : `N 夠大：主亮紋要 sinθ = λ/d = ${uOrder.toFixed(2)} > 1，根本到不了 → 只剩中央那一團，和單狹縫（紅色虛線）幾乎重合。`
+            ] : [
+                `近看：把縫切成 ${N} 條細縫${q.N > 8 ? `（設定 ${q.N} 條，近看最多畫 8 條；看 N 很大請切到「遠看」）` : ''}；每條細縫都是一個子波源。`,
+                '細縫愈多、愈密，就愈接近「縫上每一點都發出子波」的單狹縫。'
+            ];
+        } else {
+            notes = far ? [
                 '遠看：縫寬 a 比 L 小很多，亮度只由方向決定；a sinθ = mλ 的方向是暗紋，中央亮帶最寬最亮。',
                 '水平面畫的是平均亮度；想看縫上各點的子波怎麼疊加，「比例」切到「近看」。'
             ] : [
                 '縫上每一點都發出子波（惠更斯）；縫沿上下很長，所以屏幕上同樣是直條紋。',
                 p.src3 === 'white' && p.show3 === 'instant' ? '白光各色頻率不同，瞬間圖沒有意義，這裡改畫平均亮度。'
                     : 'a 愈小，中央亮帶張得愈開；a sinθ = λ 的方向子波成對抵消，是第一暗紋。'
-            ]
+            ];
+        }
+        draw3D(ctx, w, h, p, t, {
+            far, N, dl: q.cut ? q.d : 0, al: q.w,
+            slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
+            inset: q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
+            cache: holder._f3, store: (r) => { holder._f3 = r; },
+            title: q.cut
+                ? `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：寬 a = ${p.aw3} λ₀ 的縫切成 ${q.N} 條細縫，${lamText(p)}`
+                : `3D${far ? '（遠看：L ≫ a）' : '（近看：放大示意）'}：單狹縫，${lamText(p)}（a = ${p.aw3} λ₀）`,
+            notes
         });
     }
     function single3DReadouts(p) {
         const lam = p.src3 === 'white' ? 550 : p.src3 === 'two' ? Number(p.lam1) : Number(p.lam);
         const r = lam / 550 / p.aw3;
         const th = r <= 1 ? Math.asin(r) * 180 / Math.PI : null;
-        return [
+        const q = cutInfo(p);
+        const out = [
             { label: '條紋形狀', value: '直條紋（與狹縫平行）' },
-            { label: `第一暗紋 a sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: th === null ? '無：a < λ，光幾乎向各方向展開' : `θ₁ = ${th.toFixed(1)}°` },
-            { label: '中央亮紋的角寬', value: th === null ? '—' : `2θ₁ = ${(2 * th).toFixed(1)}°` },
-            { label: '操作', value: '拖曳旋轉；「視角」可快速切換' }
+            { label: `${q.cut ? '單狹縫（同寬 a）' : ''}第一暗紋 a sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: th === null ? '無：a < λ，光幾乎向各方向展開' : `θ₁ = ${th.toFixed(1)}°` }
         ];
+        if (q.cut) {
+            const s1 = (lam / 550) / q.d;
+            out.push({ label: `細縫 N = ${q.N}，d = a/N`, value: `${(+q.d.toFixed(3))} λ₀` });
+            out.push({ label: '多狹縫第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°（還看得到）` : `sinθ = ${s1.toFixed(2)} > 1：不存在 → 只剩單狹縫圖樣` });
+        } else {
+            out.push({ label: '中央亮紋的角寬', value: th === null ? '—' : `2θ₁ = ${(2 * th).toFixed(1)}°` });
+            out.push({ label: '操作', value: '拖曳旋轉；「視角」可快速切換' });
+        }
+        return out;
     }
 
     /* ---- 多狹縫 → 單狹縫：相量（箭頭）相加 ----

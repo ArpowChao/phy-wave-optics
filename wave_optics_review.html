@@ -1844,6 +1844,9 @@
                 (lab.controls || []).forEach((c) => {
                     const out = document.getElementById(prefix ? `${prefix}${id}-${c.key}-out` : `${id}-${c.key}-out`);
                     if (out) out.textContent = c.fmt ? c.fmt(params[c.key], params) : params[c.key];
+                    // 參數被別的控制項改掉時（onChange），讓滑桿位置跟上
+                    const inp = document.getElementById(prefix ? `${prefix}${id}-${c.key}` : `${id}-${c.key}`);
+                    if (inp && inp.type === 'range' && Number(inp.value) !== Number(params[c.key])) inp.value = params[c.key];
                     const wrap = document.getElementById(prefix ? `${prefix}${id}-${c.key}-wrap` : `${id}-${c.key}-wrap`);
                     if (wrap && (c.only || c.showIf)) {
                         const vis = (!c.only || c.only.includes(params.mode)) && (!c.showIf || c.showIf(params));
@@ -11986,7 +11989,11 @@
                 { key: 'yMm', label: 'P 點高度 y (mm)', min: 0, max: 640, step: 0.1, value: 11, fmt: (v) => `${v.toFixed(1)} mm`, only: ['pathdiff'] },
                 { key: 'zones', label: '把狹縫等分成幾區', min: 2, max: 6, step: 2, value: 2, fmt: (v) => `${v} 區（第 ${v / 2} 暗紋）`, only: ['cancel'] },
                 { key: 'aw', label: '縫寬／波長 a/λ（無單位比例）', min: 0.5, max: 8, step: 0.25, value: 2.5, fmt: (v) => `a / λ = ${v.toFixed(2)}`, only: ['huygens'] },
-                { key: 'aw3', label: '縫寬 a（λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
+                { key: 'cut3', label: '狹縫', value: 'whole', only: ['view3d'], fmt: () => '',
+                  onChange: (v, p) => { if (v === 'cut' && p.aw3 < 6) p.aw3 = 8; }, options: [
+                    { value: 'whole', label: '一條寬縫（單狹縫）' }, { value: 'cut', label: '切成 N 條細縫（總寬 a 不變）' }] },
+                { key: 'nc3', label: '細縫數 N', min: 2, max: 150, step: 1, value: 2, fmt: (v) => `${v} 條`, only: ['view3d'], showIf: (p) => p.cut3 === 'cut' },
+                { key: 'aw3', label: '縫寬 a（切開時為總寬；λ₀ = 550 nm 的倍數）', min: 1, max: 8, step: 0.25, value: 3, fmt: (v) => `${v.toFixed(2)} λ₀`, only: ['view3d'] },
                 { key: 'scale3', label: '比例', value: 'far', only: ['view3d'], fmt: () => '', options: [
                     { value: 'far', label: '遠看：L ≫ d（接近真實比例）' }, { value: 'near', label: '近看：放大看波怎麼疊加' }] },
                 { key: 'show3', label: '水平面上顯示', value: 'instant', only: ['view3d'], showIf: (p) => p.scale3 === 'near', fmt: () => '', options: [
