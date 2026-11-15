@@ -1647,6 +1647,15 @@
                 `近看：把縫切成 ${N} 條細縫${q.N > 8 ? `（設定 ${q.N} 條，近看最多畫 8 條；看 N 很大請切到「遠看」）` : ''}；每條細縫都是一個子波源。`,
                 '細縫愈多、愈密，就愈接近「縫上每一點都發出子波」的單狹縫。'
             ];
+        } else if (p.aw3 / k0 >= 10) {
+            const half = Math.asin(Math.min(1, 1 / (p.aw3 * k0))) * 180 / Math.PI;
+            notes = far ? [
+                `縫很寬（a = ${p.aw3} λ₀，λ/a = ${(1 / (p.aw3 * k0)).toFixed(3)} ≪ 1）：中央亮紋的半角寬只有 ${half.toFixed(1)}°，光幾乎直線前進 → 看不出繞射。`,
+                '「比例」切到「近看」：可以看到光直直穿過縫，屏幕上是約 a 寬的亮帶、兩旁是清楚的影子。'
+            ] : [
+                `縫很寬（a = ${p.aw3} λ₀ ≫ λ）：光幾乎直線穿過縫，屏幕上是寬度約等於 a 的亮帶、兩旁是影子；只有亮帶邊緣有一點點條紋 → 繞射不明顯。`,
+                '把 a 調小到和 λ 差不多：光就會往兩旁的影子區散開，繞射變明顯。'
+            ];
         } else {
             notes = far ? [
                 '遠看：縫寬 a 比 L 小很多，亮度只由方向決定；a sinθ = mλ 的方向是暗紋，中央亮帶最寬最亮。',
@@ -1660,7 +1669,7 @@
         draw3D(ctx, w, h, p, t, {
             Lv: p.L3, gain: p.gain3,
             far, N, dl: q.cut ? q.d : 0, al: q.w,
-            slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
+            slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: q.cut ? 26 : 90, ref,
             inset: q.grat ? `N = ${q.N}，d = ${f2(q.d)} λ₀，縫寬 ${f2(q.w)} λ₀` : q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
             title: q.grat
@@ -1694,6 +1703,8 @@
             out.push({ label: '多狹縫第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°（還看得到）` : `sinθ = ${s1.toFixed(2)} > 1：不存在 → 只剩單狹縫圖樣` });
         } else {
             out.push({ label: '中央亮紋的角寬', value: th === null ? '—' : `2θ₁ = ${(2 * th).toFixed(1)}°` });
+            const ratio = lam / 550 / p.aw3;
+            out.push({ label: 'λ / a', value: `${ratio.toFixed(3)}（${ratio >= 1 ? 'λ ≥ a：繞射非常明顯' : ratio >= 0.3 ? '接近 1：繞射明顯' : ratio >= 0.1 ? '繞射看得出來' : '≪ 1：幾乎直線前進，繞射不明顯'}）` });
             out.push({ label: '屏幕距離 L（示意）', value: `${p.L3 || 16}：屏幕兩端到 sinθ = ±${(WV / Math.hypot(WV, p.L3 || 16)).toFixed(2)}；L 愈大，中央亮紋在屏幕上愈寬（2Lλ/a），但看得到的角度範圍愈小` });
         }
         return out;
