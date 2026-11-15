@@ -7432,7 +7432,7 @@
                 ? '<b>共軛成像</b>：物屏距離 L 固定時，透鏡在兩個位置都能在屏幕上成清晰的實像，一個放大、一個縮小。兩個位置的物距和像距正好互換（p₁ = q₂、q₁ = p₂），所以兩次的放大率互為倒數（m₁·m₂ = 1）。<br><b>什麼時候找得到</b>：L 要大於 4f 才有兩個位置；L = 4f 時兩個位置合成一個（p = q = 2f，等大倒立）；L 小於 4f 時怎麼移都不清楚。<br><b>測焦距（貝索法）</b>：量出兩個位置的距離 d，焦距 f = (L² − d²) ÷ 4L。'
                 : '本實驗採實物：凸透鏡物距大於焦距時成倒立實像、小於焦距時成正立放大虛像；物在焦點時出射平行光。凹透鏡成正立縮小虛像。<br><b>虛像怎麼找</b>：折射後的光不會真的交在一起，把每一條折射光往回延長（虛線），延長線交在同一點，就是虛像。<br><b>三條光線</b>：① 平行主軸入射 → 凸透鏡折射後通過另一側焦點；凹透鏡折射後好像從同側焦點發出。② 通過鏡心，方向不變。③ 凸透鏡：通過（或來自）同側焦點方向的光，折射後平行主軸；凹透鏡：瞄準另一側焦點的光，折射後平行主軸。<br>符號法則：凸透鏡 f 取正、凹透鏡 f 取負；q > 0 為鏡後實像、q < 0 為鏡前虛像；m = −q/p，m > 0 正立、m < 0 倒立。',
             // 景深模式在窄螢幕上下排光路圖與照片，畫布要高一些
-            height: (p, w) => p.mode === 'dof' ? (w < 640 ? 1190 : 600) : 420,
+            height: (p, w) => p.mode === 'dof' ? (w < 640 ? 1190 : 600) : p.mode === 'conj' ? 500 : 420,
             modes: [
                 { key: 'convex', label: '凸透鏡（f > 0）' },
                 { key: 'concave', label: '凹透鏡（f < 0）' },
@@ -8161,7 +8161,20 @@
                 const lensCm = conj ? g.x : 0, objCm = conj ? 0 : -Number(p.p);
                 const scale = conj ? (w - 70) / maxOf('L') : (w * 0.5 - 14) / (maxOf('p') + 6);
                 const ox = conj ? 40 : w * 0.5;
-                const vScale = L.vScaleOf(axisY, top);
+                /* 共軛模式：放大的那個清晰像（|m| = q₁/p₁）要整個放得進畫面，光線才看得到交在像的尖端。
+                 * 垂直比例只由 L、f 決定（以最大物高計算），拖動透鏡或改物高時都不會跟著縮放；
+                 * 放大率極大時設下限，物體不會小到看不見（此時像會超出畫面，另有標示）。 */
+                const baseV = L.vScaleOf(axisY, top);
+                let vScale = baseV, needCm = 0;
+                if (conj) {
+                    const Lc = g.L, disc = Lc * Lc - 4 * Lc * g.f;
+                    if (disc > 0) {
+                        const x1 = (Lc - Math.sqrt(disc)) / 2;
+                        needCm = maxOf('ho') * (Lc - x1) / x1;            // 最大物高時，放大像的像高
+                        vScale = Math.max(baseV / 3.5, Math.min(baseV, (bottom - axisY - 14) / needCm));
+                        needCm *= ho / maxOf('ho');
+                    }
+                }
                 const sx = (cm) => ox + cm * scale, sy = (cm) => axisY - cm * vScale;
                 const po = lensCm - objCm;                             // 物距
                 const q = Math.abs(po - f) < 1e-6 ? null : 1 / (1 / f - 1 / po);
@@ -8171,7 +8184,9 @@
                 axis(ctx, 12, axisY, w - 12, axisY);
                 label(ctx, '主軸', w - 40, axisY - 8, C.muted, 10);
                 // 透鏡本體（共軛模式另畫記錄過的位置，淡色）
-                const lensShape = (x, alpha) => L.lensShape(ctx, x, axisY, L.lensHalf(axisY, top, vScale), concave, alpha);
+                // 透鏡要比放大像的像高再大一點：光線③（折射後平行主軸、高度＝像高）才打得到透鏡上
+                const lensH = Math.min(axisY - top - 4, Math.max(L.lensHalf(axisY, top, vScale), needCm * vScale + 8));
+                const lensShape = (x, alpha) => L.lensShape(ctx, x, axisY, lensH, concave, alpha);
                 if (conj) (p._rec || []).filter((r) => r.L === g.L && r.f === g.f).forEach((r, i) => {
                     lensShape(sx(r.x), 0.3);
                     labelFit(ctx, `記錄 ${i + 1}`, sx(r.x), axisY + 88, C.blue, 10, 'center', { clampW: w, plate: 1 });
@@ -8261,12 +8276,13 @@
                     else {
                         const Ix = sx(lensCm + q), Iy = sy(m * ho), imgCol = q > 0 ? C.blue : C.violet;
                         // 共軛模式下像剛好落在屏幕上時，屏幕上的像就是答案，不再重疊畫第二支
-                        const onScreen = conj && g.sharp && Math.abs(Ix - scrX) < 10;
+                        // 屏幕上已經清楚成像時，屏幕上的像就是答案（像距與屏幕距離只差一點點，不再另畫一支）
+                        const onScreen = conj && g.sharp;
                         if (!onScreen) clip(() => arrow(ctx, Ix, axisY, Ix, Iy, imgCol, 2.8));
                         const tooTall = Iy < top || Iy > bottom;
-                        const lblY = onScreen ? (Iy > axisY ? axisY - 10 : axisY + 34)                       // 標在像的另一側，不壓到焦點標記
+                        const lblY = onScreen ? (Iy > axisY ? axisY - 14 : axisY + 34)                       // 標在像的另一側，不壓到焦點標記
                             : Math.max(top + 14, Math.min(bottom - 4, Iy + (Iy < axisY ? -6 : 15)));
-                        const lblTxt = (q > 0 ? (onScreen ? '實像（清楚成像在屏幕上）' : '實像') : '虛像') + (tooTall ? `，像高 ${Math.abs(m * ho).toFixed(1)} cm 超出畫面` : '');
+                        const lblTxt = (q > 0 ? (onScreen ? (w < 560 ? '清楚的實像' : '實像（清楚成像在屏幕上）') : '實像') : '虛像') + (tooTall ? `，像高 ${Math.abs(m * ho).toFixed(1)} cm 超出畫面` : '');
                         if (Ix > 8 && Ix < w - 8) labelFit(ctx, lblTxt, (onScreen ? scrX + 6 : Ix) + 8, lblY, imgCol, 12, 'left', { clampW: w, plate: 1 });
                         else labelFit(ctx, `${q > 0 ? '實像' : '虛像'}在畫面${Ix >= w - 8 ? '右' : '左'}方之外`, Ix >= w - 8 ? w - 10 : 10, axisY - 10, imgCol, 11, Ix >= w - 8 ? 'right' : 'left', { clampW: w, plate: 1 });
                         label(ctx, `p = ${po} cm　f = ${f} cm　q = ${q.toFixed(1)} cm　m = ${m.toFixed(2)}`, 14, 22, C.ink, 12);
