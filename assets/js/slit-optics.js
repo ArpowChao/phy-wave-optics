@@ -277,22 +277,26 @@
      * 水平面 z = 0 上的光場由縫上排列的點波源（惠更斯子波）直接相加；屏幕條紋取同一組波源在 x = LV 的強度，
      * 所以平面上的亮線一定打在屏幕的亮紋上。
      * ====================================================================== */
-    const LV = 16, WV = 7.5, XI = 3.6, PH = 4.2, SH = 3.2, LAM0 = 0.6;
+    const LV0 = 16, WV = 7.5, XI = 3.6, PH = 4.2, SH = 3.2, LAM0 = 0.6;
+    let LV = LV0;   // 屏幕位置（示意距離 L），每次畫 3D 前由 cfg.Lv 設定
+    /* 相機：txf = 看向 x = txf × L（屏幕位置會隨 L 改變）；fit = 整個裝置隨 L 縮放到差不多大 */
     const PRESETS = {
-        oblique: { yaw: -2.0, pitch: 0.50, zoom: 1, tx: LV * 0.42, D: 33 },
-        top: { yaw: -Math.PI / 2, pitch: 1.45, zoom: 1, tx: LV * 0.42, D: 33 },
-        screen: { yaw: Math.PI + 0.32, pitch: 0.22, zoom: 1.5, tx: LV, D: 13 },
-        side: { yaw: -Math.PI / 2, pitch: 0.16, zoom: 1, tx: LV * 0.42, D: 33 },
+        oblique: { yaw: -2.0, pitch: 0.50, zoom: 1, txf: 0.42, fit: true, D: 33 },
+        top: { yaw: -Math.PI / 2, pitch: 1.45, zoom: 1, txf: 0.42, D: 33 },
+        screen: { yaw: Math.PI + 0.32, pitch: 0.22, zoom: 1.5, txf: 1, D: 13, dL: true },
+        side: { yaw: -Math.PI / 2, pitch: 0.16, zoom: 1, txf: 0.42, fit: true, D: 33 },
         slits: { yaw: -0.85, pitch: 0.3, zoom: 5, tx: 0, D: 33 }
     };
     const viewOf = (p) => p._view || (p._view = Object.assign({}, PRESETS[p.cam] || PRESETS.oblique));
 
     function camera(v, w, h) {
         const cyw = Math.cos(v.yaw), syw = Math.sin(v.yaw), cp = Math.cos(v.pitch), sp = Math.sin(v.pitch);
-        const T = [v.tx, 0, 0.4];
-        const E = [T[0] + v.D * cp * cyw, T[1] + v.D * cp * syw, T[2] + v.D * sp];
+        const T = [v.txf != null ? v.txf * LV : v.tx, 0, 0.4];
+        const Dv = v.dL ? v.D * LV / LV0 : v.D;   // 從屏幕這側看：相機距離跟著 L，才不會跑到狹縫板後面
+        const E = [T[0] + Dv * cp * cyw, T[1] + Dv * cp * syw, T[2] + Dv * sp];
         const f = [-cp * cyw, -cp * syw, -sp], r = [-syw, cyw, 0], u = [-sp * cyw, -sp * syw, cp];
-        const F = Math.min(w * 1.25, h * 1.9) * (v.D / 33) * (w < 560 ? 0.92 : 0.74) * v.zoom;
+        const fit = v.fit ? Math.min(1.12, (XI + LV0) / Math.max(XI + LV, 2 * WV)) : 1;
+        const F = Math.min(w * 1.25, h * 1.9) * (Dv / 33) * (w < 560 ? 0.92 : 0.74) * v.zoom * fit;
         const cx = w / 2, cy = h * 0.46;
         const project = (P) => {
             const dx = P[0] - E[0], dy = P[1] - E[1], dz = P[2] - E[2];
@@ -338,7 +342,7 @@
 
     /* 平面光場的貼圖與屏幕強度：只在參數改變時重算（旋轉視角不用重算） */
     function buildField(cfg) {
-        const key = JSON.stringify([cfg.slits, cfg.a, cfg.lines.map((L) => Math.round(L.lam * 10))]);
+        const key = JSON.stringify([cfg.slits, cfg.a, LV, cfg.lines.map((L) => Math.round(L.lam * 10))]);
         if (cfg.cache && cfg.cache.key === key) return cfg.cache;
         const lines = cfg.lines, n = lines.length;
         const lamMin = LAM0 * Math.min(...lines.map((L) => L.lam)) / 550;
@@ -404,7 +408,7 @@
      * 以 u = sinθ 等間隔建表：I = [sin β / β]² · [sin(Nφ/2) / (N sin(φ/2))]²，β = π a u / λ、φ = 2π d u / λ。
      * 縫很多時亮紋極細，比一個像素還窄：每個像素依它涵蓋的 u 範圍取平均（前綴和），細亮紋才不會消失。 */
     function buildFar(cfg) {
-        const key = JSON.stringify(['far', cfg.N, cfg.dl, cfg.al, cfg.lines.map((L) => Math.round(L.lam * 10))]);
+        const key = JSON.stringify(['far', cfg.N, cfg.dl, cfg.al, LV, cfg.lines.map((L) => Math.round(L.lam * 10))]);
         if (cfg.cache && cfg.cache.key === key) return cfg.cache;
         const NT = 32768, lines = cfg.lines, n = lines.length, N = cfg.N;
         const P = new Float64Array((NT + 1) * 3), Pl = lines.map(() => new Float64Array(NT + 1)), Pt = new Float64Array(NT + 1);
@@ -465,6 +469,7 @@
     }
 
     function draw3D(ctx, w, h, p, t, cfg) {
+        LV = Math.max(6, Math.min(30, Number(cfg.Lv) || LV0));
         const v = viewOf(p);
         const cam = camera(v, w, h);
         const far = !!cfg.far;
@@ -1565,8 +1570,18 @@
                     : (p.show3 === 'instant' ? '水平面上：從縫放射出去、一直亮著的線是腹線，打到屏幕就是亮紋。' : '平均亮度：從縫放射出去的亮帶，就是屏幕上亮紋的來源。')
         ];
         if (!far && Nset > 8) notes[1] = `近看最多畫 8 條縫（設定 ${Nset} 條）；要看 100 條縫，「比例」切到「遠看：L ≫ d」。`;
+        const aEff = Math.min(p.al, p.dl * 0.95);
+        const k0 = 550 / (p.src3 === 'white' ? 550 : p.src3 === 'two' ? Number(p.lam1) : Number(p.lam));
+        const ref = far && !oneOpen && p.src3 !== 'white' ? (u) => sinc2(Math.PI * aEff * u * k0) : null;
+        const ratio = +(p.dl / aEff).toFixed(6);
+        const uEdge = WV / Math.hypot(WV, Math.max(6, Math.min(30, Number(p.L3) || LV0)));
+        const uEnv = 1 / (aEff * k0);
+        if (ref && uEnv > uEdge) notes[1] = uEnv >= 1 ? '縫寬 a < λ：單縫包絡寬到看不出來（只剩雙狹縫條紋）。把 a 調大，才看得到亮紋被包絡「包住」。'
+            : `單縫包絡的暗紋在 sinθ = ${uEnv.toFixed(2)}，超出屏幕（屏幕兩端只到 ±${uEdge.toFixed(2)}）→ 把 L 調小或 a 調大，才看得到。`;
+        else if (ref) notes[1] = `紅色虛線＝單縫包絡（只開一條縫的亮度）：縫有寬度 a，亮紋被它「包住」；a sinθ = λ 處沒有亮紋${Number.isInteger(ratio) ? `（d/a = ${ratio}，第 ${ratio} 級缺級）` : ''}。`;
         draw3D(ctx, w, h, p, t, {
-            far, N: oneOpen ? 1 : N, dl: p.dl, al: Math.min(p.al, p.dl * 0.95),
+            Lv: p.L3, ref,
+            far, N: oneOpen ? 1 : N, dl: p.dl, al: aEff,
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 6,
             cache: holder._f3, store: (r) => { holder._f3 = r; },
             title: `3D${far ? '（遠看：L ≫ d）' : '（近看：放大示意）'}：${oneOpen ? '只開 1 條縫' : (N === 2 ? '雙' : N + ' 條') + '狹縫'}，${lamText(p)}`,
@@ -1583,7 +1598,9 @@
         return [
             { label: '條紋形狀', value: '直條紋（與狹縫平行）' },
             { label: `第 1 亮紋方向 d sinθ = λ${p.src3 === 'two' ? '₁' : ''}`, value: th1 === null ? '無（d < λ）' : `θ₁ = ${th1.toFixed(1)}°` },
-            { label: '單縫包絡第一暗紋 a sinθ = λ', value: env === null ? '無（a < λ）：包絡很寬' : `θ = ${env.toFixed(1)}°` },
+            { label: '單縫包絡第一暗紋 a sinθ = λ', value: env === null ? '無（a < λ）：包絡很寬，看不出單縫效果；把 a 調大' : `θ = ${env.toFixed(1)}°` },
+            { label: '缺級（亮紋剛好落在包絡暗紋）', value: Number.isInteger(+(p.dl / a).toFixed(6)) ? `d/a = ${+(p.dl / a).toFixed(2)} → 第 ${+(p.dl / a).toFixed(0)}、${2 * +(p.dl / a).toFixed(0)}… 級消失` : `d/a = ${(p.dl / a).toFixed(2)} 不是整數：沒有剛好缺級` },
+            { label: '屏幕距離 L（示意）', value: `${p.L3 || 16}：屏幕兩端到 sinθ = ±${(WV / Math.hypot(WV, p.L3 || 16)).toFixed(2)}；L 愈大，條紋間距 Δy = Lλ/d 愈大，但看得到的角度範圍愈小` },
             { label: '縫數 N', value: p.open3 === 'one' ? '只開 1 條：單縫繞射，沒有細條紋' : N === 2 ? '2（雙狹縫）' : `${N}：主亮紋寬約 2/N，之間有 ${N - 1} 個暗紋、${N - 2} 個小亮紋${p.scale3 === 'near' && N > 8 ? '（近看只畫 8 條）' : ''}` }
         ];
     }
@@ -1629,6 +1646,7 @@
             ];
         }
         draw3D(ctx, w, h, p, t, {
+            Lv: p.L3,
             far, N, dl: q.cut ? q.d : 0, al: q.w,
             slits, a: av, lines: src3Lines(p), show: p.show3, curve: !!p.curve, nsMax: 26, ref,
             inset: q.cut ? `a = ${p.aw3} λ₀ 切成 N = ${q.N}，d = ${f2(q.d)} λ₀` : null,
@@ -1654,7 +1672,7 @@
             out.push({ label: '多狹縫第一主亮紋 d sinθ = λ', value: s1 <= 1 ? `θ = ${(Math.asin(s1) * 180 / Math.PI).toFixed(1)}°（還看得到）` : `sinθ = ${s1.toFixed(2)} > 1：不存在 → 只剩單狹縫圖樣` });
         } else {
             out.push({ label: '中央亮紋的角寬', value: th === null ? '—' : `2θ₁ = ${(2 * th).toFixed(1)}°` });
-            out.push({ label: '操作', value: '拖曳旋轉；「視角」可快速切換' });
+            out.push({ label: '屏幕距離 L（示意）', value: `${p.L3 || 16}：屏幕兩端到 sinθ = ±${(WV / Math.hypot(WV, p.L3 || 16)).toFixed(2)}；L 愈大，中央亮紋在屏幕上愈寬（2Lλ/a），但看得到的角度範圍愈小` });
         }
         return out;
     }
