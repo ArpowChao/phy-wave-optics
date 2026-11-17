@@ -289,7 +289,7 @@ function renderSingleLabView(rawId) {
     if (code && !nodes.includes(code)) nodes.unshift(code);
     const guide = lessonGuide(code);
     const preset = code === fromCode ? LESSON_LABS[code]?.params : null;
-    document.getElementById('main-content').innerHTML = `<div class="view-header"><span class="view-eyebrow">${id === 'optical_bench' ? '延伸探究' : '互動實驗'}</span><h2>${labMeta[id].name}</h2></div>${guide && id !== 'optical_bench' ? `<div class="lab-observation"><b>帶著一個問題看</b>${guide.labObserve || guide.observe}</div>` : ''}${labShellHtml(id)}<div class="lesson-actions">${nodes.map(c => routeLink(`node-${c}`, `回看：${nodeMeta[c].title}`, 'lesson-secondary')).join('')}${routeLink('tool-lab','其他實驗','lesson-secondary')}</div>`;
+    document.getElementById('main-content').innerHTML = `<div class="view-header"><span class="view-eyebrow">${id === 'optical_bench' ? '延伸探究' : '互動實驗'}</span><h2>${(labMeta[id] || LABS[id]).name}</h2></div>${guide && id !== 'optical_bench' ? `<div class="lab-observation"><b>帶著一個問題看</b>${guide.labObserve || guide.observe}</div>` : ''}${labShellHtml(id)}<div class="lesson-actions">${nodes.map(c => routeLink(`node-${c}`, `回看：${nodeMeta[c].title}`, 'lesson-secondary')).join('')}${routeLink('tool-lab','其他實驗','lesson-secondary')}</div>`;
     mountLab(id,initialMode || null,'',null,preset);
 }
 
